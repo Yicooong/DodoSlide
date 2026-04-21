@@ -1,4 +1,9 @@
 import React from 'react';
+import { Activity, CheckCircle, Cpu, ShieldCheck } from 'lucide-react';
+
+export const DEFAULT_CODE = `
+
+import React from 'react';
 import { Cpu, Layers, Zap, Database, BarChart3, Binary, ArrowRight, Activity } from 'lucide-react';
 
 const App = () => {
@@ -81,15 +86,15 @@ const App = () => {
                   { label: 'Exec', title: '目标芯片优化代码/二进制', status: 'green' }
                 ].map((step, idx) => (
                   <div key={idx} className="flex items-center gap-6 relative z-10">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 shrink-0 shadow-sm
-                      ${step.status === 'indigo' ? 'bg-[#4F46E5] border-indigo-100 text-white' : 
+                    <div className={\`w-16 h-16 rounded-full flex items-center justify-center border-4 shrink-0 shadow-sm
+                      \${step.status === 'indigo' ? 'bg-[#4F46E5] border-indigo-100 text-white' : 
                         step.status === 'green' ? 'bg-[#5B8054] border-green-100 text-white' : 
-                        'bg-white border-slate-100 text-slate-400'}`}>
+                        'bg-white border-slate-100 text-slate-400'}\`}>
                       <span className="font-mono font-bold text-lg">{idx + 1}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-mono font-bold text-slate-400 uppercase leading-none mb-1">{step.label}</span>
-                      <span className={`font-bold ${step.status === 'indigo' ? 'text-[#4F46E5]' : 'text-slate-800'}`}>{step.title}</span>
+                      <span className={\`font-bold \${step.status === 'indigo' ? 'text-[#4F46E5]' : 'text-slate-800'}\`}>{step.title}</span>
                     </div>
                   </div>
                 ))}
@@ -160,3 +165,5 @@ const App = () => {
 };
 
 export default App;
+
+`;
