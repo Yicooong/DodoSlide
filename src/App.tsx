@@ -122,6 +122,19 @@ const App = () => {
     // getBoundingClientRect returns scaled physical pixels, requires unscaling
     const pxToIn = (px: number) => ((px / currentScale) * 13.33) / 1280;
 
+    // Calculate Absolute Opacity by walking up the DOM tree
+    const getEffectiveOpacity = (el: HTMLElement, stopAt: HTMLElement) => {
+      let op = 1;
+      let current: HTMLElement | null = el;
+      while (current && current !== document.body) {
+        const style = window.getComputedStyle(current);
+        op *= parseFloat(style.opacity || '1');
+        if (current === stopAt) break;
+        current = current.parentElement;
+      }
+      return op;
+    };
+
     // Bulletproof Canvas-based Color Parser
     // Can accurately resolve ANY modern CSS color (oklch, color-mix, rgba) to strict Hex/Alpha
     const tempCanvas = document.createElement('canvas');
@@ -165,30 +178,24 @@ const App = () => {
          continue;
       }
 
-      const globalOpacity = nStyle.opacity;
+      const effectiveOp = getEffectiveOpacity(node, container);
+      const globalOpacity = effectiveOp.toString();
 
       // Handle Icons (SVGs)
       if (tagName === 'svg') {
         try {
           let svgData = new XMLSerializer().serializeToString(node);
           
-          // 1. Convert SVG currentColor natively to a literal Hex + Alpha!
-          // MS Office PPTX SVG Renderer has limited RGBA string support. 
-          // Best practice is inject explicit Stroke/Fill Hex and Stroke/Fill Opacities (SVG 1.1 compliant)
-          const colorInfo = parseColor(nStyle.color, nStyle.opacity);
+          // 1. Resolve true color and alpha accounting for DOM tree opacity
+          const colorInfo = parseColor(nStyle.color, globalOpacity);
           const trueHex = `#${colorInfo.color}`;
-          const trueAlpha = colorInfo.alpha;
           
+          // Force currentColor to exact Hex
           svgData = svgData.replace(/currentColor/g, trueHex);
           
-          // 2. Sometimes SVG strokes are missed if they inherit.
+          // 2. Ensure strokes are explicitly set
           if (!svgData.includes('stroke=')) {
               svgData = svgData.replace('<svg', `<svg stroke="${trueHex}"`);
-          }
-
-          // 3. Inject compliant opacities directly to root SVG which cascades to children
-          if (trueAlpha < 1) {
-              svgData = svgData.replace('<svg', `<svg stroke-opacity="${trueAlpha}" fill-opacity="${trueAlpha}"`);
           }
 
           const svgBase64 = `data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(svgData)))}`;
@@ -198,7 +205,8 @@ const App = () => {
             x: pxToIn(rect.left - parentRect.left),
             y: pxToIn(rect.top - parentRect.top),
             w: pxToIn(rect.width),
-            h: pxToIn(rect.height)
+            h: pxToIn(rect.height),
+            transparency: colorInfo.transparency > 0 ? colorInfo.transparency : undefined
           });
         } catch (e) {
           console.error("SVG Export failed", e);
@@ -346,13 +354,16 @@ const App = () => {
                maxY = Math.max(maxY, rRect.bottom);
            }
 
-           const textColor = parseColor(style.color, style.opacity);
+           // Retrieve absolute opacity for each text block by walking the tree!
+           const effectiveOp = getEffectiveOpacity(tn.parentElement as HTMLElement, container);
+           const textColor = parseColor(style.color, effectiveOp.toString());
            const rawFontSize = parseFloat(style.fontSize || '16');
 
            richTextObjects.push({
                text: textStr,
                options: {
                    color: textColor.color,
+                   transparency: textColor.transparency > 0 ? textColor.transparency : undefined,
                    fontSize: rawFontSize * 0.75, // px to pt
                    bold: parseInt(style.fontWeight || '400') >= 600,
                    italic: style.fontStyle === 'italic',
