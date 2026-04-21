@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研究现状与核心痛点 - 完美布局版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .slide-canvas {
+            width: 1280px;
+            height: 720px;
+            background: white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            margin: 20px auto;
+            padding: 50px 60px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .title-underline {
+            width: 60px;
+            height: 4px;
+            background-color: #3b82f6;
+            margin-top: 10px;
+        }
+        /* 时间轴样式 */
+        .timeline-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 105px;
+            left: 60px;
+            right: 60px;
+            height: 2px;
+            background: #cbd5e1;
+            z-index: 1;
+        }
+        .timeline-line::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -4px;
+            border-left: 10px solid #cbd5e1;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        .timeline-node {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 50%;
+            z-index: 2;
+            position: relative;
+        }
+        .framework-tag {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .stage-box {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
+        }
+        /* 颜色定义 */
+        .color-blue { background-color: #dbeafe; color: #1e40af; }
+        .color-yellow { background-color: #fef3c7; color: #92400e; }
+        .color-red { background-color: #fee2e2; color: #b91c1c; }
+        .color-green { background-color: #dcfce7; color: #166534; }
+
+        /* 卡片样式 */
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .list-item {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 12px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .list-icon {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-canvas">
+    <!-- 标题区 -->
+    <div class="mb-10">
+        <h1 class="text-4xl font-bold text-slate-800">研究现状与核心痛点</h1>
+        <div class="title-underline"></div>
+    </div>
+
+    <!-- 顶部：演进历程时间轴 -->
+    <div class="timeline-box">
+        <div class="timeline-line"></div>
+        <div class="flex justify-between items-start relative z-10">
+            <!-- 阶段 1 -->
+            <div class="flex flex-col items-center w-1/4">
+                <div class="flex gap-2 mb-8">
+                    <span class="framework-tag color-blue">Theano</span>
+                    <span class="framework-tag color-blue">Torch7</span>
+                </div>
+                <div class="timeline-node mb-3"></div>
+                <div class="text-slate-500 font-bold mb-4">2010年</div>
+                <div class="stage-box color-blue">科学计算库阶段</div>
+            </div>
+            <!-- 阶段 2 -->
+            <div class="flex flex-col items-center w-1/4">
+                <div class="flex gap-2 mb-8">
+                    <span class="framework-tag color-yellow">Caffe</span>
+                    <span class="framework-tag color-yellow">Tensorflow 1.X</span>
+                </div>
+                <div class="timeline-node mb-3"></div>
+                <div class="text-slate-500 font-bold mb-4">2014-2016年</div>
+                <div class="stage-box color-yellow">静态图阶段</div>
+            </div>
+            <!-- 阶段 3 -->
+            <div class="flex flex-col items-center w-1/4">
+                <div class="flex flex-col items-center gap-2 mb-4">
+                    <div class="flex gap-2">
+                        <span class="framework-tag color-red">PyTorch 1.X</span>
+                        <span class="framework-tag color-red">JAX</span>
+                    </div>
+                    <span class="framework-tag color-red">TF 2.X</span>
+                </div>
+                <div class="timeline-node mb-3"></div>
+                <div class="text-slate-500 font-bold mb-4">2019年</div>
+                <div class="stage-box color-red">动态图阶段</div>
+            </div>
+            <!-- 阶段 4 -->
+            <div class="flex flex-col items-center w-1/4">
+                <div class="flex flex-col items-center gap-2 mb-4">
+                    <span class="framework-tag color-green">PyTorch 2.X</span>
+                    <span class="framework-tag color-green">TorchDynamo</span>
+                </div>
+                <div class="timeline-node mb-3"></div>
+                <div class="text-slate-500 font-bold mb-4">2024年 - 至今</div>
+                <div class="stage-box color-green">动静结合阶段</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下方：双栏详情 -->
+    <div class="flex gap-8 flex-grow">
+        <!-- 左栏：策略 -->
+        <div class="detail-card border-l-4 border-l-blue-500">
+            <div class="card-header text-blue-600">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>当前主流优化策略</span>
+            </div>
+            <div class="list-item text-slate-600">
+                <i class="fa-solid fa-circle-check list-icon text-slate-300"></i>
+                <span><b>运行时局部策略：</b> 如 MagPy (状态监控)、BladeDISC (子图聚类)，侧重于局部的执行优化。</span>
+            </div>
+            <div class="list-item text-slate-600">
+                <i class="fa-solid fa-circle-check list-icon text-slate-300"></i>
+                <span><b>语义重构探索：</b> 尝试利用 <span class="text-blue-600 font-bold">LLM</span> 自动化解决底层限制，通过源码级重写突破动态语义屏障。</span>
+            </div>
+            <div class="list-item text-slate-600">
+                <i class="fa-solid fa-circle-check list-icon text-slate-300"></i>
+                <span><b>字节码拦截：</b> TorchDynamo 成为行业共识，致力于实现 Eager 与 Graph 的透明切换。</span>
+            </div>
+        </div>
+
+        <!-- 右栏：痛点 -->
+        <div class="detail-card border-l-4 border-l-red-500 bg-red-50/30">
+            <div class="card-header text-red-600">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>核心技术瓶颈 (痛点)</span>
+            </div>
+            <div class="list-item text-red-900">
+                <i class="fa-solid fa-circle-xmark list-icon text-red-600"></i>
+                <span><b>静态分析受限：</b> 传统模板难以覆盖复杂的 Python 嵌套、动态属性访问与外部库调用。</span>
+            </div>
+            <div class="list-item text-red-900">
+                <i class="fa-solid fa-circle-xmark list-icon text-red-600"></i>
+                <span><b>LLM 幻觉风险：</b> 纯生成式方案缺乏底层语义约束知识，生成的优化代码稳定性极差。</span>
+            </div>
+            <div class="list-item text-red-900">
+                <i class="fa-solid fa-circle-xmark list-icon text-red-600"></i>
+                <span><b>系统性缺失：</b> 现有研究多聚焦单一层面，缺少 <span class="text-blue-600 font-bold underline">“源码-AST-字节码”</span> 的多粒度协同框架。</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
