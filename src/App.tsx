@@ -172,14 +172,23 @@ const App = () => {
         try {
           let svgData = new XMLSerializer().serializeToString(node);
           
-          // 1. Convert SVG currentColor natively to a literal RGBA string!
-          // This allows PowerPoint to inherit the exact nested translucency of the HTML DOM.
-          const trueRGBA = parseColor(nStyle.color, nStyle.opacity).rgba;
-          svgData = svgData.replace(/currentColor/g, trueRGBA);
+          // 1. Convert SVG currentColor natively to a literal Hex + Alpha!
+          // MS Office PPTX SVG Renderer has limited RGBA string support. 
+          // Best practice is inject explicit Stroke/Fill Hex and Stroke/Fill Opacities (SVG 1.1 compliant)
+          const colorInfo = parseColor(nStyle.color, nStyle.opacity);
+          const trueHex = `#${colorInfo.color}`;
+          const trueAlpha = colorInfo.alpha;
+          
+          svgData = svgData.replace(/currentColor/g, trueHex);
           
           // 2. Sometimes SVG strokes are missed if they inherit.
           if (!svgData.includes('stroke=')) {
-              svgData = svgData.replace('<svg', `<svg stroke="${trueRGBA}"`);
+              svgData = svgData.replace('<svg', `<svg stroke="${trueHex}"`);
+          }
+
+          // 3. Inject compliant opacities directly to root SVG which cascades to children
+          if (trueAlpha < 1) {
+              svgData = svgData.replace('<svg', `<svg stroke-opacity="${trueAlpha}" fill-opacity="${trueAlpha}"`);
           }
 
           const svgBase64 = `data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(svgData)))}`;
@@ -356,14 +365,31 @@ const App = () => {
            const blockStyle = window.getComputedStyle(blockParent);
            const textAlign = blockStyle.textAlign === 'center' ? pres.AlignH.center : (blockStyle.textAlign === 'right' ? pres.AlignH.right : pres.AlignH.left);
            
+           const wIn = Math.max(pxToIn(maxX - minX), 0.1);
+           const hIn = Math.max(pxToIn(maxY - minY), 0.1);
+           
+           // Buffer handles cross-platform font rendering kerning differences so PPT doesn't wrap lines unnecessarily
+           const bufferW = 0.25; 
+           const bufferH = 0.05;
+
+           let finX = pxToIn(minX - parentRect.left);
+           let finY = pxToIn(minY - parentRect.top);
+
+           // Adjust X to maintain true visual alignment when box is expanded
+           if (textAlign === pres.AlignH.center) {
+               finX -= (bufferW / 2);
+           } else if (textAlign === pres.AlignH.right) {
+               finX -= bufferW;
+           }
+
            slide.addText(richTextObjects, {
-             x: pxToIn(minX - parentRect.left),
-             y: pxToIn(minY - parentRect.top),
-             w: Math.max(pxToIn(maxX - minX), 0.1) + 0.05, // Tight constraints bypasses flex/icon overlaps!
-             h: Math.max(pxToIn(maxY - minY), 0.1) + 0.05,
+             x: finX,
+             y: finY,
+             w: wIn + bufferW, // Expanded frame allows font engine breathing room!
+             h: hIn + bufferH,
              align: textAlign,
-             valign: 'middle', // Keeps inline content tightly grouped
-             margin: 0,
+             valign: 'middle',
+             margin: 0.05, // Give very subtle native padding
              wrap: true
            });
        }
