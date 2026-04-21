@@ -1,108 +1,125 @@
-# CLAUDE.md — Project Documentation
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-## Project Overview
+# Slide Playground — JSX 幻灯片编辑器
 
-**Name:** gemini-canvas-ppt-download
-**Type:** Browser-based slide editor (runs inside Google AI Studio)
-**Summary:** A React app where users write JSX code in a Monaco editor, see a live 1280×720 (16:9) slide preview, and export the result as a `.pptx` file using `pptxgenjs`.
-
----
-
-## Tech Stack
-
-| Layer | Tech |
-|---|---|
-| UI framework | React 19 + Tailwind CSS v4 |
-| Code editor | `@monaco-editor/react` |
-| JSX transpiler | `@babel/standalone` (browser-side — no build step on edit) |
-| PPTX generation | `pptxgenjs` |
-| Animations | `motion` |
-| Icons | `lucide-react` |
-| Server | Express + Vite (dev) / static serve (prod) |
-| AI SDK | `@google/genai` (installed but not actively used) |
+一款运行在浏览器中的幻灯片编辑器，使用 JSX 代码编写幻灯片，实时预览，并导出为 PPTX 文件。
 
 ---
 
-## Build, Test, and Run
+## 功能特性
 
-### Install dependencies
+- **JSX 编写幻灯片** — 用熟悉的 React JSX 语法编写幻灯片内容
+- **实时预览** — 边写边看，1280×720（16:9）标准比例
+- **导出 PPTX** — 一键导出为 `.pptx` 文件，支持形状、颜色、文字、图标
+- **lucide-react 图标** — 支持所有 lucide 图标库
+- **浏览器端转译** — 使用 Babel 无需构建步骤，修改代码即时生效
+
+---
+
+## 本地运行
+
+**前置要求：** Node.js
+
 ```bash
+# 1. 安装依赖
 npm install
-```
 
-### Development (with hot reload + Express server)
-```bash
+# 2. 配置环境变量（可选，AI 相关功能需要）
+cp .env.example .env.local
+# 编辑 .env.local，填入 GEMINI_API_KEY
+
+# 3. 启动开发服务器
 npm run dev
 ```
-Vite middleware serves the app; changes reload instantly.
 
-### Production build
+访问 `http://localhost:3000` 即可使用。
+
+---
+
+## 生产构建
+
 ```bash
 npm run build
-npm start          # Express serves ./dist as static files
-```
-
-### Lint
-```bash
-npm run lint
+npm start
 ```
 
 ---
 
-## Key Architecture Decisions
+## 幻灯片代码示例
 
-### 1. Two-Tab Interface
-- **code tab**: Full Monaco editor for writing JSX slide code.
-- **preview tab**: Live render of the slide at 1280×720 logical pixels.
-- Toggled by sidebar/header buttons.
+幻灯片以 React 函数组件的形式编写，**必须使用 `export default` 导出**：
 
-### 2. Browser-Side JSX Transpilation
-Babel runs in the browser to avoid a build step when the user edits code. The transpiled code is wrapped in a self-executing function that injects `React` and `lucide-react` as dependencies, simulating a CommonJS `require`.
+```tsx
+import React from 'react';
+import { Activity, CheckCircle, Cpu, ShieldCheck } from 'lucide-react';
 
-### 3. DOM-to-PPTX Export Pipeline
-On export, a `TreeWalker` traverses the rendered slide DOM and reconstructs it in `pptxgenjs`:
+const MySlide = () => {
+  return (
+    <div className="w-full h-full bg-white text-slate-900 font-sans p-12 flex flex-col">
+      <h1 className="text-4xl font-extrabold">系统核心模块验证程序</h1>
+      <Cpu size={48} />
+      <p>当前系统表现稳定，符合预期偏差范围。</p>
+    </div>
+  );
+};
 
-- **Shapes** → background fills, borders (symmetrical as `roundRect`/`rect`, asymmetrical as individual `line` shapes)
-- **SVG icons** → serialized, base64-encoded, embedded as images with resolved colors
-- **Text** → grouped by nearest block-level ancestor, mapped to `pptxgenjs` rich text objects with font size (px→pt ×0.75), bold, italic, color
-- **Colors** → resolved via a 1×1 canvas trick to handle `oklch`, `color-mix`, `rgba`, etc.
-
-### 4. Scaling
-The preview scales to fit the viewport via `ResizeObserver`. Export coordinates are unscaled using:
-```js
-pxToIn = (px / currentScale) * 13.33 / 1280
+export default MySlide;
 ```
 
-### 5. Font Fallback
-All exported text uses `Microsoft YaHei` (a CJK-compatible font) to ensure Chinese characters render in the PPTX.
+### 支持的样式
+
+| 特性 | 支持情况 |
+|------|----------|
+| Tailwind CSS 类名 | ✅ 完整支持 |
+| lucide-react 图标 | ✅ |
+| 背景颜色 / 渐变 | ✅ |
+| 边框（实线 / 虚线 / 不对称） | ✅ |
+| 圆角（矩形 / 胶囊形） | ✅ |
+| 文字（大小 / 粗细 / 颜色 / 对齐） | ✅ |
+| 透明度继承 | ✅ |
+
+### 尺寸单位说明
+
+预览区域固定为 **1280×720**（16:9）。以下 Tailwind 类在该上下文中会被强制覆盖：
+
+- `h-screen` / `min-h-screen` → 固定为 720px
+- `w-screen` / `min-w-screen` → 固定为 1280px
 
 ---
 
-## Directory Structure
+## 项目结构
 
 ```
 /
-├── index.html          — Entry HTML with Tailwind v4 browser runtime
-├── server.ts           — Express server (Vite middleware in dev, static in prod)
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── .env.example
-├── metadata.json       — AI Studio metadata
-└── src/
-    ├── main.tsx        — React root mount
-    ├── App.tsx         — Main app: editor + preview + export logic (~590 lines)
-    ├── constants.ts    — DEFAULT_CODE: the sample slide JSX
-    ├── index.css       — Tailwind imports + Inter/JetBrains Mono fonts + @theme
-    └── lib/utils.ts    — cn() utility (clsx + tailwind-merge)
+├── index.html          — 入口 HTML
+├── server.ts           — Express 服务器（开发热加载 / 生产静态服务）
+├── vite.config.ts      — Vite 配置
+├── src/
+│   ├── App.tsx         — 主应用：编辑器 + 预览 + PPTX 导出逻辑
+│   ├── constants.ts    — 默认幻灯片代码示例
+│   ├── index.css       — Tailwind CSS v4 主题
+│   └── lib/utils.ts    — cn() 工具函数
+└── package.json
 ```
 
 ---
 
-## Important Notes
+## 技术栈
 
-- The root container is **skipped** in shape drawing to avoid a duplicate background shape during export.
-- Opacity inheritance is tracked by walking up the DOM tree per element.
-- Tailwind gradient fallbacks are extracted from `background-image` when `background-color` is transparent.
-- Text whitespace is collapsed via `textContent.replace(/\n/g, ' ')` and bounding boxes are expanded with buffer inches (`0.25` wide, `0.05` tall) to prevent line-wrapping from kerning differences.
-- `@google/genai` is installed but not actively used in the current codebase — it may be used in future AI-assisted features.
+| 层级 | 技术 |
+|------|------|
+| UI 框架 | React 19 + Tailwind CSS v4 |
+| 代码编辑器 | Monaco Editor |
+| JSX 转译 | Babel (浏览器端) |
+| PPTX 生成 | pptxgenjs |
+| 动画 | motion |
+| 图标 | lucide-react |
+| 服务器 | Express + Vite |
+
+---
+
+## License
+
+Apache 2.0
