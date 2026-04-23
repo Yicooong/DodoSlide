@@ -315,8 +315,7 @@ const App = () => {
        const rect = range.getBoundingClientRect();
        
        // Collapse lines, ignore entirely empty invisible traces
-       const textStr = tn.textContent?.replace(/\n/g, ' ') || '';
-       if (rect.width === 0 || rect.height === 0 || textStr.trim().length === 0) return;
+       if (rect.width === 0 || rect.height === 0 || !tn.textContent || tn.textContent.length === 0) return;
 
        let parent = tn.parentElement;
        while(parent && parent !== container) {
@@ -340,8 +339,14 @@ const App = () => {
 
        items.forEach(({ tn, style }) => {
            let textStr = tn.textContent || '';
-           textStr = textStr.replace(/\s+/g, ' '); // Collapse HTML whitespace naturally
-           if (textStr.trim().length === 0) return;
+           const isPre = style.whiteSpace.startsWith('pre');
+           
+           if (!isPre) {
+               // Collapse HTML whitespace naturally (but do not destroy \xA0 non-breaking spaces)
+               textStr = textStr.replace(/[ \t\r\n\f]+/g, ' '); 
+           }
+           
+           if (textStr.length === 0) return;
 
            // Compute exact ink boundaries per chunk
            const range = document.createRange();
