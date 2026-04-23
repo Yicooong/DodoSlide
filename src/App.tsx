@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, Component } from 'react';
 import { 
   Play, 
   Download, 
@@ -16,7 +16,9 @@ import {
   Loader2,
   Maximize2,
   Trash2,
-  Upload
+  Upload,
+  Settings,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Editor from '@monaco-editor/react';
@@ -24,17 +26,185 @@ import * as Babel from '@babel/standalone';
 import pptxgen from 'pptxgenjs';
 import { DEFAULT_CODE } from './constants';
 import { cn } from './lib/utils';
+import { useAiGeneration } from './lib/use-ai-generation';
+import { SettingsModal } from './components/SettingsModal';
+import { AiInputModal } from './components/AiInputModal';
 
 // Libs for the sandbox
 import * as LucideIcons from 'lucide-react';
 
+// Error Boundary to catch runtime errors in rendered slides
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: string }> {
+  state = { hasError: false, error: '' };
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error: error?.message || String(error) };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div className="text-red-500 font-mono p-4">渲染错误: {this.state.error}</div>;
+    }
+    return this.props.children;
+  }
+}
+
+const ErrorBoundaryWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ErrorBoundary>{children}</ErrorBoundary>
+);
+
+// Slide Thumbnail Component - renders a mini preview of the slide
+const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, isActive }) => {
+  const [thumbnailContent, setThumbnailContent] = useState<React.ReactNode>(null);
+  const [hasError, setHasError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.15);
+
+  useEffect(() => {
+    try {
+      const result = Babel.transform(code, {
+        presets: ['react', ['env', { modules: 'commonjs' }]],
+        filename: 'slide.tsx'
+      }).code;
+      
+      if (result) {
+        const wrappedCode = `
+          return (function(dependencies) {
+            const __react_lib__ = dependencies.React;
+            const __icons_lib__ = dependencies.icons;
+            
+            const exports = {};
+            const module = { exports };
+            const require = (name) => {
+              if (name === 'react') return __react_lib__;
+              if (name === 'react/jsx-runtime') return __react_lib__;
+              if (name === 'lucide-react') return __icons_lib__;
+              return {};
+            };
+            
+            ${result}
+            
+            return module.exports.default || module.exports.MySlide || module.exports;
+          })(dependencies)
+        `;
+        
+        const dependencies = { React, icons: LucideIcons };
+        const renderFn = new Function('dependencies', wrappedCode);
+        const Component = renderFn(dependencies);
+        
+        if (typeof Component === 'function') {
+          setThumbnailContent(<Component />);
+          setHasError(false);
+        }
+      }
+    } catch (err) {
+      setHasError(true);
+    }
+  }, [code]);
+
+  // Calculate scale based on container size - use ResizeObserver for accurate sizing
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        // Scale to fit container width while maintaining 16:9 aspect ratio
+        // 1280 is the original slide width
+        const newScale = containerWidth / 1280;
+        setScale(newScale);
+      }
+    };
+    
+    updateScale();
+    
+    const observer = new ResizeObserver(() => {
+      updateScale();
+    });
+    
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-slate-100">
+        <span className="text-[8px] text-red-400">错误</span>
+      </div>
+    );
+  }
+
+  // Calculate scaled dimensions
+  const scaledWidth = 1280 * scale;
+  const scaledHeight = 720 * scale;
+
+  return (
+    <div 
+      ref={containerRef}
+      className="w-full h-full overflow-hidden relative bg-white flex items-center justify-center"
+    >
+      <div 
+        className="relative"
+        style={{
+          width: scaledWidth,
+          height: scaledHeight,
+        }}
+      >
+        <div 
+          className="absolute top-0 left-0 origin-top-left"
+          style={{
+            transform: `scale(${scale})`,
+            width: '1280px',
+            height: '720px',
+          }}
+        >
+          <ErrorBoundaryWrapper>
+            {thumbnailContent}
+          </ErrorBoundaryWrapper>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Slide type definition
+interface Slide {
+  id: string;
+  name: string;
+  code: string;
+}
+
 const App = () => {
+  // Multi-slide state management
+  const [slides, setSlides] = useState<Slide[]>([
+    { id: '1', name: '幻灯片 1', code: DEFAULT_CODE }
+  ]);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [transpiledCode, setTranspiledCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [scale, setScale] = useState(0.75);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // AI Generation
+  const {
+    isGenerating,
+    error: aiError,
+    generate,
+    clearError,
+    apiSettings,
+    updateApiSettings,
+    promptSettings,
+    updatePromptSettings,
+  } = useAiGeneration();
+  
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAiInput, setShowAiInput] = useState(false);
+  const [editingSlideName, setEditingSlideName] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportMode, setExportMode] = useState<'all' | 'current' | 'range'>('all');
+  const [exportRangeStart, setExportRangeStart] = useState(1);
+  const [exportRangeEnd, setExportRangeEnd] = useState(1);
+  const [exportSpecificPage, setExportSpecificPage] = useState(1);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -48,6 +218,67 @@ const App = () => {
   }, []);
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('code');
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Update code when current slide changes
+  useEffect(() => {
+    setCode(slides[currentSlideIndex]?.code || DEFAULT_CODE);
+  }, [currentSlideIndex, slides]);
+
+  // Update current slide's code when code changes
+  const updateCurrentSlideCode = useCallback((newCode: string) => {
+    setCode(newCode);
+    setSlides((prev: Slide[]) => {
+      const updated = [...prev];
+      updated[currentSlideIndex] = { ...updated[currentSlideIndex], code: newCode };
+      return updated;
+    });
+  }, [currentSlideIndex]);
+
+  // Add new slide
+  const addNewSlide = useCallback(() => {
+    const newSlide: Slide = {
+      id: Date.now().toString(),
+      name: `幻灯片 ${slides.length + 1}`,
+      code: DEFAULT_CODE
+    };
+    setSlides((prev: Slide[]) => [...prev, newSlide]);
+    setCurrentSlideIndex(slides.length);
+  }, [slides.length]);
+
+  // Delete slide
+  const deleteSlide = useCallback((index: number) => {
+    if (slides.length <= 1) return; // Keep at least one slide
+    setSlides((prev: Slide[]) => prev.filter((_: Slide, i: number) => i !== index));
+    if (currentSlideIndex >= index && currentSlideIndex > 0) {
+      setCurrentSlideIndex((prev: number) => prev - 1);
+    }
+  }, [slides.length, currentSlideIndex]);
+
+  // Rename slide
+  const renameSlide = useCallback((index: number, newName: string) => {
+    setSlides((prev: Slide[]) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], name: newName };
+      return updated;
+    });
+    setEditingSlideName(null);
+  }, []);
+
+  // Duplicate slide
+  const duplicateSlide = useCallback((index: number) => {
+    const slideToDuplicate = slides[index];
+    const newSlide: Slide = {
+      id: Date.now().toString(),
+      name: `${slideToDuplicate.name} 副本`,
+      code: slideToDuplicate.code
+    };
+    setSlides((prev: Slide[]) => {
+      const updated = [...prev];
+      updated.splice(index + 1, 0, newSlide);
+      return updated;
+    });
+    setCurrentSlideIndex(index + 1);
+  }, [slides]);
 
   // Transpile JSX to JS
   useEffect(() => {
@@ -94,27 +325,116 @@ const App = () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target?.result as string;
-        if (content) setCode(content);
+        if (content) updateCurrentSlideCode(content);
       };
       reader.readAsText(file);
     }
   };
 
+  // Handle AI Generation
+  const handleAiGenerate = async (userInput: string) => {
+    const result = await generate(userInput);
+    if (result.success && result.code) {
+      updateCurrentSlideCode(result.code);
+      setActiveTab('code');
+    }
+    return result;
+  };
+
   // PPTX Export Logic (Dynamically mapping DOM to PPTX with SVG support)
-  const exportToPPTX = async () => {
-    setIsExporting(true);
-    const pres = new pptxgen();
-    pres.layout = 'LAYOUT_WIDE';
+  const exportSingleSlideToPPTX = async (pres: any, slideCode: string, slideName: string) => {
+    // Transpile the slide code
+    let transpiled;
+    try {
+      const result = Babel.transform(slideCode, {
+        presets: ['react', ['env', { modules: 'commonjs' }]],
+        filename: 'slide.tsx'
+      }).code;
+      
+      if (result) {
+        transpiled = `
+          return (function(dependencies) {
+            const __react_lib__ = dependencies.React;
+            const __icons_lib__ = dependencies.icons;
+            
+            const exports = {};
+            const module = { exports };
+            const require = (name) => {
+              if (name === 'react') return __react_lib__;
+              if (name === 'react/jsx-runtime') return __react_lib__;
+              if (name === 'lucide-react') return __icons_lib__;
+              return {};
+            };
+            
+            ${result}
+            
+            return module.exports.default || module.exports.MySlide || module.exports;
+          })(dependencies)
+        `;
+      }
+    } catch (err) {
+      throw new Error(`幻灯片 "${slideName}" 代码解析错误: ${err.message}`);
+    }
+
+    if (!transpiled) return;
+
+    // Create a temporary container for rendering
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '1280px';
+    tempContainer.style.height = '720px';
+    document.body.appendChild(tempContainer);
+
+    // Render the component
+    try {
+      const dependencies = { React, icons: LucideIcons };
+      const renderFn = new Function('dependencies', transpiled);
+      const Component = renderFn(dependencies);
+      
+      if (typeof Component !== 'function') {
+        throw new Error(`幻灯片 "${slideName}" 必须导出一个默认组件`);
+      }
+
+      // Create root and render
+      const root = document.createElement('div');
+      root.className = 'logical-slide-root w-[1280px] h-[720px] relative overflow-hidden';
+      root.style.width = '1280px';
+      root.style.height = '720px';
+      tempContainer.appendChild(root);
+
+      // Use ReactDOM to render (we'll use a simple approach)
+      const { createElement } = React;
+      const element = createElement(Component);
+      
+      // For simplicity, we'll use the existing preview approach
+      // by temporarily setting the code and using the existing render logic
+      // But since we can't easily do that, we'll create a minimal DOM structure
+      // This is a simplified version - in production you'd want proper React rendering
+      
+      // For now, let's use a simpler approach: create a hidden preview
+      const slide = pres.addSlide();
+      
+      // Parse and export the slide content
+      // This is a placeholder - the actual implementation would need proper React rendering
+      // For now, we'll export a slide with the name
+      slide.addText(slideName, { x: 0.5, y: 0.5, w: 9, h: 0.5, fontSize: 24, bold: true });
+      
+    } finally {
+      document.body.removeChild(tempContainer);
+    }
+  };
+
+  // Export a single slide to PPTX
+  const exportSingleSlide = async (pres: any, slideCode: string, slideName: string, containerRef: HTMLDivElement | null) => {
     const slide = pres.addSlide();
 
-    if (!previewRef.current) {
-      setIsExporting(false);
+    if (!containerRef) {
       return;
     }
 
-    const container = (previewRef.current.querySelector('.logical-slide-root') || previewRef.current.firstElementChild) as HTMLElement;
+    const container = (containerRef.querySelector('.logical-slide-root') || containerRef.firstElementChild) as HTMLElement;
     if (!container) {
-      setIsExporting(false);
       return;
     }
 
@@ -410,13 +730,129 @@ const App = () => {
            });
        }
     });
+  };
 
-    pres.writeFile({ fileName: `Export_Slide_${Date.now()}.pptx` })
-      .then(() => setIsExporting(false))
-      .catch((e) => {
-         console.error(e);
-         setIsExporting(false);
-      });
+  // Main export function supporting both current and all slides
+  const exportToPPTX = async (mode: 'all' | 'current' | 'range', startPage?: number, endPage?: number) => {
+    setIsExporting(true);
+    
+    try {
+      if (mode === 'current') {
+        // Export only current slide
+        const pres = new pptxgen();
+        pres.layout = 'LAYOUT_WIDE';
+        
+        await exportSingleSlide(pres, slides[currentSlideIndex].code, slides[currentSlideIndex].name, previewRef.current);
+        
+        await pres.writeFile({ fileName: `Slide_${slides[currentSlideIndex].name}_${Date.now()}.pptx` });
+      } else if (mode === 'range' && startPage !== undefined && endPage !== undefined) {
+        // Export range of slides
+        const pres = new pptxgen();
+        pres.layout = 'LAYOUT_WIDE';
+        
+        const start = Math.max(1, startPage) - 1; // Convert to 0-based index
+        const end = Math.min(slides.length, endPage);
+        
+        for (let i = start; i < end; i++) {
+          const slide = slides[i];
+          await exportSlideToPPTX(pres, slide, i);
+        }
+        
+        await pres.writeFile({ fileName: `Presentation_Slides_${startPage}-${endPage}_${Date.now()}.pptx` });
+      } else {
+        // Export all slides
+        const pres = new pptxgen();
+        pres.layout = 'LAYOUT_WIDE';
+        
+        for (let i = 0; i < slides.length; i++) {
+          const slide = slides[i];
+          await exportSlideToPPTX(pres, slide, i);
+        }
+        
+        await pres.writeFile({ fileName: `Presentation_All_Slides_${Date.now()}.pptx` });
+      }
+    } catch (err: any) {
+      console.error('Export failed:', err);
+      alert('导出失败: ' + err.message);
+    } finally {
+      setIsExporting(false);
+      setShowExportModal(false);
+    }
+  };
+
+  // Helper function to export a single slide to PPTX
+  const exportSlideToPPTX = async (pres: pptxgen, slide: Slide, index: number) => {
+    // Create a temporary container for this slide
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '1280px';
+    tempContainer.style.height = '720px';
+    document.body.appendChild(tempContainer);
+    
+    try {
+      // Transpile the slide code
+      const result = Babel.transform(slide.code, {
+        presets: ['react', ['env', { modules: 'commonjs' }]],
+        filename: 'slide.tsx'
+      }).code;
+      
+      if (result) {
+        const wrappedCode = `
+          return (function(dependencies) {
+            const __react_lib__ = dependencies.React;
+            const __icons_lib__ = dependencies.icons;
+            
+            const exports = {};
+            const module = { exports };
+            const require = (name) => {
+              if (name === 'react') return __react_lib__;
+              if (name === 'react/jsx-runtime') return __react_lib__;
+              if (name === 'lucide-react') return __icons_lib__;
+              return {};
+            };
+            
+            ${result}
+            
+            return module.exports.default || module.exports.MySlide || module.exports;
+          })(dependencies)
+        `;
+        
+        const dependencies = { React, icons: LucideIcons };
+        const renderFn = new Function('dependencies', wrappedCode);
+        const Component = renderFn(dependencies);
+        
+        if (typeof Component === 'function') {
+          // Create a root element and render
+          const root = document.createElement('div');
+          root.className = 'logical-slide-root w-[1280px] h-[720px] relative overflow-hidden';
+          root.style.width = '1280px';
+          root.style.height = '720px';
+          tempContainer.appendChild(root);
+          
+          // Use ReactDOM to render (create a temporary React root)
+          const { createElement } = React;
+          const { createRoot } = await import('react-dom/client');
+          const reactRoot = createRoot(root);
+          
+          await new Promise<void>((resolve) => {
+            reactRoot.render(createElement(ErrorBoundaryWrapper, null, createElement(Component)));
+            // Wait a bit for rendering to complete
+            setTimeout(resolve, 100);
+          });
+          
+          // Now export this slide
+          await exportSingleSlide(pres, slide.code, slide.name, tempContainer);
+          
+          // Cleanup
+          reactRoot.unmount();
+        }
+      }
+    } catch (err: any) {
+      console.error(`Failed to export slide "${slide.name}":`, err);
+    } finally {
+      document.body.removeChild(tempContainer);
+    }
   };
 
   // Safe Rendering of User Component
@@ -435,7 +871,7 @@ const App = () => {
          return <div className="text-red-500 font-mono p-4">Code must export a default component.</div>;
       }
 
-      return <Component />;
+      return <ErrorBoundaryWrapper><Component /></ErrorBoundaryWrapper>;
     } catch (err: any) {
       return <div className="text-red-500 font-mono p-4">Runtime Error: {err.message}</div>;
     }
@@ -444,23 +880,119 @@ const App = () => {
   return (
     <div className="flex h-screen bg-[#0F172A] text-slate-100 overflow-hidden font-sans">
       
-      {/* Sidebar: Navigation */}
-      <div className="w-16 border-r border-slate-800 flex flex-col items-center py-6 gap-8 bg-slate-950">
-        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <Layout className="text-white" size={24} />
+      {/* Left Sidebar: Slide Thumbnails */}
+      <div className="w-64 border-r border-slate-800 flex flex-col bg-slate-950">
+        {/* Header */}
+        <div className="h-16 border-b border-slate-800 flex items-center px-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Layout className="text-white" size={18} />
+            </div>
+            <span className="font-bold text-sm">幻灯片</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-6">
-          <button 
-            onClick={() => setActiveTab('code')}
-            className={cn("p-3 rounded-xl transition-all", activeTab === 'code' ? "bg-indigo-600/20 text-indigo-400" : "text-slate-500 hover:text-slate-300")}
+
+        {/* Slide List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {slides.map((slide: Slide, index: number) => (
+            <div
+              key={slide.id}
+              onClick={() => setCurrentSlideIndex(index)}
+              className={cn(
+                "group relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden",
+                currentSlideIndex === index
+                  ? "border-indigo-500 bg-indigo-500/10"
+                  : "border-slate-700 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-800/50"
+              )}
+            >
+              {/* Slide Number */}
+              <div className="absolute top-1 left-1.5 text-[10px] font-mono text-slate-500">
+                {index + 1}
+              </div>
+              
+              {/* Slide Thumbnail Preview */}
+              <div className="aspect-video bg-white m-1 mt-4 mb-1 rounded overflow-hidden relative">
+                <SlideThumbnail code={slide.code} isActive={currentSlideIndex === index} />
+              </div>
+              
+              {/* Slide Name */}
+              <div className="px-2 pb-1.5">
+                {editingSlideName === slide.id ? (
+                  <input
+                    type="text"
+                    defaultValue={slide.name}
+                    onBlur={(e) => renameSlide(index, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        renameSlide(index, e.currentTarget.value);
+                      } else if (e.key === 'Escape') {
+                        setEditingSlideName(null);
+                      }
+                    }}
+                    className="w-full text-[11px] bg-slate-800 border border-indigo-500 rounded px-1 py-0.5 outline-none"
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span 
+                      className="text-[11px] text-slate-300 truncate flex-1"
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setEditingSlideName(slide.id);
+                      }}
+                    >
+                      {slide.name}
+                    </span>
+                    
+                    {/* Actions Menu */}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateSlide(index);
+                        }}
+                        className="p-0.5 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200"
+                        title="复制"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSlide(index);
+                        }}
+                        className="p-0.5 rounded hover:bg-red-900/50 text-slate-400 hover:text-red-400"
+                        title="删除"
+                        disabled={slides.length <= 1}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="p-3 border-t border-slate-800">
+          <button
+            onClick={addNewSlide}
+            className="w-full py-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-all flex items-center justify-center gap-2 text-sm font-medium"
           >
-            <Code2 size={24} />
-          </button>
-          <button 
-            onClick={() => setActiveTab('preview')}
-            className={cn("p-3 rounded-xl transition-all", activeTab === 'preview' ? "bg-indigo-600/20 text-indigo-400" : "text-slate-500 hover:text-slate-300")}
-          >
-            <Play size={24} />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            新建幻灯片
           </button>
         </div>
       </div>
@@ -490,13 +1022,34 @@ const App = () => {
           </div>
           
           <div className="flex items-center gap-4">
+             <button 
+                onClick={() => setShowAiInput(true)}
+                disabled={isGenerating}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95"
+             >
+                <Sparkles size={16} />
+                AI 生成
+             </button>
+             <button 
+                onClick={() => setShowSettings(true)}
+                className="bg-slate-800 hover:bg-slate-700 active:scale-95 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border border-white/5"
+             >
+                <Settings size={16} />
+                设置
+             </button>
              <label className="cursor-pointer bg-slate-800 hover:bg-slate-700 active:scale-95 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border border-white/5">
                 <Upload size={16} />
                 上传 JSX
                 <input type="file" accept=".jsx,.tsx,.js,.ts" className="hidden" onChange={handleFileUpload} />
              </label>
+             {/* Export Button - Opens Modal */}
              <button 
-                onClick={exportToPPTX}
+                onClick={() => {
+                  setExportRangeStart(1);
+                  setExportRangeEnd(slides.length);
+                  setExportSpecificPage(currentSlideIndex + 1);
+                  setShowExportModal(true);
+                }}
                 disabled={isExporting || !!error}
                 className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all active:scale-95"
              >
@@ -516,7 +1069,7 @@ const App = () => {
                 height="100%"
                 defaultLanguage="javascript"
                 value={code}
-                onChange={(value) => setCode(value || '')}
+                onChange={(value) => updateCurrentSlideCode(value || '')}
                 theme="vs-dark"
                 options={{
                   fontSize: 14,
@@ -590,6 +1143,216 @@ const App = () => {
           </div>
         </main>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        apiSettings={apiSettings}
+        onUpdateApiSettings={updateApiSettings}
+        promptSettings={promptSettings}
+        onUpdatePromptSettings={updatePromptSettings}
+      />
+
+      {/* AI Input Modal */}
+      <AiInputModal
+        isOpen={showAiInput}
+        onClose={() => {
+          setShowAiInput(false);
+          clearError();
+        }}
+        onGenerate={handleAiGenerate}
+        isGenerating={isGenerating}
+        error={aiError}
+      />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-[480px] max-w-[90vw] overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Download size={20} className="text-indigo-400" />
+                导出 PPTX
+              </h3>
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Export Mode Selection */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-slate-300">导出范围</label>
+                
+                {/* Option 1: Export All */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                  exportMode === 'all' 
+                    ? "border-indigo-500 bg-indigo-500/10" 
+                    : "border-slate-600 hover:border-slate-500"
+                )}>
+                  <input 
+                    type="radio" 
+                    name="exportMode" 
+                    value="all"
+                    checked={exportMode === 'all'}
+                    onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
+                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-white">全部导出</div>
+                    <div className="text-xs text-slate-400">导出所有 {slides.length} 张幻灯片</div>
+                  </div>
+                </label>
+
+                {/* Option 2: Export Current */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                  exportMode === 'current' 
+                    ? "border-indigo-500 bg-indigo-500/10" 
+                    : "border-slate-600 hover:border-slate-500"
+                )}>
+                  <input 
+                    type="radio" 
+                    name="exportMode" 
+                    value="current"
+                    checked={exportMode === 'current'}
+                    onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
+                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-white">导出当前幻灯片</div>
+                    <div className="text-xs text-slate-400">仅导出第 {currentSlideIndex + 1} 张: {slides[currentSlideIndex]?.name}</div>
+                  </div>
+                </label>
+
+                {/* Option 3: Export Range */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                  exportMode === 'range' 
+                    ? "border-indigo-500 bg-indigo-500/10" 
+                    : "border-slate-600 hover:border-slate-500"
+                )}>
+                  <input 
+                    type="radio" 
+                    name="exportMode" 
+                    value="range"
+                    checked={exportMode === 'range'}
+                    onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
+                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-white">导出指定范围</div>
+                    <div className="text-xs text-slate-400">导出连续的多个幻灯片</div>
+                  </div>
+                </label>
+
+                {/* Range Input Fields */}
+                {exportMode === 'range' && (
+                  <div className="flex items-center gap-3 pl-7 mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-400">从</span>
+                      <input 
+                        type="number" 
+                        min={1} 
+                        max={slides.length}
+                        value={exportRangeStart}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setExportRangeStart(Math.max(1, Math.min(val, slides.length)));
+                        }}
+                        className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-400">到</span>
+                      <input 
+                        type="number" 
+                        min={1} 
+                        max={slides.length}
+                        value={exportRangeEnd}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setExportRangeEnd(Math.max(1, Math.min(val, slides.length)));
+                        }}
+                        className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <span className="text-sm text-slate-500">共 {slides.length} 页</span>
+                  </div>
+                )}
+
+                {/* Specific Page Input */}
+                {exportMode === 'current' && (
+                  <div className="flex items-center gap-3 pl-7 mt-2">
+                    <span className="text-sm text-slate-400">指定页码:</span>
+                    <input 
+                      type="number" 
+                      min={1} 
+                      max={slides.length}
+                      value={exportSpecificPage}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        setExportSpecificPage(Math.max(1, Math.min(val, slides.length)));
+                      }}
+                      className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                    />
+                    <span className="text-sm text-slate-500">/ {slides.length}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-700 flex justify-end gap-3">
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+              >
+                取消
+              </button>
+              <button 
+                onClick={() => {
+                  if (exportMode === 'current') {
+                    // Navigate to the specified page first, then export
+                    const pageIndex = exportSpecificPage - 1;
+                    setCurrentSlideIndex(pageIndex);
+                    // Wait for state update then export
+                    setTimeout(() => {
+                      exportToPPTX('current');
+                    }, 100);
+                  } else if (exportMode === 'range') {
+                    const start = Math.min(exportRangeStart, exportRangeEnd);
+                    const end = Math.max(exportRangeStart, exportRangeEnd);
+                    exportToPPTX('range', start, end);
+                  } else {
+                    exportToPPTX('all');
+                  }
+                }}
+                disabled={isExporting || (exportMode === 'range' && exportRangeStart > exportRangeEnd)}
+                className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2 transition-all"
+              >
+                {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                {isExporting ? '导出中...' : '确认导出'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
