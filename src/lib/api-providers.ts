@@ -6,7 +6,7 @@
 /**
  * Supported AI API Providers
  */
-export type ApiProvider = 'gemini' | 'openai' | 'anthropic' | 'custom';
+export type ApiProvider = 'custom';
 
 /**
  * API Provider configuration
@@ -26,62 +26,14 @@ export interface ApiProviderConfig {
  * Available API providers configuration
  */
 export const API_PROVIDERS: Record<ApiProvider, ApiProviderConfig> = {
-  gemini: {
-    id: 'gemini',
-    name: 'Google Gemini',
-    description: 'Google Gemini AI via AI Studio',
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
-    apiKeyEnvVar: 'GEMINI_API_KEY',
-    modelParam: 'models',
-    defaultModel: 'gemini-2.0-flash',
-    supportedModels: [
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-lite',
-    ],
-  },
-  openai: {
-    id: 'openai',
-    name: 'OpenAI',
-    description: 'OpenAI GPT models',
-    endpoint: 'https://api.openai.com/v1',
-    apiKeyEnvVar: 'OPENAI_API_KEY',
-    modelParam: 'model',
-    defaultModel: 'gpt-4o-mini',
-    supportedModels: [
-      'gpt-4o-mini',
-      'gpt-4o',
-      'gpt-4-turbo',
-      'gpt-4',
-      'gpt-3.5-turbo',
-    ],
-  },
-  anthropic: {
-    id: 'anthropic',
-    name: 'Anthropic Claude',
-    description: 'Anthropic Claude via API',
-    endpoint: 'https://api.anthropic.com/v1',
-    apiKeyEnvVar: 'ANTHROPIC_API_KEY',
-    modelParam: 'model',
-    defaultModel: 'claude-3-5-haiku-20241024',
-    supportedModels: [
-      'claude-3-5-haiku-20241024',
-      'claude-3-5-sonnet-20241024',
-      'claude-3-opus-20240229',
-      'claude-3-sonnet-20240229',
-      'claude-3-haiku-20240307',
-    ],
-  },
   custom: {
     id: 'custom',
-    name: 'Custom API',
-    description: 'Custom OpenAI-compatible API endpoint',
+    name: '自定义 API',
+    description: '自定义 OpenAI 兼容的 API 端点',
     endpoint: '',
     apiKeyEnvVar: 'CUSTOM_API_KEY',
     modelParam: 'model',
-    defaultModel: 'custom-model',
+    defaultModel: '',
     supportedModels: [],
   },
 };
@@ -124,7 +76,7 @@ export interface ApiSettings {
 }
 
 export const DEFAULT_API_SETTINGS: ApiSettings = {
-  provider: 'gemini',
+  provider: 'custom',
   customEndpoint: '',
   customModel: '',
   customApiKey: '',
@@ -135,67 +87,74 @@ export const DEFAULT_API_SETTINGS: ApiSettings = {
 
 /**
  * List available models for a provider
+ * Improved implementation similar to Cherry Studio
  */
 export const listModels = async (
   provider: ApiProvider,
   apiKey: string,
   customEndpoint?: string
 ): Promise<{ success: boolean; models?: string[]; error?: string }> => {
+  if (!apiKey) {
+    return { success: false, error: '请先输入 API Key' };
+  }
+
   try {
     switch (provider) {
-      case 'gemini': {
-        const response = await fetch(
-          `${API_PROVIDERS.gemini.endpoint}?key=${apiKey}`
-        );
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-        }
-        const data = await response.json();
-        const models = data.models?.map((m: any) => m.name.replace('models/', '')) || [];
-        return { success: true, models };
-      }
-
-      case 'openai':
       case 'custom': {
-        const endpoint = customEndpoint || API_PROVIDERS.openai.endpoint;
+        const endpoint = customEndpoint || '';
+        if (!endpoint) {
+          return { success: false, error: '请先输入 API 端点' };
+        }
+
         // Ensure endpoint doesn't have /chat/completions suffix, then append /models
-        const baseUrl = endpoint.replace(/\/chat\/completions\/?$/, '').replace(/\/$/, '');
+        const baseUrl = endpoint.replace(/\/chat\/completions\/?$/, '').replace(/\/v1\/chat\/completions\/?$/, '/v1').replace(/\/$/, '');
+
         const response = await fetch(`${baseUrl}/models`, {
           headers: {
             'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
           },
         });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-        }
-        const data = await response.json();
-        const models = data.data?.map((m: any) => m.id) || [];
-        return { success: true, models };
-      }
 
-      case 'anthropic': {
-        const response = await fetch(`${API_PROVIDERS.anthropic.endpoint}/models`, {
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-        });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+          const errorMessage = errorData.error?.message || errorData.message || `HTTP ${response.status}`;
+          throw new Error(errorMessage);
         }
+
         const data = await response.json();
-        const models = data.models?.map((m: any) => m.name) || [];
+
+        // Handle different response formats
+        let models: string[] = [];
+        if (data.data && Array.isArray(data.data)) {
+          // OpenAI format
+          models = data.data.map((m: any) => m.id).filter((id: string) => id);
+        } else if (data.models && Array.isArray(data.models)) {
+          // Alternative format
+          models = data.models.map((m: any) => m.id || m.name).filter((id: string) => id);
+        } else if (Array.isArray(data)) {
+          // Direct array format
+          models = data.map((m: any) => m.id || m.name).filter((id: string) => id);
+        }
+
+        // Sort models alphabetically and filter out empty/invalid ones
+        models = models
+          .filter((m: string) => m && typeof m === 'string' && m.length > 0)
+          .sort((a: string, b: string) => a.localeCompare(b));
+
+        if (models.length === 0) {
+          return { success: false, error: '未找到可用模型，请检查 API 配置' };
+        }
+
         return { success: true, models };
       }
 
       default:
-        return { success: false, error: 'Unsupported provider' };
+        return { success: false, error: '不支持的提供商' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message || 'Connection test failed' };
+    console.error('Model listing error:', error);
+    return { success: false, error: error.message || '连接测试失败' };
   }
 };
 

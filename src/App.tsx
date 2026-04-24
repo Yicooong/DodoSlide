@@ -4,14 +4,14 @@
  */
 
 import React, { useEffect, useState, useRef, useCallback, Component } from 'react';
-import { 
-  Play, 
-  Download, 
-  Code2, 
-  Layout, 
-  FileJson, 
-  Terminal, 
-  CheckCircle2, 
+import {
+  Play,
+  Download,
+  Code2,
+  Layout,
+  FileJson,
+  Terminal,
+  CheckCircle2,
   AlertCircle,
   Loader2,
   Maximize2,
@@ -25,7 +25,9 @@ import {
   Monitor,
   Square,
   Send,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Editor from '@monaco-editor/react';
@@ -35,8 +37,7 @@ import { DEFAULT_CODE } from './constants';
 import { cn } from './lib/utils';
 import { useAiGeneration } from './lib/use-ai-generation';
 import { SettingsModal } from './components/SettingsModal';
-import { AiInputBar } from './components/AiInputBar.tsx';
-import { AiInputModal } from './components/AiInputModal';
+import { AiGenerationPanel } from './components/AiGenerationPanel';
 import { CanvasRatio, CANVAS_CONFIGS, getCanvasConfig, CanvasConfig } from './lib/canvas-config';
 import { AppTheme, THEME_CONFIGS, getThemeConfig, ThemeConfig } from './lib/theme-config';
 
@@ -75,13 +76,13 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean; canvasRatio: C
         presets: ['react', ['env', { modules: 'commonjs' }]],
         filename: 'slide.tsx'
       }).code;
-      
+
       if (result) {
         const wrappedCode = `
           return (function(dependencies) {
             const __react_lib__ = dependencies.React;
             const __icons_lib__ = dependencies.icons;
-            
+
             const exports = {};
             const module = { exports };
             const require = (name) => {
@@ -90,17 +91,17 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean; canvasRatio: C
               if (name === 'lucide-react') return __icons_lib__;
               return {};
             };
-            
+
             ${result}
-            
+
             return module.exports.default || module.exports.MySlide || module.exports;
           })(dependencies)
         `;
-        
+
         const dependencies = { React, icons: LucideIcons };
         const renderFn = new Function('dependencies', wrappedCode);
         const Component = renderFn(dependencies);
-        
+
         if (typeof Component === 'function') {
           setThumbnailContent(<Component />);
           setHasError(false);
@@ -114,7 +115,7 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean; canvasRatio: C
   // Calculate scale based on container size - use ResizeObserver for accurate sizing
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const updateScale = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
@@ -123,16 +124,16 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean; canvasRatio: C
         setScale(newScale);
       }
     };
-    
+
     updateScale();
-    
+
     const observer = new ResizeObserver(() => {
       updateScale();
     });
-    
+
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [canvasRatio]);
+  }, [canvasRatio, config.width, config.height]);
 
   if (hasError) {
     return (
@@ -222,6 +223,7 @@ const App = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [canvasRatio, setCanvasRatio] = useState<CanvasRatio>('16:9');
   const [appTheme, setAppTheme] = useState<AppTheme>('dark');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const themeConfig = getThemeConfig(appTheme);
   const canvasConfig = getCanvasConfig(canvasRatio);
   
@@ -241,7 +243,6 @@ const App = () => {
   const [showAiInput, setShowAiInput] = useState(false);
   const [editingSlideName, setEditingSlideName] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showAiCodeModal, setShowAiCodeModal] = useState(false);
   const [exportMode, setExportMode] = useState<'all' | 'current' | 'range'>('all');
   const [exportRangeStart, setExportRangeStart] = useState(1);
   const [exportRangeEnd, setExportRangeEnd] = useState(1);
@@ -374,12 +375,23 @@ const App = () => {
   };
 
   // Handle AI Generation
-  const handleAiGenerate = async (userInput: string) => {
-    const result = await generate(userInput);
+  const handleAiGenerate = async (userInput: string, styleId: string = 'modern') => {
+    // Add style instruction to the prompt
+    const styleInstructions: Record<string, string> = {
+      modern: '使用现代简约的设计风格，白色背景，深色文字，简洁的布局',
+      tech: '使用科技感的设计风格，蓝色为主色调，包含科技元素图标',
+      creative: '使用创意活泼的设计风格，鲜艳的色彩，动态的布局',
+      professional: '使用专业严谨的设计风格，简洁的配色，清晰的层次',
+      elegant: '使用优雅典雅的设计风格，柔和的色调，精致的排版',
+    };
+
+    const stylePrompt = styleInstructions[styleId] || '';
+    const enhancedPrompt = stylePrompt ? `${userInput}\n\n设计要求：${stylePrompt}` : userInput;
+
+    const result = await generate(enhancedPrompt);
     if (result.success && result.code) {
       setPendingAiCode(result.code);
       setShowAiInput(false);
-      setShowAiCodeModal(true);
     }
     return result;
   };
@@ -931,19 +943,27 @@ const App = () => {
     <div className={`flex h-screen overflow-hidden font-sans ${themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
       
       {/* Left Sidebar: Slide Thumbnails */}
-      <div className="w-64 border-r flex flex-col" style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
+      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} border-r flex flex-col transition-all duration-300`} style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
         {/* Header */}
         <div className="h-16 border-b flex items-center px-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ background: 'var(--accent)', boxShadow: '0 4px 14px var(--accent-bg)' }}>
               <Layout className="text-white" size={18} />
             </div>
-            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>幻灯片</span>
+            {!sidebarCollapsed && <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>幻灯片</span>}
           </div>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="ml-auto p-1.5 rounded-lg transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            title={sidebarCollapsed ? '展开侧边栏' : '收缩侧边栏'}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
         </div>
 
         {/* Slide List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className={`${sidebarCollapsed ? 'hidden' : 'flex-1 overflow-y-auto p-3 space-y-2'}`}>
           {slides.map((slide: Slide, index: number) => (
             <div
               key={slide.id}
@@ -965,7 +985,7 @@ const App = () => {
               </div>
               
               {/* Slide Thumbnail Preview */}
-              <div className="aspect-video bg-white m-1 mt-4 mb-1 rounded overflow-hidden relative">
+              <div className="bg-white m-1 mt-4 mb-1 rounded overflow-hidden relative" style={{ aspectRatio: canvasRatio === '16:9' ? '16/9' : '4/3' }}>
                 <SlideThumbnail code={slide.code} isActive={currentSlideIndex === index} canvasRatio={canvasRatio} />
               </div>
               
@@ -1040,7 +1060,7 @@ const App = () => {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className={`${sidebarCollapsed ? 'hidden' : 'p-3 border-t'}`} style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={addNewSlide}
             className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium"
@@ -1065,10 +1085,10 @@ const App = () => {
               Slide <span style={{ color: 'var(--accent)' }}>Playground</span>
             </h1>
 
-            <nav className="flex items-center p-1 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+            <nav className="flex items-center p-1 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
                <button
                   onClick={() => setActiveTab('code')}
-                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'code' ? "shadow-sm" : "hover:opacity-80")}
+                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full", activeTab === 'code' ? "shadow-sm" : "hover:opacity-80")}
                   style={{
                     background: activeTab === 'code' ? 'var(--bg-button)' : 'transparent',
                     color: activeTab === 'code' ? 'var(--text-primary)' : 'var(--text-muted)'
@@ -1078,7 +1098,7 @@ const App = () => {
                </button>
                <button
                   onClick={() => setActiveTab('preview')}
-                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'preview' ? "shadow-sm" : "hover:opacity-80")}
+                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full", activeTab === 'preview' ? "shadow-sm" : "hover:opacity-80")}
                   style={{
                     background: activeTab === 'preview' ? 'var(--bg-button)' : 'transparent',
                     color: activeTab === 'preview' ? 'var(--text-primary)' : 'var(--text-muted)'
@@ -1089,12 +1109,12 @@ const App = () => {
             </nav>
 
             {/* Canvas Ratio Selector */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
               <Monitor size={14} style={{ color: 'var(--text-muted)' }} />
               <select
                 value={canvasRatio}
                 onChange={(e) => setCanvasRatio(e.target.value as CanvasRatio)}
-                className="text-xs font-medium bg-transparent outline-none cursor-pointer"
+                className="text-xs font-medium bg-transparent outline-none cursor-pointer h-full"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 {(Object.values(CANVAS_CONFIGS) as CanvasConfig[]).map((config) => (
@@ -1106,13 +1126,13 @@ const App = () => {
             </div>
 
             {/* Theme Selector */}
-            <div className="flex items-center gap-1 p-1 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+            <div className="flex items-center gap-1 p-1 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
               {(Object.values(THEME_CONFIGS) as ThemeConfig[]).map((theme) => (
                 <button
                   key={theme.id}
                   onClick={() => setAppTheme(theme.id)}
                   title={theme.description}
-                  className={cn("p-1.5 rounded-md transition-all", appTheme === theme.id ? "shadow-sm" : "hover:opacity-80")}
+                  className={cn("p-1.5 rounded-md transition-all h-full flex items-center justify-center", appTheme === theme.id ? "shadow-sm" : "hover:opacity-80")}
                   style={{
                     background: appTheme === theme.id ? 'var(--bg-button)' : 'transparent',
                   }}
@@ -1289,53 +1309,43 @@ const App = () => {
         onUpdateApiSettings={updateApiSettings}
         promptSettings={promptSettings}
         onUpdatePromptSettings={updatePromptSettings}
-        appTheme={appTheme}
-        onAppThemeChange={setAppTheme}
       />
 
-      {/* AI Input Bottom Bar */}
-      <AiInputBar
+      {/* AI Generation Panel */}
+      <AiGenerationPanel
         isVisible={showAiInput}
         onClose={() => {
           setShowAiInput(false);
           clearError();
         }}
         onGenerate={handleAiGenerate}
-        isGenerating={isGenerating}
-        error={aiError}
-      />
-
-      {/* AI Code Review Modal */}
-      <AiInputModal
-        isOpen={showAiCodeModal}
-        onClose={() => {
-          setShowAiCodeModal(false);
-          setPendingAiCode(null);
-        }}
-        onGenerate={handleAiGenerate}
         onReplace={handleAiReplace}
         isGenerating={isGenerating}
         error={aiError}
+        promptSettings={promptSettings}
+        onUpdatePromptSettings={updatePromptSettings}
       />
 
       {/* Export Modal */}
       {showExportModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-[480px] max-w-[90vw] overflow-hidden"
+            className="rounded-xl shadow-2xl w-[480px] max-w-[90vw] overflow-hidden"
+            style={{ background: 'var(--bg-modal)', borderColor: 'var(--border-subtle)' }}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Download size={20} className="text-indigo-400" />
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+              <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <Download size={20} style={{ color: 'var(--accent)' }} />
                 导出 PPTX
               </h3>
-              <button 
+              <button
                 onClick={() => setShowExportModal(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="transition-colors"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1348,68 +1358,83 @@ const App = () => {
             <div className="px-6 py-5 space-y-4">
               {/* Export Mode Selection */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-300">导出范围</label>
+                <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>导出范围</label>
                 
                 {/* Option 1: Export All */}
                 <label className={cn(
                   "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                  exportMode === 'all' 
-                    ? "border-indigo-500 bg-indigo-500/10" 
-                    : "border-slate-600 hover:border-slate-500"
-                )}>
-                  <input 
-                    type="radio" 
-                    name="exportMode" 
+                  exportMode === 'all'
+                    ? ""
+                    : ""
+                )}
+                style={{
+                  background: exportMode === 'all' ? 'var(--accent-bg)' : 'var(--bg-card)',
+                  borderColor: exportMode === 'all' ? 'var(--border-active)' : 'var(--border-default)'
+                }}>
+                  <input
+                    type="radio"
+                    name="exportMode"
                     value="all"
                     checked={exportMode === 'all'}
                     onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
-                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                    className="w-4 h-4"
+                    style={{ accentColor: 'var(--accent)' }}
                   />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">全部导出</div>
-                    <div className="text-xs text-slate-400">导出所有 {slides.length} 张幻灯片</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>全部导出</div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>导出所有 {slides.length} 张幻灯片</div>
                   </div>
                 </label>
 
                 {/* Option 2: Export Current */}
                 <label className={cn(
                   "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                  exportMode === 'current' 
-                    ? "border-indigo-500 bg-indigo-500/10" 
-                    : "border-slate-600 hover:border-slate-500"
-                )}>
-                  <input 
-                    type="radio" 
-                    name="exportMode" 
+                  exportMode === 'current'
+                    ? ""
+                    : ""
+                )}
+                style={{
+                  background: exportMode === 'current' ? 'var(--accent-bg)' : 'var(--bg-card)',
+                  borderColor: exportMode === 'current' ? 'var(--border-active)' : 'var(--border-default)'
+                }}>
+                  <input
+                    type="radio"
+                    name="exportMode"
                     value="current"
                     checked={exportMode === 'current'}
                     onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
-                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                    className="w-4 h-4"
+                    style={{ accentColor: 'var(--accent)' }}
                   />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">导出当前幻灯片</div>
-                    <div className="text-xs text-slate-400">仅导出第 {currentSlideIndex + 1} 张: {slides[currentSlideIndex]?.name}</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>导出当前幻灯片</div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>仅导出第 {currentSlideIndex + 1} 张: {slides[currentSlideIndex]?.name}</div>
                   </div>
                 </label>
 
                 {/* Option 3: Export Range */}
                 <label className={cn(
                   "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                  exportMode === 'range' 
-                    ? "border-indigo-500 bg-indigo-500/10" 
-                    : "border-slate-600 hover:border-slate-500"
-                )}>
-                  <input 
-                    type="radio" 
-                    name="exportMode" 
+                  exportMode === 'range'
+                    ? ""
+                    : ""
+                )}
+                style={{
+                  background: exportMode === 'range' ? 'var(--accent-bg)' : 'var(--bg-card)',
+                  borderColor: exportMode === 'range' ? 'var(--border-active)' : 'var(--border-default)'
+                }}>
+                  <input
+                    type="radio"
+                    name="exportMode"
                     value="range"
                     checked={exportMode === 'range'}
                     onChange={(e) => setExportMode(e.target.value as 'all' | 'current' | 'range')}
-                    className="w-4 h-4 text-indigo-500 accent-indigo-500"
+                    className="w-4 h-4"
+                    style={{ accentColor: 'var(--accent)' }}
                   />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">导出指定范围</div>
-                    <div className="text-xs text-slate-400">导出连续的多个幻灯片</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>导出指定范围</div>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>导出连续的多个幻灯片</div>
                   </div>
                 </label>
 
@@ -1417,67 +1442,71 @@ const App = () => {
                 {exportMode === 'range' && (
                   <div className="flex items-center gap-3 pl-7 mt-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400">从</span>
-                      <input 
-                        type="number" 
-                        min={1} 
+                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>从</span>
+                      <input
+                        type="number"
+                        min={1}
                         max={slides.length}
                         value={exportRangeStart}
                         onChange={(e) => {
                           const val = parseInt(e.target.value) || 1;
                           setExportRangeStart(Math.max(1, Math.min(val, slides.length)));
                         }}
-                        className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                        className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
+                        style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400">到</span>
-                      <input 
-                        type="number" 
-                        min={1} 
+                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>到</span>
+                      <input
+                        type="number"
+                        min={1}
                         max={slides.length}
                         value={exportRangeEnd}
                         onChange={(e) => {
                           const val = parseInt(e.target.value) || 1;
                           setExportRangeEnd(Math.max(1, Math.min(val, slides.length)));
                         }}
-                        className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                        className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
+                        style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                       />
                     </div>
-                    <span className="text-sm text-slate-500">共 {slides.length} 页</span>
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>共 {slides.length} 页</span>
                   </div>
                 )}
 
                 {/* Specific Page Input */}
                 {exportMode === 'current' && (
                   <div className="flex items-center gap-3 pl-7 mt-2">
-                    <span className="text-sm text-slate-400">指定页码:</span>
-                    <input 
-                      type="number" 
-                      min={1} 
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>指定页码:</span>
+                    <input
+                      type="number"
+                      min={1}
                       max={slides.length}
                       value={exportSpecificPage}
                       onChange={(e) => {
                         const val = parseInt(e.target.value) || 1;
                         setExportSpecificPage(Math.max(1, Math.min(val, slides.length)));
                       }}
-                      className="w-16 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white text-center focus:border-indigo-500 focus:outline-none"
+                      className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
+                      style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                     />
-                    <span className="text-sm text-slate-500">/ {slides.length}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>/ {slides.length}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-700 flex justify-end gap-3">
-              <button 
+            <div className="px-6 py-4 flex justify-end gap-3" style={{ borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
                 onClick={() => setShowExportModal(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{ color: 'var(--text-secondary)', background: 'var(--bg-button)' }}
               >
                 取消
               </button>
-              <button 
+              <button
                 onClick={() => {
                   if (exportMode === 'current') {
                     // Navigate to the specified page first, then export
@@ -1496,7 +1525,8 @@ const App = () => {
                   }
                 }}
                 disabled={isExporting || (exportMode === 'range' && exportRangeStart > exportRangeEnd)}
-                className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2 transition-all"
+                className="px-6 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--accent)' }}
               >
                 {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                 {isExporting ? '导出中...' : '确认导出'}

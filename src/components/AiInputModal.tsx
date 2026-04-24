@@ -95,21 +95,22 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
       />
       
       {/* Modal */}
-      <div className="relative bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-[600px] max-h-[80vh] overflow-hidden">
+      <div className="relative rounded-2xl shadow-2xl w-[600px] max-h-[80vh] overflow-hidden" style={{ background: 'var(--bg-modal)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600/20 rounded-lg">
-              <Sparkles className="text-indigo-400" size={20} />
+            <div className="p-2 rounded-lg" style={{ background: 'var(--accent-bg)' }}>
+              <Sparkles size={20} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">AI 生成幻灯片</h2>
-              <p className="text-xs text-slate-400">描述你想要创建的幻灯片</p>
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>AI 生成幻灯片</h2>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>描述你想要创建的幻灯片</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X size={20} />
           </button>
@@ -126,31 +127,40 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
               onKeyDown={handleKeyDown}
               placeholder="描述你想要创建的幻灯片内容...&#10;例如：创建一个关于2024年技术趋势的演示文稿"
               rows={6}
-              className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+              style={{
+                background: 'var(--bg-input)',
+                borderColor: 'var(--border-default)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-default)'
+              }}
               disabled={isGenerating}
             />
-            <div className="absolute bottom-3 right-3 text-xs text-slate-500">
+            <div className="absolute bottom-3 right-3 text-xs" style={{ color: 'var(--text-muted)' }}>
               ⌘ + Enter 发送
             </div>
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="mt-4 p-3 bg-red-950/50 border border-red-900/50 rounded-xl flex items-start gap-2">
-              <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={16} />
-              <div className="text-sm text-red-300">{error}</div>
+            <div className="mt-4 p-3 rounded-xl flex items-start gap-2"
+              style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            >
+              <AlertCircle className="flex-shrink-0 mt-0.5" size={16} style={{ color: '#ef4444' }} />
+              <div className="text-sm" style={{ color: '#fca5a5' }}>{error}</div>
             </div>
           )}
 
           {/* Examples */}
           <div className="mt-4">
-            <div className="text-xs text-slate-500 mb-2">示例 Prompt：</div>
+            <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>示例 Prompt：</div>
             <div className="flex flex-wrap gap-2">
               {examplePrompts.map((example, index) => (
                 <button
                   key={index}
                   onClick={() => useExample(example)}
-                  className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-white/5 transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg transition-colors"
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', borderColor: 'var(--border-default)', border: '1px solid var(--border-default)' }}
                   disabled={isGenerating}
                 >
                   {example.substring(0, 20)}...
@@ -163,19 +173,22 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
           {generatedCode && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm text-slate-300">
+                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   <Code2 size={16} />
                   生成的 React 代码
                 </div>
                 <button
                   onClick={copyCode}
-                  className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+                  style={{ background: 'var(--bg-button)', color: 'var(--text-secondary)' }}
                 >
                   {copied ? <Check size={14} /> : <Copy size={14} />}
                   {copied ? '已复制' : '复制代码'}
                 </button>
               </div>
-              <pre className="p-4 bg-slate-950 rounded-xl border border-white/5 text-xs text-slate-300 overflow-x-auto max-h-48 overflow-y-auto">
+              <pre className="p-4 rounded-xl border overflow-x-auto max-h-48 overflow-y-auto text-xs"
+                style={{ background: '#0f172a', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
+              >
                 <code>{generatedCode}</code>
               </pre>
             </div>
@@ -183,18 +196,20 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/5 bg-slate-950/50 flex gap-3">
+        <div className="px-6 py-4 flex gap-3" style={{ borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-card)' }}>
           <button
             onClick={handleClose}
             disabled={isGenerating}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-xl transition-colors"
+            className="px-4 py-2 text-white text-sm rounded-xl transition-colors"
+            style={{ background: 'var(--bg-button)' }}
           >
             {generatedCode ? '取消' : '关闭'}
           </button>
           {generatedCode && (
             <button
               onClick={handleUseCode}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm rounded-xl transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-white text-sm rounded-xl transition-colors flex items-center gap-2"
+              style={{ background: '#22c55e' }}
             >
               <Check size={16} />
               使用此代码
@@ -203,7 +218,8 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || isGenerating}
-            className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--accent)' }}
           >
             {isGenerating ? (
               <>

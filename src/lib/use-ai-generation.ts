@@ -208,28 +208,12 @@ export const useAiGeneration = () => {
       let apiKey = '';
 
       switch (apiSettings.provider) {
-        case 'gemini':
-          apiKey = apiSettings.geminiApiKey || localStorage.getItem('api_key_gemini') || '';
-          if (!apiKey) throw new Error('请先配置 Gemini API Key');
-          responseText = await callGemini(fullPrompt, apiKey, API_PROVIDERS.gemini.defaultModel);
-          break;
-
-        case 'openai':
-          apiKey = apiSettings.openaiApiKey || localStorage.getItem('api_key_openai') || '';
-          if (!apiKey) throw new Error('请先配置 OpenAI API Key');
-          responseText = await callOpenAI(fullPrompt, apiKey, API_PROVIDERS.openai.defaultModel, apiSettings.customEndpoint);
-          break;
-
-        case 'anthropic':
-          apiKey = apiSettings.anthropicApiKey || localStorage.getItem('api_key_anthropic') || '';
-          if (!apiKey) throw new Error('请先配置 Anthropic API Key');
-          responseText = await callAnthropic(fullPrompt, apiKey, API_PROVIDERS.anthropic.defaultModel);
-          break;
-
         case 'custom':
           apiKey = apiSettings.customApiKey || localStorage.getItem('api_key_custom') || '';
-          if (!apiKey) throw new Error('请先配置 Custom API Key');
-          responseText = await callOpenAI(fullPrompt, apiKey, apiSettings.customModel || 'custom-model', apiSettings.customEndpoint);
+          if (!apiKey) throw new Error('请先配置 API Key');
+          if (!apiSettings.customEndpoint) throw new Error('请先配置 API 端点');
+          if (!apiSettings.customModel) throw new Error('请先选择模型');
+          responseText = await callOpenAI(fullPrompt, apiKey, apiSettings.customModel, apiSettings.customEndpoint);
           break;
 
         default:

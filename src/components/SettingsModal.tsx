@@ -27,8 +27,6 @@ interface SettingsModalProps {
     userInstructions: string;
   };
   onUpdatePromptSettings: (settings: any) => void;
-  appTheme: string;
-  onAppThemeChange: (theme: any) => void;
 }
 
 type SettingsTab = 'api' | 'prompt';
@@ -136,32 +134,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       />
       
       {/* Modal */}
-      <div className="relative bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-[700px] max-h-[80vh] overflow-hidden">
+      <div className="relative rounded-2xl shadow-2xl w-[700px] max-h-[80vh] overflow-hidden" style={{ background: 'var(--bg-modal)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600/20 rounded-lg">
-              <Settings className="text-indigo-400" size={20} />
+            <div className="p-2 rounded-lg" style={{ background: 'var(--accent-bg)' }}>
+              <Settings size={20} style={{ color: 'var(--accent)' }} />
             </div>
-            <h2 className="text-lg font-bold text-white">设置</h2>
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>设置</h2>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-white/5">
+        <div className="flex" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <button
             onClick={() => setActiveTab('api')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'api' 
-                ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-600/10' 
-                : 'text-slate-400 hover:text-white'
+              activeTab === 'api'
+                ? ''
+                : ''
             }`}
+            style={{
+              color: activeTab === 'api' ? 'var(--accent)' : 'var(--text-muted)',
+              borderColor: 'var(--border-active)',
+              background: activeTab === 'api' ? 'var(--accent-bg)' : 'transparent',
+              borderBottom: activeTab === 'api' ? '2px solid var(--accent)' : 'none'
+            }}
           >
             <div className="flex items-center justify-center gap-2">
               <Key size={16} />
@@ -171,10 +176,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             onClick={() => setActiveTab('prompt')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'prompt' 
-                ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-600/10' 
-                : 'text-slate-400 hover:text-white'
+              activeTab === 'prompt'
+                ? ''
+                : ''
             }`}
+            style={{
+              color: activeTab === 'prompt' ? 'var(--accent)' : 'var(--text-muted)',
+              borderColor: 'var(--border-active)',
+              background: activeTab === 'prompt' ? 'var(--accent-bg)' : 'transparent',
+              borderBottom: activeTab === 'prompt' ? '2px solid var(--accent)' : 'none'
+            }}
           >
             <div className="flex items-center justify-center gap-2">
               <Sparkles size={16} />
@@ -187,132 +198,108 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-130px)]">
           {activeTab === 'api' ? (
             <div className="space-y-6">
-              {/* Provider Selection */}
+              {/* API Endpoint Configuration */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
-                  API 提供商
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
+                  API 端点
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(Object.keys(API_PROVIDERS) as ApiProvider[]).map(providerId => {
-                    const provider = API_PROVIDERS[providerId];
-                    const isSelected = apiSettings.provider === providerId;
-                    return (
-                      <button
-                        key={providerId}
-                        onClick={() => onUpdateApiSettings({ provider: providerId })}
-                        className={`p-4 rounded-xl border text-left transition-all ${
-                          isSelected 
-                            ? 'border-indigo-500 bg-indigo-600/20' 
-                            : 'border-white/10 bg-slate-800/50 hover:border-white/20'
-                        }`}
-                      >
-                        <div className="font-medium text-white">{provider.name}</div>
-                        <div className="text-xs text-slate-400 mt-1">{provider.description}</div>
-                      </button>
-                    );
-                  })}
-                </div>
+                <input
+                  type="text"
+                  value={apiSettings.customEndpoint}
+                  onChange={(e) => {
+                    let value = e.target.value.trim();
+                    // Auto-correct: strip trailing paths like /chat/completions, /v1/chat/completions
+                    value = value.replace(/\/chat\/completions\/?$/, '');
+                    value = value.replace(/\/v1\/chat\/completions\/?$/, '/v1');
+                    // Remove trailing slash
+                    value = value.replace(/\/$/, '');
+                    onUpdateApiSettings({ customEndpoint: value });
+                  }}
+                  placeholder="https://api.example.com/v1"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    background: 'var(--bg-input)',
+                    borderColor: 'var(--border-default)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-default)'
+                  }}
+                />
+                {apiSettings.customEndpoint && (
+                  <div className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    完整地址: <span style={{ color: 'var(--text-secondary)' }}>{apiSettings.customEndpoint}/chat/completions</span>
+                  </div>
+                )}
               </div>
 
               {/* API Key Input */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
                   API Key
                 </label>
                 <div className="relative">
                   <input
-                    type={showApiKey[apiSettings.provider] ? 'text' : 'password'}
-                    value={getCurrentApiKey(apiSettings.provider)}
-                    onChange={(e) => setCurrentApiKey(apiSettings.provider, e.target.value)}
+                    type={showApiKey['custom'] ? 'text' : 'password'}
+                    value={apiSettings.customApiKey}
+                    onChange={(e) => setCurrentApiKey('custom', e.target.value)}
                     placeholder="输入 API Key"
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 pr-12"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none pr-12"
+                    style={{
+                      background: 'var(--bg-input)',
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-default)'
+                    }}
                   />
                   <button
-                    onClick={() => toggleShowApiKey(apiSettings.provider)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    onClick={() => toggleShowApiKey('custom')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
                   >
-                    {showApiKey[apiSettings.provider] ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showApiKey['custom'] ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                  <Check size={12} className={getCurrentApiKey(apiSettings.provider) ? 'text-green-400' : 'text-slate-600'} />
-                  当前: {renderMaskedKey(getCurrentApiKey(apiSettings.provider))}
+                <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <Check size={12} style={{ color: apiSettings.customApiKey ? '#22c55e' : 'var(--text-muted)' }} />
+                  当前: {renderMaskedKey(apiSettings.customApiKey)}
                 </div>
               </div>
 
-              {/* Custom Endpoint Settings */}
-              {(apiSettings.provider === 'custom' || apiSettings.provider === 'openai') && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-3">
-                    {apiSettings.provider === 'custom' ? '自定义 API 端点' : 'OpenAI 兼容端点'}
-                  </label>
-                  <input
-                    type="text"
-                    value={apiSettings.customEndpoint}
-                    onChange={(e) => {
-                      let value = e.target.value.trim();
-                      // Auto-correct: strip trailing paths like /chat/completions, /v1/chat/completions
-                      value = value.replace(/\/chat\/completions\/?$/, '');
-                      value = value.replace(/\/v1\/chat\/completions\/?$/, '/v1');
-                      // Remove trailing slash
-                      value = value.replace(/\/$/, '');
-                      onUpdateApiSettings({ customEndpoint: value });
-                    }}
-                    placeholder={apiSettings.provider === 'custom' ? 'https://api.example.com/v1' : 'https://api.openai.com/v1'}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                  />
-                  {apiSettings.customEndpoint && (
-                    <div className="mt-2 text-xs text-slate-500">
-                      完整地址: <span className="text-slate-300">{apiSettings.customEndpoint}/chat/completions</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Custom Model Dropdown */}
-              {(apiSettings.provider === 'custom') && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-3">
-                    自定义模型名称
-                  </label>
+              <div>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
+                  选择模型
+                </label>
+                <div className="space-y-3">
                   <select
                     value={apiSettings.customModel}
                     onChange={(e) => onUpdateApiSettings({ customModel: e.target.value })}
-                    onFocus={() => {
-                      // Auto-test connection when dropdown is opened
-                      if (!connectionStatus && getCurrentApiKey(apiSettings.provider)) {
-                        testConnection();
-                      }
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none appearance-none cursor-pointer"
+                    style={{
+                      background: 'var(--bg-input)',
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-default)'
                     }}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
                   >
-                    <option value="">请先测试连接获取模型列表</option>
+                    <option value="">请选择模型</option>
                     {connectionStatus?.models?.map((model) => (
                       <option key={model} value={model}>{model}</option>
                     ))}
                   </select>
-                  <div className="mt-2 text-xs text-slate-500">
-                    点击模型选择器时会自动测试连接并获取可用模型
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    点击下方"测试连接"按钮获取可用模型列表
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Provider Info & Test Connection */}
+              {/* Test Connection & Save */}
               <div className="space-y-4">
-                <div className="p-4 bg-slate-800/50 rounded-xl border border-white/5">
-                  <div className="text-sm">
-                    <span className="text-slate-400">当前使用: </span>
-                    <span className="text-white font-medium">{API_PROVIDERS[apiSettings.provider].name}</span>
-                    <span className="text-slate-500 ml-2">({API_PROVIDERS[apiSettings.provider].defaultModel})</span>
-                  </div>
-                </div>
-
-                {/* Test Connection Button */}
                 <div className="flex gap-3">
                   <button
                     onClick={testConnection}
-                    disabled={testingConnection || !getCurrentApiKey(apiSettings.provider)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-500 text-white rounded-xl transition-colors"
+                    disabled={testingConnection || !apiSettings.customApiKey || !apiSettings.customEndpoint}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--bg-button)' }}
                   >
                     {testingConnection ? (
                       <>
@@ -328,7 +315,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </button>
                   <button
                     onClick={() => onUpdateApiSettings({ ...apiSettings })}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors"
+                    className="flex items-center justify-center gap-2 py-3 px-4 text-white rounded-xl transition-colors"
+                    style={{ background: 'var(--accent)' }}
                   >
                     <Check size={16} />
                     保存
@@ -339,22 +327,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {connectionStatus && (
                   <div className={`p-4 rounded-xl border ${
                     connectionStatus.success
-                      ? 'bg-green-900/20 border-green-500/30'
-                      : 'bg-red-900/20 border-red-500/30'
-                  }`}>
+                      ? ''
+                      : ''
+                  }`}
+                  style={{
+                    background: connectionStatus.success ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    borderColor: connectionStatus.success ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'
+                  }}
+                  >
                     <div className="flex items-center gap-2">
                       {connectionStatus.success ? (
-                        <Wifi size={16} className="text-green-400" />
+                        <Wifi size={16} style={{ color: '#22c55e' }} />
                       ) : (
-                        <WifiOff size={16} className="text-red-400" />
+                        <WifiOff size={16} style={{ color: '#ef4444' }} />
                       )}
-                      <span className={connectionStatus.success ? 'text-green-400' : 'text-red-400'}>
+                      <span style={{ color: connectionStatus.success ? '#22c55e' : '#ef4444' }}>
                         {connectionStatus.message}
                       </span>
                     </div>
                     {connectionStatus.success && connectionStatus.models && connectionStatus.models.length > 0 && (
                       <div className="mt-3">
-                        <div className="text-xs text-slate-400 mb-2">可用模型 (点击选择):</div>
+                        <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>可用模型 (点击选择):</div>
                         <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
                           {connectionStatus.models.map((model) => (
                             <button
@@ -368,9 +361,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               }}
                               className={`px-2 py-1 rounded text-xs transition-colors ${
                                 apiSettings.customModel === model
-                                  ? 'bg-indigo-600 text-white'
-                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                                  ? 'text-white'
+                                  : ''
                               }`}
+                              style={{
+                                background: apiSettings.customModel === model ? 'var(--accent)' : 'var(--bg-input)',
+                                color: apiSettings.customModel === model ? 'var(--text-inverse)' : 'var(--text-secondary)'
+                              }}
                             >
                               {model}
                             </button>
@@ -387,14 +384,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Use Default Prompt Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-white">使用默认 Prompt</div>
-                  <div className="text-sm text-slate-400 mt-1">使用内置的系统 Prompt 生成幻灯片</div>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>使用默认 Prompt</div>
+                  <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>使用内置的系统 Prompt 生成幻灯片</div>
                 </div>
                 <button
                   onClick={() => onUpdatePromptSettings({ useDefaultPrompt: !promptSettings.useDefaultPrompt })}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    promptSettings.useDefaultPrompt ? 'bg-indigo-600' : 'bg-slate-700'
+                    promptSettings.useDefaultPrompt ? '' : ''
                   }`}
+                  style={{ background: promptSettings.useDefaultPrompt ? 'var(--accent)' : 'var(--bg-button)' }}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
                     promptSettings.useDefaultPrompt ? 'translate-x-6' : 'translate-x-0.5'
@@ -405,7 +403,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Custom Prompt Editor */}
               {!promptSettings.useDefaultPrompt && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-3">
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
                     自定义系统 Prompt
                   </label>
                   <textarea
@@ -413,7 +411,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onChange={(e) => onUpdatePromptSettings({ customPrompt: e.target.value })}
                     placeholder="输入自定义的 system prompt..."
                     rows={10}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono text-sm resize-none"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none font-mono text-sm resize-none"
+                    style={{
+                      background: 'var(--bg-input)',
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-default)'
+                    }}
                   />
                 </div>
               )}
@@ -422,14 +426,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <button
                   onClick={() => setShowPromptEditor(!showPromptEditor)}
-                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-sm transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
                 >
                   {showPromptEditor ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   {showPromptEditor ? '隐藏' : '查看'} 默认 Prompt 模板
                 </button>
                 {showPromptEditor && (
-                  <div className="mt-3 p-4 bg-slate-800/50 rounded-xl border border-white/5">
-                    <pre className="text-xs text-slate-400 whitespace-pre-wrap font-mono leading-relaxed">
+                  <div className="mt-3 p-4 rounded-xl" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+                    <pre className="text-xs whitespace-pre-wrap font-mono leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                       {DEFAULT_SYSTEM_PROMPT}
                     </pre>
                   </div>
@@ -438,7 +443,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Additional Instructions */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
                   额外指令 (可选)
                 </label>
                 <textarea
@@ -446,7 +451,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) => onUpdatePromptSettings({ userInstructions: e.target.value })}
                   placeholder="添加额外的生成指令，例如设计风格、颜色偏好等..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none text-sm resize-none"
+                  style={{
+                    background: 'var(--bg-input)',
+                    borderColor: 'var(--border-default)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-default)'
+                  }}
                 />
               </div>
             </div>
@@ -454,10 +465,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/5 bg-slate-950/50">
+        <div className="px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-card)' }}>
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-colors"
+            className="w-full py-2.5 font-medium rounded-xl transition-colors text-white"
+            style={{ background: 'var(--accent)' }}
           >
             完成
           </button>

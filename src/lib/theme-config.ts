@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type AppTheme = 'dark' | 'light' | 'system';
+export type AppTheme = 'dark' | 'light';
 
 export interface ThemeConfig {
   id: AppTheme;
@@ -30,14 +30,6 @@ export const THEME_CONFIGS: Record<AppTheme, ThemeConfig> = {
     description: '浅色主题',
     rootClass: 'light',
     monacoTheme: 'vs',
-  },
-  system: {
-    id: 'system',
-    label: '系统',
-    icon: '💻',
-    description: '跟随系统设置',
-    rootClass: '',
-    monacoTheme: 'vs-dark',
   },
 };
 

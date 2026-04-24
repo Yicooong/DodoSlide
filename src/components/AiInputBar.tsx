@@ -48,7 +48,7 @@ export const AiInputBar: React.FC<AiInputBarProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-white/10 p-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4" style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)' }}>
       <div className="max-w-4xl mx-auto">
         <div className="relative">
           <textarea
@@ -58,13 +58,20 @@ export const AiInputBar: React.FC<AiInputBarProps> = ({
             onKeyDown={handleKeyDown}
             placeholder="描述你想要创建的幻灯片... (Cmd/Ctrl + Enter 发送, Esc 关闭)"
             rows={3}
-            className="w-full px-4 py-3 pr-24 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+            className="w-full px-4 py-3 pr-24 rounded-xl focus:outline-none resize-none"
+            style={{
+              background: 'var(--bg-input)',
+              borderColor: 'var(--border-default)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-default)'
+            }}
             disabled={isGenerating}
           />
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white transition-colors"
+              className="p-2 transition-colors"
+              style={{ color: 'var(--text-muted)' }}
               title="关闭"
             >
               <X size={18} />
@@ -72,7 +79,8 @@ export const AiInputBar: React.FC<AiInputBarProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!input.trim() || isGenerating}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: 'var(--accent)' }}
             >
               {isGenerating ? (
                 <>
@@ -90,9 +98,11 @@ export const AiInputBar: React.FC<AiInputBarProps> = ({
         </div>
 
         {error && (
-          <div className="mt-3 p-3 bg-red-950/50 border border-red-900/50 rounded-xl flex items-start gap-2">
-            <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={16} />
-            <div className="text-sm text-red-300">{error}</div>
+          <div className="mt-3 p-3 rounded-xl flex items-start gap-2"
+            style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+          >
+            <AlertCircle className="flex-shrink-0 mt-0.5" size={16} style={{ color: '#ef4444' }} />
+            <div className="text-sm" style={{ color: '#fca5a5' }}>{error}</div>
           </div>
         )}
       </div>
