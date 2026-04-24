@@ -27,6 +27,8 @@ interface SettingsModalProps {
     userInstructions: string;
   };
   onUpdatePromptSettings: (settings: any) => void;
+  appTheme: string;
+  onAppThemeChange: (theme: any) => void;
 }
 
 type SettingsTab = 'api' | 'prompt';

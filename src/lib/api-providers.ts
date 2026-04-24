@@ -95,7 +95,7 @@ export const getApiKey = (provider: ApiProvider): string => {
   if (storedKey) return storedKey;
   
   // Fall back to environment variable
-  const envKey = import.meta.env[`VITE_${API_PROVIDERS[provider].apiKeyEnvVar}`];
+  const envKey = (import.meta as any).env?.[`VITE_${API_PROVIDERS[provider].apiKeyEnvVar}`];
   return envKey || '';
 };
 

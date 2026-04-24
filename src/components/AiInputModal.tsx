@@ -10,6 +10,7 @@ interface AiInputModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGenerate: (prompt: string) => Promise<{ success: boolean; code?: string; error?: string }>;
+  onReplace: (code: string) => void;
   isGenerating: boolean;
   error: string | null;
 }
@@ -18,6 +19,7 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
   isOpen,
   onClose,
   onGenerate,
+  onReplace,
   isGenerating,
   error,
 }) => {
@@ -49,6 +51,13 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
     setInput('');
     setCopied(false);
     onClose();
+  };
+
+  const handleUseCode = () => {
+    if (generatedCode) {
+      onReplace(generatedCode);
+      handleClose();
+    }
   };
 
   const copyCode = async () => {
@@ -176,12 +185,21 @@ export const AiInputModal: React.FC<AiInputModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-white/5 bg-slate-950/50 flex gap-3">
           <button
-            onClick={generatedCode ? handleClose : onClose}
+            onClick={handleClose}
             disabled={isGenerating}
             className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded-xl transition-colors"
           >
-            {generatedCode ? '关闭' : '取消'}
+            {generatedCode ? '取消' : '关闭'}
           </button>
+          {generatedCode && (
+            <button
+              onClick={handleUseCode}
+              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm rounded-xl transition-colors flex items-center gap-2"
+            >
+              <Check size={16} />
+              使用此代码
+            </button>
+          )}
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || isGenerating}

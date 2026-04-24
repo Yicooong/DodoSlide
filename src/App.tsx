@@ -18,7 +18,14 @@ import {
   Trash2,
   Upload,
   Settings,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon,
+  Palette,
+  Monitor,
+  Square,
+  Send,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Editor from '@monaco-editor/react';
@@ -28,7 +35,10 @@ import { DEFAULT_CODE } from './constants';
 import { cn } from './lib/utils';
 import { useAiGeneration } from './lib/use-ai-generation';
 import { SettingsModal } from './components/SettingsModal';
+import { AiInputBar } from './components/AiInputBar.tsx';
 import { AiInputModal } from './components/AiInputModal';
+import { CanvasRatio, CANVAS_CONFIGS, getCanvasConfig, CanvasConfig } from './lib/canvas-config';
+import { AppTheme, THEME_CONFIGS, getThemeConfig, ThemeConfig } from './lib/theme-config';
 
 // Libs for the sandbox
 import * as LucideIcons from 'lucide-react';
@@ -52,11 +62,12 @@ const ErrorBoundaryWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
 );
 
 // Slide Thumbnail Component - renders a mini preview of the slide
-const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, isActive }) => {
+const SlideThumbnail: React.FC<{ code: string; isActive: boolean; canvasRatio: CanvasRatio }> = ({ code, isActive, canvasRatio }) => {
   const [thumbnailContent, setThumbnailContent] = useState<React.ReactNode>(null);
   const [hasError, setHasError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.15);
+  const config = getCanvasConfig(canvasRatio);
 
   useEffect(() => {
     try {
@@ -108,7 +119,7 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
         const containerHeight = containerRef.current.clientHeight;
-        const newScale = Math.min(containerWidth / 1280, containerHeight / 720);
+        const newScale = Math.min(containerWidth / config.width, containerHeight / config.height);
         setScale(newScale);
       }
     };
@@ -121,7 +132,7 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
     
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [canvasRatio]);
 
   if (hasError) {
     return (
@@ -132,8 +143,8 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
   }
 
   // Calculate scaled dimensions
-  const scaledWidth = 1280 * scale;
-  const scaledHeight = 720 * scale;
+  const scaledWidth = config.width * scale;
+  const scaledHeight = config.height * scale;
 
   return (
     <div 
@@ -151,16 +162,18 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
           className="absolute top-0 left-0 origin-top-left"
           style={{
             transform: `scale(${scale})`,
-          width: '1280px',
-          height: '720px',
+            width: `${config.width}px`,
+            height: `${config.height}px`,
         }}
       >
           <div
-            className="logical-slide-root w-[1280px] h-[720px] relative overflow-hidden bg-white"
+            className="logical-slide-root relative overflow-hidden bg-white"
             style={{
+              width: `${config.width}px`,
+              height: `${config.height}px`,
               // @ts-ignore
-              '--vh': '7.2px',
-              '--vw': '12.8px',
+              '--vh': `${config.height / 100}px`,
+              '--vw': `${config.width / 100}px`,
             }}
           >
             <style>{`
@@ -169,13 +182,13 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
               }
               .logical-slide-root .min-h-screen,
               .logical-slide-root .h-screen {
-                min-height: 720px !important;
-                height: 720px !important;
+                min-height: ${config.height}px !important;
+                height: ${config.height}px !important;
               }
               .logical-slide-root .min-w-screen,
               .logical-slide-root .w-screen {
-                min-width: 1280px !important;
-                width: 1280px !important;
+                min-width: ${config.width}px !important;
+                width: ${config.width}px !important;
               }
             `}</style>
             <ErrorBoundaryWrapper>
@@ -207,6 +220,10 @@ const App = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [scale, setScale] = useState(0.75);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [canvasRatio, setCanvasRatio] = useState<CanvasRatio>('16:9');
+  const [appTheme, setAppTheme] = useState<AppTheme>('dark');
+  const themeConfig = getThemeConfig(appTheme);
+  const canvasConfig = getCanvasConfig(canvasRatio);
   
   // AI Generation
   const {
@@ -224,21 +241,23 @@ const App = () => {
   const [showAiInput, setShowAiInput] = useState(false);
   const [editingSlideName, setEditingSlideName] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showAiCodeModal, setShowAiCodeModal] = useState(false);
   const [exportMode, setExportMode] = useState<'all' | 'current' | 'range'>('all');
   const [exportRangeStart, setExportRangeStart] = useState(1);
   const [exportRangeEnd, setExportRangeEnd] = useState(1);
   const [exportSpecificPage, setExportSpecificPage] = useState(1);
+  const [pendingAiCode, setPendingAiCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        setScale(entry.contentRect.width / 1280);
+        setScale(entry.contentRect.width / canvasConfig.width);
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [canvasRatio]);
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('code');
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -358,10 +377,17 @@ const App = () => {
   const handleAiGenerate = async (userInput: string) => {
     const result = await generate(userInput);
     if (result.success && result.code) {
-      updateCurrentSlideCode(result.code);
-      setActiveTab('code');
+      setPendingAiCode(result.code);
+      setShowAiInput(false);
+      setShowAiCodeModal(true);
     }
     return result;
+  };
+
+  const handleAiReplace = (code: string) => {
+    updateCurrentSlideCode(code);
+    setActiveTab('code');
+    setShowAiCodeModal(false);
   };
 
   // PPTX Export Logic (Dynamically mapping DOM to PPTX with SVG support)
@@ -396,7 +422,8 @@ const App = () => {
         `;
       }
     } catch (err) {
-      throw new Error(`幻灯片 "${slideName}" 代码解析错误: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`幻灯片 "${slideName}" 代码解析错误: ${message}`);
     }
 
     if (!transpiled) return;
@@ -405,8 +432,8 @@ const App = () => {
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '1280px';
-    tempContainer.style.height = '720px';
+    tempContainer.style.width = `${canvasConfig.width}px`;
+    tempContainer.style.height = `${canvasConfig.height}px`;
     document.body.appendChild(tempContainer);
 
     // Render the component
@@ -463,7 +490,7 @@ const App = () => {
 
     const currentScale = scale || 1;
     // getBoundingClientRect returns scaled physical pixels, requires unscaling
-    const pxToIn = (px: number) => ((px / currentScale) * 13.33) / 1280;
+    const pxToIn = (px: number) => ((px / currentScale) * canvasConfig.pptxWidthIn) / canvasConfig.width;
 
     // Calculate Absolute Opacity by walking up the DOM tree
     const getEffectiveOpacity = (el: HTMLElement, stopAt: HTMLElement) => {
@@ -763,7 +790,7 @@ const App = () => {
       if (mode === 'current') {
         // Export only current slide
         const pres = new pptxgen();
-        pres.layout = 'LAYOUT_WIDE';
+        pres.layout = canvasConfig.pptxLayout as any;
         
         await exportSingleSlide(pres, slides[currentSlideIndex].code, slides[currentSlideIndex].name, previewRef.current);
         
@@ -771,7 +798,7 @@ const App = () => {
       } else if (mode === 'range' && startPage !== undefined && endPage !== undefined) {
         // Export range of slides
         const pres = new pptxgen();
-        pres.layout = 'LAYOUT_WIDE';
+        pres.layout = canvasConfig.pptxLayout as any;
         
         const start = Math.max(1, startPage) - 1; // Convert to 0-based index
         const end = Math.min(slides.length, endPage);
@@ -785,7 +812,7 @@ const App = () => {
       } else {
         // Export all slides
         const pres = new pptxgen();
-        pres.layout = 'LAYOUT_WIDE';
+        pres.layout = canvasConfig.pptxLayout as any;
         
         for (let i = 0; i < slides.length; i++) {
           const slide = slides[i];
@@ -809,8 +836,8 @@ const App = () => {
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '1280px';
-    tempContainer.style.height = '720px';
+    tempContainer.style.width = `${canvasConfig.width}px`;
+    tempContainer.style.height = `${canvasConfig.height}px`;
     document.body.appendChild(tempContainer);
     
     try {
@@ -848,9 +875,9 @@ const App = () => {
         if (typeof Component === 'function') {
           // Create a root element and render
           const root = document.createElement('div');
-          root.className = 'logical-slide-root w-[1280px] h-[720px] relative overflow-hidden';
-          root.style.width = '1280px';
-          root.style.height = '720px';
+          root.className = 'logical-slide-root relative overflow-hidden';
+          root.style.width = `${canvasConfig.width}px`;
+          root.style.height = `${canvasConfig.height}px`;
           tempContainer.appendChild(root);
           
           // Use ReactDOM to render (create a temporary React root)
@@ -901,17 +928,17 @@ const App = () => {
   }, [transpiledCode]);
 
   return (
-    <div className="flex h-screen bg-[#0F172A] text-slate-100 overflow-hidden font-sans">
+    <div className={`flex h-screen overflow-hidden font-sans ${themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
       
       {/* Left Sidebar: Slide Thumbnails */}
-      <div className="w-64 border-r border-slate-800 flex flex-col bg-slate-950">
+      <div className="w-64 border-r flex flex-col" style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
         {/* Header */}
-        <div className="h-16 border-b border-slate-800 flex items-center px-4">
+        <div className="h-16 border-b flex items-center px-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ background: 'var(--accent)', boxShadow: '0 4px 14px var(--accent-bg)' }}>
               <Layout className="text-white" size={18} />
             </div>
-            <span className="font-bold text-sm">幻灯片</span>
+            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>幻灯片</span>
           </div>
         </div>
 
@@ -924,18 +951,22 @@ const App = () => {
               className={cn(
                 "group relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden",
                 currentSlideIndex === index
-                  ? "border-indigo-500 bg-indigo-500/10"
-                  : "border-slate-700 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-800/50"
+                  ? "border-[var(--border-active)]"
+                  : "hover:border-[var(--border-default)]"
               )}
+              style={{
+                background: currentSlideIndex === index ? 'var(--accent-bg)' : 'var(--bg-card)',
+                borderColor: currentSlideIndex === index ? 'var(--border-active)' : 'var(--border-default)',
+              }}
             >
               {/* Slide Number */}
-              <div className="absolute top-1 left-1.5 text-[10px] font-mono text-slate-500">
+              <div className="absolute top-1 left-1.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
                 {index + 1}
               </div>
               
               {/* Slide Thumbnail Preview */}
               <div className="aspect-video bg-white m-1 mt-4 mb-1 rounded overflow-hidden relative">
-                <SlideThumbnail code={slide.code} isActive={currentSlideIndex === index} />
+                <SlideThumbnail code={slide.code} isActive={currentSlideIndex === index} canvasRatio={canvasRatio} />
               </div>
               
               {/* Slide Name */}
@@ -952,14 +983,16 @@ const App = () => {
                         setEditingSlideName(null);
                       }
                     }}
-                    className="w-full text-[11px] bg-slate-800 border border-indigo-500 rounded px-1 py-0.5 outline-none"
+                    className="w-full text-[11px] rounded px-1 py-0.5 outline-none"
+                    style={{ background: 'var(--bg-input)', border: '1px solid var(--border-active)', color: 'var(--text-primary)' }}
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
                   <div className="flex items-center justify-between">
                     <span 
-                      className="text-[11px] text-slate-300 truncate flex-1"
+                      className="text-[11px] truncate flex-1"
+                      style={{ color: 'var(--text-secondary)' }}
                       onDoubleClick={(e) => {
                         e.stopPropagation();
                         setEditingSlideName(slide.id);
@@ -975,7 +1008,8 @@ const App = () => {
                           e.stopPropagation();
                           duplicateSlide(index);
                         }}
-                        className="p-0.5 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200"
+                        className="p-0.5 rounded transition-colors"
+                        style={{ color: 'var(--text-muted)' }}
                         title="复制"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -988,7 +1022,7 @@ const App = () => {
                           e.stopPropagation();
                           deleteSlide(index);
                         }}
-                        className="p-0.5 rounded hover:bg-red-900/50 text-slate-400 hover:text-red-400"
+                        className="p-0.5 rounded transition-colors hover:text-red-400"
                         title="删除"
                         disabled={slides.length <= 1}
                       >
@@ -1006,10 +1040,11 @@ const App = () => {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t border-slate-800">
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={addNewSlide}
-            className="w-full py-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+            className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium"
+            style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1021,52 +1056,102 @@ const App = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col h-full overflow-hidden bg-slate-900">
+      <div className="flex-grow flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
         
         {/* Header Bar */}
-        <header className="h-16 border-b border-white/5 px-8 flex items-center justify-between bg-slate-950/50 backdrop-blur-xl">
+        <header className="h-16 border-b px-6 flex items-center justify-between" style={{ background: 'var(--bg-header)', borderColor: 'var(--border-subtle)', backdropFilter: 'blur(20px)' }}>
           <div className="flex items-center gap-6">
-            <h1 className="text-lg font-bold tracking-tight">Slide <span className="text-indigo-400">Playground</span></h1>
-            
-            <nav className="flex items-center bg-slate-900 p-1 rounded-lg border border-white/5">
-               <button 
+            <h1 className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Slide <span style={{ color: 'var(--accent)' }}>Playground</span>
+            </h1>
+
+            <nav className="flex items-center p-1 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+               <button
                   onClick={() => setActiveTab('code')}
-                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'code' ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-300")}
+                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'code' ? "shadow-sm" : "hover:opacity-80")}
+                  style={{
+                    background: activeTab === 'code' ? 'var(--bg-button)' : 'transparent',
+                    color: activeTab === 'code' ? 'var(--text-primary)' : 'var(--text-muted)'
+                  }}
                >
                   编辑器
                </button>
-               <button 
+               <button
                   onClick={() => setActiveTab('preview')}
-                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'preview' ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-300")}
+                  className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", activeTab === 'preview' ? "shadow-sm" : "hover:opacity-80")}
+                  style={{
+                    background: activeTab === 'preview' ? 'var(--bg-button)' : 'transparent',
+                    color: activeTab === 'preview' ? 'var(--text-primary)' : 'var(--text-muted)'
+                  }}
                >
                   预览
                </button>
             </nav>
+
+            {/* Canvas Ratio Selector */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+              <Monitor size={14} style={{ color: 'var(--text-muted)' }} />
+              <select
+                value={canvasRatio}
+                onChange={(e) => setCanvasRatio(e.target.value as CanvasRatio)}
+                className="text-xs font-medium bg-transparent outline-none cursor-pointer"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {(Object.values(CANVAS_CONFIGS) as CanvasConfig[]).map((config) => (
+                  <option key={config.ratio} value={config.ratio}>
+                    {config.icon} {config.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Theme Selector */}
+            <div className="flex items-center gap-1 p-1 rounded-lg border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+              {(Object.values(THEME_CONFIGS) as ThemeConfig[]).map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setAppTheme(theme.id)}
+                  title={theme.description}
+                  className={cn("p-1.5 rounded-md transition-all", appTheme === theme.id ? "shadow-sm" : "hover:opacity-80")}
+                  style={{
+                    background: appTheme === theme.id ? 'var(--bg-button)' : 'transparent',
+                  }}
+                >
+                  <span className="text-sm">{theme.icon}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-             <button 
-                onClick={() => setShowAiInput(true)}
+
+          <div className="flex items-center gap-3">
+             <button
+                onClick={() => setShowAiInput(!showAiInput)}
                 disabled={isGenerating}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95"
+                className="px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95"
+                style={{
+                  background: showAiInput ? 'var(--accent-bg)' : 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))',
+                  color: showAiInput ? 'var(--accent)' : 'white',
+                  boxShadow: showAiInput ? 'none' : '0 4px 14px rgba(245, 158, 11, 0.3)'
+                }}
              >
                 <Sparkles size={16} />
-                AI 生成
+                {showAiInput ? '关闭 AI' : 'AI 生成'}
              </button>
-             <button 
+             <button
                 onClick={() => setShowSettings(true)}
-                className="bg-slate-800 hover:bg-slate-700 active:scale-95 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border border-white/5"
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:opacity-90"
+                style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
              >
                 <Settings size={16} />
                 设置
              </button>
-             <label className="cursor-pointer bg-slate-800 hover:bg-slate-700 active:scale-95 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border border-white/5">
+             <label className="cursor-pointer px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:opacity-90" style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}>
                 <Upload size={16} />
                 上传 JSX
                 <input type="file" accept=".jsx,.tsx,.js,.ts" className="hidden" onChange={handleFileUpload} />
              </label>
              {/* Export Button - Opens Modal */}
-             <button 
+             <button
                 onClick={() => {
                   setExportRangeStart(1);
                   setExportRangeEnd(slides.length);
@@ -1074,7 +1159,13 @@ const App = () => {
                   setShowExportModal(true);
                 }}
                 disabled={isExporting || !!error}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all active:scale-95"
+                className="px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--text-inverse)',
+                  opacity: (isExporting || !!error) ? 0.5 : 1,
+                  boxShadow: '0 4px 14px var(--accent-bg)'
+                }}
              >
                 {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                 导出 PPTX
@@ -1093,7 +1184,7 @@ const App = () => {
                 defaultLanguage="javascript"
                 value={code}
                 onChange={(value) => updateCurrentSlideCode(value || '')}
-                theme="vs-dark"
+                theme={themeConfig.monacoTheme}
                 options={{
                   fontSize: 14,
                   minimap: { enabled: false },
@@ -1109,36 +1200,54 @@ const App = () => {
           </div>
 
           {/* View: Preview */}
-          <div className={cn("absolute inset-0 flex flex-col bg-[#020617] transition-opacity duration-300", activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
+          <div
+            className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}
+            style={{ background: 'var(--bg-preview)' }}
+          >
             {/* Preview Stage */}
-            <div className="flex-grow flex items-center justify-center p-12 bg-grid-slate-900/[0.2] overflow-hidden">
-               <div ref={containerRef} className="w-full max-w-[1100px] aspect-video bg-white shadow-[0_0_80px_rgba(0,0,0,0.6)] rounded-sm overflow-hidden relative">
-                  <div 
-                    ref={previewRef} 
-                    className="w-[1280px] h-[720px] origin-top-left overflow-hidden bg-white selection:bg-indigo-100"
-                    style={{ transform: `scale(${scale})` }}
+            <div className="flex-grow flex items-center justify-center p-12 overflow-hidden">
+               <div
+                 ref={containerRef}
+                 className="bg-white rounded-sm overflow-hidden relative"
+                 style={{
+                   width: '100%',
+                   maxWidth: canvasConfig.ratio === '16:9' ? '1100px' : '900px',
+                   aspectRatio: canvasConfig.ratio === '16:9' ? '16/9' : '4/3',
+                   boxShadow: 'var(--shadow-preview)'
+                 }}
+               >
+                  <div
+                    ref={previewRef}
+                    className="origin-top-left overflow-hidden bg-white selection:bg-indigo-100"
+                    style={{
+                      width: `${canvasConfig.width}px`,
+                      height: `${canvasConfig.height}px`,
+                      transform: `scale(${scale})`
+                    }}
                   >
-                     <div 
-                        className="logical-slide-root w-[1280px] h-[720px] relative overflow-hidden"
+                     <div
+                        className="logical-slide-root relative overflow-hidden"
                         style={{
+                           width: `${canvasConfig.width}px`,
+                           height: `${canvasConfig.height}px`,
                            // @ts-ignore
-                           '--vh': '7.2px', // Treat 1vh as 1/100 of 720px
-                           '--vw': '12.8px',
+                           '--vh': `${canvasConfig.height / 100}px`,
+                           '--vw': `${canvasConfig.width / 100}px`,
                         }}
                      >
                         <style>{`
                            .logical-slide-root * {
                               box-sizing: border-box;
                            }
-                           .logical-slide-root .min-h-screen, 
+                           .logical-slide-root .min-h-screen,
                            .logical-slide-root .h-screen {
-                              min-height: 720px !important;
-                              height: 720px !important;
+                              min-height: ${canvasConfig.height}px !important;
+                              height: ${canvasConfig.height}px !important;
                            }
                            .logical-slide-root .min-w-screen,
                            .logical-slide-root .w-screen {
-                              min-width: 1280px !important;
-                              width: 1280px !important;
+                              min-width: ${canvasConfig.width}px !important;
+                              width: ${canvasConfig.width}px !important;
                            }
                         `}</style>
                         {RenderedSlide()}
@@ -1150,13 +1259,18 @@ const App = () => {
             {/* Error Overlay */}
             <AnimatePresence>
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 20, opacity: 0 }}
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[600px] bg-red-950/90 backdrop-blur-md border border-red-900/50 p-4 rounded-xl shadow-2xl font-mono text-xs text-red-200 z-50"
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[600px] backdrop-blur-md border p-4 rounded-xl shadow-2xl font-mono text-xs z-50"
+                  style={{
+                    background: 'rgba(127, 29, 29, 0.9)',
+                    borderColor: 'rgba(127, 29, 29, 0.5)',
+                    color: '#fecaca'
+                  }}
                 >
-                   <div className="font-bold flex items-center gap-2 mb-2 text-red-400">
+                   <div className="font-bold flex items-center gap-2 mb-2" style={{ color: '#f87171' }}>
                      <AlertCircle size={14} /> 代码解析错误
                    </div>
                    <div className="opacity-80 leading-relaxed">{error}</div>
@@ -1175,16 +1289,31 @@ const App = () => {
         onUpdateApiSettings={updateApiSettings}
         promptSettings={promptSettings}
         onUpdatePromptSettings={updatePromptSettings}
+        appTheme={appTheme}
+        onAppThemeChange={setAppTheme}
       />
 
-      {/* AI Input Modal */}
-      <AiInputModal
-        isOpen={showAiInput}
+      {/* AI Input Bottom Bar */}
+      <AiInputBar
+        isVisible={showAiInput}
         onClose={() => {
           setShowAiInput(false);
           clearError();
         }}
         onGenerate={handleAiGenerate}
+        isGenerating={isGenerating}
+        error={aiError}
+      />
+
+      {/* AI Code Review Modal */}
+      <AiInputModal
+        isOpen={showAiCodeModal}
+        onClose={() => {
+          setShowAiCodeModal(false);
+          setPendingAiCode(null);
+        }}
+        onGenerate={handleAiGenerate}
+        onReplace={handleAiReplace}
         isGenerating={isGenerating}
         error={aiError}
       />
