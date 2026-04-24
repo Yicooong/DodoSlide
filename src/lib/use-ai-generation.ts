@@ -105,44 +105,10 @@ export const useAiGeneration = () => {
   };
 
   /**
-   * Call Gemini API
+   * Call Custom OpenAI-compatible API
    */
-  const callGemini = async (prompt: string, apiKey: string, model: string): Promise<string> => {
-    const response = await fetch(
-      `${API_PROVIDERS.gemini.endpoint}/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            topK: 40,
-            maxOutputTokens: 8192,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Gemini API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  };
-
-  /**
-   * Call OpenAI API
-   */
-  const callOpenAI = async (prompt: string, apiKey: string, model: string, endpoint?: string): Promise<string> => {
-    const apiEndpoint = endpoint || API_PROVIDERS.openai.endpoint;
-    
-    const response = await fetch(`${apiEndpoint}/chat/completions`, {
+  const callCustomApi = async (prompt: string, apiKey: string, model: string, endpoint: string): Promise<string> => {
+    const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,38 +124,11 @@ export const useAiGeneration = () => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
+      throw new Error(errorData.error?.message || `API error: ${response.status}`);
     }
 
     const data = await response.json();
     return data.choices?.[0]?.message?.content || '';
-  };
-
-  /**
-   * Call Anthropic API
-   */
-  const callAnthropic = async (prompt: string, apiKey: string, model: string): Promise<string> => {
-    const response = await fetch(`${API_PROVIDERS.anthropic.endpoint}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 8192,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Anthropic API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.content?.[0]?.text || '';
   };
 
   /**
@@ -205,20 +144,13 @@ export const useAiGeneration = () => {
     try {
       const fullPrompt = buildFullPrompt(userInput, promptSettings);
       let responseText = '';
-      let apiKey = '';
 
-      switch (apiSettings.provider) {
-        case 'custom':
-          apiKey = apiSettings.customApiKey || localStorage.getItem('api_key_custom') || '';
-          if (!apiKey) throw new Error('请先配置 API Key');
-          if (!apiSettings.customEndpoint) throw new Error('请先配置 API 端点');
-          if (!apiSettings.customModel) throw new Error('请先选择模型');
-          responseText = await callOpenAI(fullPrompt, apiKey, apiSettings.customModel, apiSettings.customEndpoint);
-          break;
+      const apiKey = apiSettings.customApiKey || localStorage.getItem('api_key_custom') || '';
+      if (!apiKey) throw new Error('请先配置 API Key');
+      if (!apiSettings.customEndpoint) throw new Error('请先配置 API 端点');
+      if (!apiSettings.customModel) throw new Error('请先选择模型');
 
-        default:
-          throw new Error('未支持的 API 提供商');
-      }
+      responseText = await callCustomApi(fullPrompt, apiKey, apiSettings.customModel, apiSettings.customEndpoint);
 
       const extractedCode = extractCodeFromResponse(responseText);
       

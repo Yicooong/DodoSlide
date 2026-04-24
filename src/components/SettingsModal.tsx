@@ -41,9 +41,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('api');
   const [showApiKey, setShowApiKey] = useState<Record<ApiProvider, boolean>>({
-    gemini: false,
-    openai: false,
-    anthropic: false,
     custom: false,
   });
   const [showPromptEditor, setShowPromptEditor] = useState(false);
@@ -102,9 +99,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const getCurrentApiKey = (provider: ApiProvider): string => {
     switch (provider) {
-      case 'gemini': return apiSettings.geminiApiKey;
-      case 'openai': return apiSettings.openaiApiKey;
-      case 'anthropic': return apiSettings.anthropicApiKey;
       case 'custom': return apiSettings.customApiKey;
       default: return '';
     }
@@ -112,9 +106,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const setCurrentApiKey = (provider: ApiProvider, value: string) => {
     switch (provider) {
-      case 'gemini': onUpdateApiSettings({ geminiApiKey: value }); break;
-      case 'openai': onUpdateApiSettings({ openaiApiKey: value }); break;
-      case 'anthropic': onUpdateApiSettings({ anthropicApiKey: value }); break;
       case 'custom': onUpdateApiSettings({ customApiKey: value }); break;
     }
   };

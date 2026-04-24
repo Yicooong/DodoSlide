@@ -107,19 +107,33 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 ├── metadata.json       — AI Studio metadata
 └── src/
     ├── main.tsx        — React root mount
-    ├── App.tsx         — Main app: editor + preview + export + AI (~1000+ lines)
+    ├── App.tsx         — Main app: orchestrates all components (~300 lines)
     ├── constants.ts    — DEFAULT_CODE: the sample slide JSX
     ├── index.css       — Tailwind imports + theme variables + fonts
-    ├── components/
-    │   ├── SettingsModal.tsx       — API configuration (custom only)
-    │   ├── AiGenerationPanel.tsx  — Large AI generation panel with styles
-    │   ├── AiInputModal.tsx       — Legacy AI modal (deprecated)
-    │   └── AiInputBar.tsx         — Bottom AI input bar (deprecated)
-    └── lib/
+    ├── hooks/          — Custom React hooks for state management
+    │   ├── use-slides.ts         — Slide management (add, delete, rename, duplicate)
+    │   ├── use-app-state.ts      — App-wide state (theme, canvas ratio, tabs)
+    │   └── use-slide-renderer.ts — JSX transpilation and rendering logic
+    ├── components/     — UI components organized by feature
+    │   ├── slide/              — Slide-related components
+    │   │   ├── SlideThumbnail.tsx — Mini preview of slide
+    │   │   └── SlideSidebar.tsx   — Collapsible sidebar with slide list
+    │   ├── editor/             — Code editor components
+    │   │   └── CodeEditor.tsx     — Monaco editor wrapper
+    │   ├── preview/            — Preview components
+    │   │   └── SlidePreview.tsx   — Slide preview with error display
+    │   ├── header/             — Header components
+    │   │   └── AppHeader.tsx      — Top navigation bar
+    │   ├── export/             — Export components
+    │   │   └── ExportModal.tsx    — PPTX export dialog
+    │   ├── SettingsModal.tsx     — API configuration (custom only)
+    │   └── AiGenerationPanel.tsx  — Large AI generation panel with styles
+    └── lib/           — Core libraries and utilities
         ├── canvas-config.ts       — Canvas ratio configurations (16:9, 4:3)
         ├── theme-config.ts        — Theme configurations (dark, light)
         ├── api-providers.ts       — Custom API provider and model fetching
         ├── prompt-manager.ts      — System prompt management
+        ├── pptx-exporter.ts       — DOM-to-PPTX export logic
         ├── use-ai-generation.ts   — AI generation hook
         └── utils.ts               — cn() utility (clsx + tailwind-merge)
 ```
@@ -128,47 +142,71 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 
 ## Important Implementation Details
 
+### Module Organization
+The project has been refactored into a modular structure for better maintainability and AI code understanding:
+
+- **Hooks Layer** (`src/hooks/`): Custom React hooks that encapsulate state and business logic
+  - `use-slides.ts`: Manages slide array, CRUD operations, and current slide selection
+  - `use-app-state.ts`: Manages app-wide UI state (theme, canvas ratio, tabs, sidebar)
+  - `use-slide-renderer.ts`: Handles JSX transpilation via Babel and safe component rendering
+
+- **Components Layer** (`src/components/`): Feature-organized UI components
+  - `slide/`: Sidebar, thumbnails, and slide list management
+  - `editor/`: Monaco editor wrapper
+  - `preview/`: Slide preview with error handling
+  - `header/`: Top navigation and controls
+  - `export/`: PPTX export modal and dialogs
+  - Root-level: SettingsModal, AiGenerationPanel for modals
+
+- **Libraries Layer** (`src/lib/`): Core utilities and business logic
+  - `pptx-exporter.ts`: Contains all DOM-to-PPTX conversion logic
+  - Configuration files (canvas, theme, API, prompt)
+  - AI generation hook and utilities
+
 ### Canvas Configuration
 - Canvas configs are centralized in `canvas-config.ts` with width, height, and PPTX dimensions
 - All canvas-dependent components receive `canvasRatio` prop and use `getCanvasConfig()`
-- Thumbnail rendering must update when canvas ratio changes (use ResizeObserver with config dependencies)
+- Thumbnail rendering in `SlideThumbnail` updates when canvas ratio changes (ResizeObserver with config dependencies)
 
 ### Theme Implementation
 - All colors defined in `index.css` as CSS variables with `--var-` naming convention
 - Components access theme variables via inline styles: `style={{ color: 'var(--text-primary)' }}`
-- Theme switching updates the root class (`dark` or `light`) which activates corresponding CSS variables
+- Theme switching managed by `use-app-state.ts` hook, updates root class (`dark` or `light`)
 
 ### AI Integration
-- Only custom OpenAI-compatible APIs are supported (gemini, openai, anthropic providers removed)
+- Only custom OpenAI-compatible APIs are supported
 - API settings stored in localStorage under `api_settings`
-- Model list fetching handles multiple response formats (OpenAI, direct arrays, etc.)
-- Style instructions are prepended to user prompts in `handleAiGenerate()`
+- Model list fetching in `api-providers.ts` handles multiple response formats
+- Style instructions prepended to user prompts in `App.tsx`'s `handleAiGenerate()`
+- AI state management via `use-ai-generation.ts` hook
 
 ### Export System
+- Export logic centralized in `lib/pptx-exporter.ts` with two main functions:
+  - `exportSingleSlide()`: Exports a rendered DOM element to PPTX
+  - `exportSlideByCode()`: Renders slide code to temporary DOM, then exports
 - Supports three modes: all slides, current slide, or range export
-- Export uses temporary DOM rendering with React roots for each slide
 - The root container is **skipped** in shape drawing to avoid duplicate backgrounds
-- Opacity inheritance is tracked by walking up the DOM tree per element
-- Text whitespace is collapsed and bounding boxes expanded with buffer to prevent wrapping issues
+- Opacity inheritance tracked by walking up the DOM tree per element
+- Text whitespace collapsed and bounding boxes expanded with buffer
 
 ### Sidebar State
-- `sidebarCollapsed` state controls sidebar width and content visibility
+- Managed by `use-app-state.ts` hook's `sidebarCollapsed` state
+- `SlideSidebar` component handles width transitions and content visibility
 - Chevron icon indicates current state (left/right arrow)
-- Slide list and actions hidden when collapsed, only header and collapse button visible
 
 ---
 
 ## Development Guidelines
 
 ### Adding New Canvas Ratios
-1. Update `CanvasRatio` type in `canvas-config.ts`
+1. Update `CanvasRatio` type in `lib/canvas-config.ts`
 2. Add configuration to `CANVAS_CONFIGS` object
-3. Update slide thumbnail container aspect-ratio calculation in `App.tsx`
-4. Test thumbnail rendering and export functionality
+3. Update `AppHeader.tsx` to show new ratio option (handled automatically via Object.values)
+4. Test thumbnail rendering in `SlideThumbnail.tsx` and export functionality
 
 ### Adding New AI Styles
-1. Add style to `PROMPT_STYLES` array in `AiGenerationPanel.tsx`
-2. Include style instruction mapping in `handleAiGenerate()` function
+1. Add style to `PROMPT_STYLES` array in `components/AiGenerationPanel.tsx`
+2. Include style instruction mapping in `App.tsx`'s `handleAiGenerate()` function
 3. Test style application with different prompts
 
 ### Theme Extensions
@@ -177,7 +215,25 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 3. Test in both light and dark modes across all components
 
 ### API Integration
-- Always use the improved `listModels()` function for model fetching
+- Always use the `listModels()` function in `lib/api-providers.ts` for model fetching
 - Handle multiple response formats and provide clear error messages
 - Validate API configuration before attempting connections
 - Store API settings in localStorage for persistence
+
+### Module Extension Guide
+
+**When to add a new hook:**
+- Extract complex state logic from components
+- Share state between multiple components
+- Encapsulate side effects (API calls, localStorage, etc.)
+
+**When to create a new component folder:**
+- Group related components together (e.g., `slide/`, `editor/`, `preview/`)
+- Keep component files focused on single responsibility
+- Extract reusable UI patterns
+
+**When to add to `lib/`:**
+- Pure utility functions
+- Business logic not tied to React
+- Configuration and constants
+- External API integrations
