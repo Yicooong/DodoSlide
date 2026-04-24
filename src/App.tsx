@@ -107,9 +107,8 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
     const updateScale = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
-        // Scale to fit container width while maintaining 16:9 aspect ratio
-        // 1280 is the original slide width
-        const newScale = containerWidth / 1280;
+        const containerHeight = containerRef.current.clientHeight;
+        const newScale = Math.min(containerWidth / 1280, containerHeight / 720);
         setScale(newScale);
       }
     };
@@ -139,26 +138,50 @@ const SlideThumbnail: React.FC<{ code: string; isActive: boolean }> = ({ code, i
   return (
     <div 
       ref={containerRef}
-      className="w-full h-full overflow-hidden relative bg-white flex items-center justify-center"
+      className="w-full h-full overflow-hidden relative bg-white"
     >
       <div 
-        className="relative"
+        className="absolute top-0 left-0 overflow-hidden"
         style={{
           width: scaledWidth,
           height: scaledHeight,
         }}
       >
-        <div 
+        <div
           className="absolute top-0 left-0 origin-top-left"
           style={{
             transform: `scale(${scale})`,
-            width: '1280px',
-            height: '720px',
-          }}
-        >
-          <ErrorBoundaryWrapper>
-            {thumbnailContent}
-          </ErrorBoundaryWrapper>
+          width: '1280px',
+          height: '720px',
+        }}
+      >
+          <div
+            className="logical-slide-root w-[1280px] h-[720px] relative overflow-hidden bg-white"
+            style={{
+              // @ts-ignore
+              '--vh': '7.2px',
+              '--vw': '12.8px',
+            }}
+          >
+            <style>{`
+              .logical-slide-root * {
+                box-sizing: border-box;
+              }
+              .logical-slide-root .min-h-screen,
+              .logical-slide-root .h-screen {
+                min-height: 720px !important;
+                height: 720px !important;
+              }
+              .logical-slide-root .min-w-screen,
+              .logical-slide-root .w-screen {
+                min-width: 1280px !important;
+                width: 1280px !important;
+              }
+            `}</style>
+            <ErrorBoundaryWrapper>
+              {thumbnailContent}
+            </ErrorBoundaryWrapper>
+          </div>
         </div>
       </div>
     </div>
