@@ -4,6 +4,12 @@
  */
 
 /**
+ * @deprecated This module is deprecated. Use `./providers/index` instead.
+ * The new provider system supports multiple provider configurations with rich metadata.
+ * This file is kept for migration reference only.
+ */
+
+/**
  * Supported AI API Providers
  */
 export type ApiProvider = 'custom';

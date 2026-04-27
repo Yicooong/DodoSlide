@@ -4,8 +4,10 @@
  */
 
 import { useState, useCallback } from 'react';
-import { ApiProvider, API_PROVIDERS, ApiSettings, loadApiSettings, saveApiSettings } from './api-providers';
 import { PromptSettings, loadPromptSettings, savePromptSettings, buildFullPrompt } from './prompt-manager';
+import { useProviderManager } from './providers/use-provider-manager';
+import { apiStrategyRegistry } from './providers/api-strategy';
+import type { UseProviderManagerReturn } from './providers/use-provider-manager';
 
 /**
  * AI generation state
@@ -26,7 +28,8 @@ export interface AiGenerationResult {
 }
 
 /**
- * Hook for AI-powered slide generation
+ * Hook for AI-powered slide generation.
+ * Uses the new provider system for API calls.
  */
 export const useAiGeneration = () => {
   const [state, setState] = useState<AiGenerationState>({
@@ -35,19 +38,8 @@ export const useAiGeneration = () => {
     lastGeneratedCode: null,
   });
 
-  const [apiSettings, setApiSettings] = useState<ApiSettings>(() => loadApiSettings());
   const [promptSettings, setPromptSettings] = useState<PromptSettings>(() => loadPromptSettings());
-
-  /**
-   * Update API settings
-   */
-  const updateApiSettings = useCallback((newSettings: Partial<ApiSettings>) => {
-    setApiSettings(prev => {
-      const updated = { ...prev, ...newSettings };
-      saveApiSettings(updated);
-      return updated;
-    });
-  }, []);
+  const providerManager = useProviderManager();
 
   /**
    * Update prompt settings
@@ -105,34 +97,8 @@ export const useAiGeneration = () => {
   };
 
   /**
-   * Call Custom OpenAI-compatible API
-   */
-  const callCustomApi = async (prompt: string, apiKey: string, model: string, endpoint: string): Promise<string> => {
-    const response = await fetch(`${endpoint}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 8192,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || '';
-  };
-
-  /**
-   * Generate slide code using AI
+   * Generate slide code using AI.
+   * Uses the current provider from the provider manager.
    */
   const generate = useCallback(async (userInput: string): Promise<AiGenerationResult> => {
     if (!userInput.trim()) {
@@ -142,15 +108,16 @@ export const useAiGeneration = () => {
     setState({ isGenerating: true, error: null, lastGeneratedCode: null });
 
     try {
+      const currentProvider = providerManager.getCurrentProvider();
+      if (!currentProvider) throw new Error('请先配置 API 提供商');
+      if (!currentProvider.settingsConfig.apiKey) throw new Error('请先配置 API Key');
+      if (!currentProvider.settingsConfig.endpoint) throw new Error('请先配置 API 端点');
+      if (!currentProvider.settingsConfig.model) throw new Error('请先选择模型');
+
       const fullPrompt = buildFullPrompt(userInput, promptSettings);
-      let responseText = '';
-
-      const apiKey = apiSettings.customApiKey || localStorage.getItem('api_key_custom') || '';
-      if (!apiKey) throw new Error('请先配置 API Key');
-      if (!apiSettings.customEndpoint) throw new Error('请先配置 API 端点');
-      if (!apiSettings.customModel) throw new Error('请先选择模型');
-
-      responseText = await callCustomApi(fullPrompt, apiKey, apiSettings.customModel, apiSettings.customEndpoint);
+      const apiFormat = currentProvider.meta?.apiFormat ?? 'openai_compatible';
+      const strategy = apiStrategyRegistry.getStrategy(apiFormat);
+      const responseText = await strategy.callApi(fullPrompt, currentProvider.settingsConfig);
 
       const extractedCode = extractCodeFromResponse(responseText);
       
@@ -165,8 +132,8 @@ export const useAiGeneration = () => {
       });
 
       return { success: true, code: extractedCode };
-    } catch (error: any) {
-      const errorMessage = error.message || '生成失败，请重试';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '生成失败，请重试';
       setState({
         isGenerating: false,
         error: errorMessage,
@@ -174,7 +141,7 @@ export const useAiGeneration = () => {
       });
       return { success: false, error: errorMessage };
     }
-  }, [apiSettings, promptSettings]);
+  }, [providerManager, promptSettings]);
 
   /**
    * Clear error state
@@ -187,8 +154,7 @@ export const useAiGeneration = () => {
     ...state,
     generate,
     clearError,
-    apiSettings,
-    updateApiSettings,
+    providerManager,
     promptSettings,
     updatePromptSettings,
   };

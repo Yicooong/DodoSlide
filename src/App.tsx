@@ -266,8 +266,7 @@ const App = () => {
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        apiSettings={aiGen.apiSettings}
-        onUpdateApiSettings={aiGen.updateApiSettings}
+        providerManager={aiGen.providerManager}
         promptSettings={aiGen.promptSettings}
         onUpdatePromptSettings={aiGen.updatePromptSettings}
       />
