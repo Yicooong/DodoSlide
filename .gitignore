@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+cc-switch-cli-main
+.vscode
+.codeartsdoer

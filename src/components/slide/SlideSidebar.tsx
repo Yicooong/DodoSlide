@@ -38,24 +38,38 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
   const [editingSlideName, setEditingSlideName] = useState<string | null>(null);
 
   return (
-    <div className={`${collapsed ? 'w-12' : 'w-64'} border-r flex flex-col transition-all duration-300`} style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
+    <div className={`${collapsed ? 'w-12' : 'w-64'} border-r flex flex-col transition-all duration-300 relative`} style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
       {/* Header */}
-      <div className="h-16 border-b flex items-center px-4" style={{ borderColor: 'var(--border-subtle)' }}>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ background: 'var(--accent)', boxShadow: '0 4px 14px var(--accent-bg)' }}>
+      <div className="h-16 border-b flex items-center justify-between px-2" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className={`flex items-center gap-2 ${collapsed ? 'justify-center w-full' : ''}`}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0" style={{ background: 'var(--accent)', boxShadow: '0 4px 14px var(--accent-bg)' }}>
             <Layout className="text-white" size={18} />
           </div>
           {!collapsed && <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>幻灯片</span>}
         </div>
+        {!collapsed && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-lg transition-colors flex-shrink-0"
+            style={{ color: 'var(--text-muted)' }}
+            title="收缩侧边栏"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Expand button - shown when collapsed */}
+      {collapsed && (
         <button
           onClick={onToggleCollapse}
-          className="ml-auto p-1.5 rounded-lg transition-colors"
-          style={{ color: 'var(--text-muted)' }}
-          title={collapsed ? '展开侧边栏' : '收缩侧边栏'}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors z-10"
+          style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}
+          title="展开侧边栏"
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          <ChevronRight size={20} />
         </button>
-      </div>
+      )}
 
       {/* Slide List */}
       <div className={`${collapsed ? 'hidden' : 'flex-1 overflow-y-auto p-3 space-y-2'}`}>
