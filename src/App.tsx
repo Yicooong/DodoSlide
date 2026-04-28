@@ -22,6 +22,8 @@ import { AppHeader } from './components/header/AppHeader';
 import { ExportModal, ExportMode } from './components/export/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AiGenerationPanel } from './components/AiGenerationPanel';
+import LandingPage from './components/landing/LandingPage';
+import AiGeneratePage from './components/ai-generate/AiGeneratePage';
 
 // Libs
 import { CANVAS_CONFIGS, CanvasConfig } from './lib/canvas-config';
@@ -194,6 +196,32 @@ const App = () => {
       exportToPPTX('all');
     }
   };
+
+  // Handle navigation from landing page
+  const handleNavigate = (view: 'landing' | 'ai-generate' | 'code' | 'preview') => {
+    appState.setViewType(view);
+    if (view === 'code' || view === 'preview') {
+      appState.setActiveTab(view);
+    }
+  };
+
+  // Render landing page
+  if (appState.viewType === 'landing') {
+    return (
+      <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
+        <LandingPage onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  // Render AI generation page
+  if (appState.viewType === 'ai-generate') {
+    return (
+      <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
+        <AiGeneratePage onNavigate={handleNavigate} />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
