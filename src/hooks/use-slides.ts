@@ -4,7 +4,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { DEFAULT_CODE } from '../constants';
+import { getDefaultCode } from '../constants';
+import { CanvasRatio } from '../lib/canvas-config';
 
 export interface Slide {
   id: string;
@@ -15,9 +16,9 @@ export interface Slide {
 /**
  * Hook for managing multiple slides
  */
-export const useSlides = () => {
+export const useSlides = (canvasRatio: CanvasRatio = '16:9') => {
   const [slides, setSlides] = useState<Slide[]>([
-    { id: '1', name: '幻灯片 1', code: DEFAULT_CODE }
+    { id: '1', name: '幻灯片 1', code: getDefaultCode(canvasRatio) }
   ]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
@@ -36,14 +37,17 @@ export const useSlides = () => {
    * Add a new slide
    */
   const addNewSlide = useCallback(() => {
-    const newSlide: Slide = {
-      id: Date.now().toString(),
-      name: `幻灯片 ${slides.length + 1}`,
-      code: DEFAULT_CODE
-    };
-    setSlides((prev: Slide[]) => [...prev, newSlide]);
-    setCurrentSlideIndex(slides.length);
-  }, [slides.length]);
+    setSlides((prev: Slide[]) => {
+      const newSlide: Slide = {
+        id: Date.now().toString(),
+        name: `幻灯片 ${prev.length + 1}`,
+        code: getDefaultCode(canvasRatio)
+      };
+      const newSlides = [...prev, newSlide];
+      setCurrentSlideIndex(newSlides.length - 1);
+      return newSlides;
+    });
+  }, [canvasRatio]);
 
   /**
    * Delete a slide

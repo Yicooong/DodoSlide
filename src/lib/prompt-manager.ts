@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CanvasRatio, CANVAS_CONFIGS } from './canvas-config';
+
 /**
  * Default system prompt for slide generation
  * This prompt guides the AI to generate React JSX code for slides
@@ -60,6 +62,17 @@ export default App;
 Generate a slide based on the user's request. Return only the code in the exact format shown above.`.trim();
 
 /**
+ * Get system prompt for slide generation based on canvas ratio.
+ * Dynamically replaces width/height/ratio in the prompt to match the selected ratio.
+ */
+export const getDefaultSystemPrompt = (canvasRatio: CanvasRatio): string => {
+  const config = CANVAS_CONFIGS[canvasRatio] || CANVAS_CONFIGS['16:9'];
+  return DEFAULT_SYSTEM_PROMPT
+    .replace('w-[1280px] h-[720px]', `w-[${config.width}px] h-[${config.height}px]`)
+    .replace('1280x720 pixels (16:9 aspect ratio)', `${config.width}x${config.height} pixels (${config.ratio} aspect ratio)`);
+};
+
+/**
  * Prompt settings interface
  */
 export interface PromptSettings {
@@ -104,11 +117,13 @@ export const savePromptSettings = (settings: PromptSettings): void => {
  */
 export const buildFullPrompt = (
   userInput: string,
-  settings: PromptSettings = DEFAULT_PROMPT_SETTINGS
+  settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
+  canvasRatio?: CanvasRatio
 ): string => {
+  const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
   const basePrompt = settings.useDefaultPrompt 
-    ? DEFAULT_SYSTEM_PROMPT 
-    : settings.customPrompt || DEFAULT_SYSTEM_PROMPT;
+    ? defaultPrompt
+    : settings.customPrompt || defaultPrompt;
   
   return `${basePrompt}
 

@@ -33,8 +33,8 @@ import { cn } from './lib/utils';
 
 const App = () => {
   // Hooks
-  const slidesHook = useSlides();
   const appState = useAppState();
+  const slidesHook = useSlides(appState.canvasRatio);
   const currentCode = slidesHook.slides[slidesHook.currentSlideIndex]?.code || '';
   const { transpiledCode, error, RenderedSlide } = useSlideRenderer(currentCode);
   const aiGen = useAiGeneration();
@@ -97,7 +97,7 @@ const App = () => {
     const stylePrompt = styleInstructions[styleId] || '';
     const enhancedPrompt = stylePrompt ? `${userInput}\n\n设计要求：${stylePrompt}` : userInput;
 
-    const result = await aiGen.generate(enhancedPrompt);
+    const result = await aiGen.generate(enhancedPrompt, appState.canvasRatio);
     if (result.success && result.code) {
       slidesHook.updateCurrentSlideCode(result.code);
     }
@@ -120,7 +120,7 @@ const App = () => {
         const pres = new pptxgen();
         pres.layout = appState.canvasConfig.pptxLayout as any;
 
-        await exportSingleSlide(pres, slidesHook.slides[slidesHook.currentSlideIndex].code, slidesHook.slides[slidesHook.currentSlideIndex].name, previewRef.current, appState.canvasConfig, scale);
+        await exportSingleSlide(pres, slidesHook.slides[slidesHook.currentSlideIndex]?.code || '', slidesHook.slides[slidesHook.currentSlideIndex]?.name || 'Slide', previewRef.current, appState.canvasConfig, scale);
 
         await pres.writeFile({ fileName: `Slide_${slidesHook.slides[slidesHook.currentSlideIndex].name}_${Date.now()}.pptx` });
       } else if (mode === 'range' && startPage !== undefined && endPage !== undefined) {

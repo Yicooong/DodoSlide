@@ -8,6 +8,7 @@ import { PromptSettings, loadPromptSettings, savePromptSettings, buildFullPrompt
 import { useProviderManager } from './providers/use-provider-manager';
 import { apiStrategyRegistry } from './providers/api-strategy';
 import type { UseProviderManagerReturn } from './providers/use-provider-manager';
+import { CanvasRatio } from './canvas-config';
 
 /**
  * AI generation state
@@ -100,7 +101,7 @@ export const useAiGeneration = () => {
    * Generate slide code using AI.
    * Uses the current provider from the provider manager.
    */
-  const generate = useCallback(async (userInput: string): Promise<AiGenerationResult> => {
+  const generate = useCallback(async (userInput: string, canvasRatio?: CanvasRatio): Promise<AiGenerationResult> => {
     if (!userInput.trim()) {
       return { success: false, error: '请输入幻灯片描述' };
     }
@@ -114,7 +115,7 @@ export const useAiGeneration = () => {
       if (!currentProvider.settingsConfig.endpoint) throw new Error('请先配置 API 端点');
       if (!currentProvider.settingsConfig.model) throw new Error('请先选择模型');
 
-      const fullPrompt = buildFullPrompt(userInput, promptSettings);
+      const fullPrompt = buildFullPrompt(userInput, promptSettings, canvasRatio);
       const apiFormat = currentProvider.meta?.apiFormat ?? 'openai_compatible';
       const strategy = apiStrategyRegistry.getStrategy(apiFormat);
       const responseText = await strategy.callApi(fullPrompt, currentProvider.settingsConfig);

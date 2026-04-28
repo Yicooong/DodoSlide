@@ -136,26 +136,6 @@ export const AiGenerationPanel: React.FC<AiGenerationPanelProps> = ({
     textareaRef.current?.focus();
   };
 
-  const getStylePrompt = (styleId: string): string => {
-    const style = PROMPT_STYLES.find(s => s.id === styleId);
-    if (!style) return '';
-
-    switch (styleId) {
-      case 'modern':
-        return '使用现代简约的设计风格，白色背景，深色文字，简洁的布局';
-      case 'tech':
-        return '使用科技感的设计风格，蓝色为主色调，包含科技元素图标';
-      case 'creative':
-        return '使用创意活泼的设计风格，鲜艳的色彩，动态的布局';
-      case 'professional':
-        return '使用专业严谨的设计风格，简洁的配色，清晰的层次';
-      case 'elegant':
-        return '使用优雅典雅的设计风格，柔和的色调，精致的排版';
-      default:
-        return '';
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}

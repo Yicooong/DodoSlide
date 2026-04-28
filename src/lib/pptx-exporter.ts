@@ -53,6 +53,9 @@ export const exportSingleSlide = async (
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = 1; tempCanvas.height = 1;
   const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) {
+    return { color: 'FFFFFF', transparency: 100, isTransparent: true, rgba: 'rgba(255,255,255,0)' };
+  }
 
   const parseColor = (colorStr: string, opacityStr = '1') => {
     if (!colorStr || colorStr === 'transparent' || colorStr === 'none' || !ctx) {
