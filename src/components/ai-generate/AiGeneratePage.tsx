@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ViewType } from '../../hooks/use-app-state';
 import { CanvasRatio } from '../../lib/canvas-config';
@@ -28,6 +28,8 @@ interface AiGeneratePageProps {
     updateCurrentSlideCode: (code: string) => void;
     addNewSlide: () => void;
   };
+  showSettings: boolean;
+  setShowSettings: (show: boolean) => void;
 }
 
 export type GenerationMode = 'guided' | 'direct';
@@ -60,6 +62,8 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   canvasRatio,
   monacoTheme,
   slidesHook,
+  showSettings,
+  setShowSettings,
 }) => {
   const [phase, setPhase] = useState<Phase>('entry');
   const [context, setContext] = useState<GenerationContext>({
@@ -162,6 +166,16 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
         >
           AI 幻灯片生成
         </h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1.5 rounded-lg transition-all cursor-pointer hover:opacity-80"
+            style={{ color: 'var(--text-muted)' }}
+            title="设置"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Phase content */}

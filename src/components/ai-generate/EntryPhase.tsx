@@ -259,15 +259,17 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               选择风格模板
             </span>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-4 px-2 justify-center">
-            {STYLE_TEMPLATES.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                isSelected={context.selectedStyle === template.id}
-                onSelect={(id) => onContextUpdate({ selectedStyle: id })}
-              />
-            ))}
+          <div className="flex justify-center">
+            <div className="flex gap-3 overflow-x-auto pb-4 px-2">
+              {STYLE_TEMPLATES.map((template) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  isSelected={context.selectedStyle === template.id}
+                  onSelect={(id) => onContextUpdate({ selectedStyle: id })}
+                />
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

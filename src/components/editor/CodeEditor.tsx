@@ -14,7 +14,7 @@ interface CodeEditorProps {
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange, monacoTheme }) => {
   return (
-    <div className="flex-grow">
+    <div className="h-full w-full">
       <Editor
         height="100%"
         defaultLanguage="javascript"

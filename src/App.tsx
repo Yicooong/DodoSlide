@@ -6,6 +6,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import pptxgen from 'pptxgenjs';
 
 // Hooks
@@ -199,76 +200,98 @@ const App = () => {
           setCanvasRatio={handleCanvasRatioChange}
           monacoTheme={appState.themeConfig.monacoTheme}
           slidesHook={slidesHook}
+          showSettings={showSettings}
+          setShowSettings={setShowSettings}
+        />
+        {/* Settings Modal */}
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          providerManager={aiGen.providerManager}
+          promptSettings={aiGen.promptSettings}
+          onUpdatePromptSettings={aiGen.updatePromptSettings}
         />
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
+    <div className={`h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
+      <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
+        {/* Left Sidebar: Slide Thumbnails */}
+        <Panel
+          defaultSize="20%"
+          minSize="10%"
+          maxSize="40%"
+          collapsible
+          collapsedSize="4%"
+          className="overflow-hidden"
+        >
+          <SlideSidebar
+            slides={slidesHook.slides}
+            currentSlideIndex={slidesHook.currentSlideIndex}
+            canvasRatio={appState.canvasRatio}
+            collapsed={appState.sidebarCollapsed}
+            onToggleCollapse={() => appState.setSidebarCollapsed(!appState.sidebarCollapsed)}
+            onSelectSlide={slidesHook.setCurrentSlideIndex}
+            onAddSlide={slidesHook.addNewSlide}
+            onDeleteSlide={slidesHook.deleteSlide}
+            onRenameSlide={slidesHook.renameSlide}
+            onDuplicateSlide={slidesHook.duplicateSlide}
+          />
+        </Panel>
 
-      {/* Left Sidebar: Slide Thumbnails */}
-      <SlideSidebar
-        slides={slidesHook.slides}
-        currentSlideIndex={slidesHook.currentSlideIndex}
-        canvasRatio={appState.canvasRatio}
-        collapsed={appState.sidebarCollapsed}
-        onToggleCollapse={() => appState.setSidebarCollapsed(!appState.sidebarCollapsed)}
-        onSelectSlide={slidesHook.setCurrentSlideIndex}
-        onAddSlide={slidesHook.addNewSlide}
-        onDeleteSlide={slidesHook.deleteSlide}
-        onRenameSlide={slidesHook.renameSlide}
-        onDuplicateSlide={slidesHook.duplicateSlide}
-      />
+        <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
-      {/* Main Content Area */}
-      <div className="flex-grow flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
-
-        {/* Header Bar */}
-        <AppHeader
-          activeTab={appState.activeTab}
-          setActiveTab={appState.setActiveTab}
-          canvasRatio={appState.canvasRatio}
-          setCanvasRatio={handleCanvasRatioChange}
-          canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
-          appTheme={appState.appTheme}
-          setAppTheme={handleThemeChange}
-          themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
-          isGenerating={aiGen.isGenerating}
-          showSettings={showSettings}
-          setShowSettings={setShowSettings}
-          onUpload={handleFileUpload}
-          onExport={handleExportClick}
-          onNavigateToAi={() => appState.setViewType('ai-generate')}
-        />
-
-        {/* Workspace Container */}
-        <main className="flex-grow relative overflow-hidden">
-
-          {/* View: Editor */}
-          <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'code' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
-            <CodeEditor
-              code={slidesHook.slides[slidesHook.currentSlideIndex]?.code || ''}
-              onChange={slidesHook.updateCurrentSlideCode}
-              monacoTheme={appState.themeConfig.monacoTheme}
+        {/* Main Content Area */}
+        <Panel defaultSize="80%" minSize="60%" className="overflow-hidden">
+          <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
+            {/* Header Bar */}
+            <AppHeader
+              activeTab={appState.activeTab}
+              setActiveTab={appState.setActiveTab}
+              canvasRatio={appState.canvasRatio}
+              setCanvasRatio={handleCanvasRatioChange}
+              canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
+              appTheme={appState.appTheme}
+              setAppTheme={handleThemeChange}
+              themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
+              isGenerating={aiGen.isGenerating}
+              showSettings={showSettings}
+              setShowSettings={setShowSettings}
+              onUpload={handleFileUpload}
+              onExport={handleExportClick}
+              onNavigateToAi={() => appState.setViewType('ai-generate')}
             />
-          </div>
 
-          {/* View: Preview */}
-          <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
-            <SlidePreview
-              canvasConfig={appState.canvasConfig}
-              scale={scale}
-              error={error}
-              containerRef={containerRef}
-              previewRef={previewRef}
-              onScaleChange={setScale}
-            >
-              {RenderedSlide()}
-            </SlidePreview>
+            {/* Workspace Container */}
+            <main className="flex-grow relative overflow-hidden">
+              {/* View: Editor */}
+              <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'code' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
+                <CodeEditor
+                  code={slidesHook.slides[slidesHook.currentSlideIndex]?.code || ''}
+                  onChange={slidesHook.updateCurrentSlideCode}
+                  monacoTheme={appState.themeConfig.monacoTheme}
+                />
+              </div>
+
+              {/* View: Preview */}
+              <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
+                <SlidePreview
+                  canvasConfig={appState.canvasConfig}
+                  scale={scale}
+                  error={error}
+                  containerRef={containerRef}
+                  previewRef={previewRef}
+                  onScaleChange={setScale}
+                >
+                  {RenderedSlide()}
+                </SlidePreview>
+              </div>
+            </main>
           </div>
-        </main>
-      </div>
+        </Panel>
+      </PanelGroup>
 
       {/* Settings Modal */}
       <SettingsModal

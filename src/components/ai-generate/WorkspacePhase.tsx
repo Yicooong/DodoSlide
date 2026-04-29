@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Code, Eye, RotateCcw, Download, ArrowLeft, Loader2, Square } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { CanvasRatio, getCanvasConfig } from '../../lib/canvas-config';
 import { useSlideRenderer } from '../../hooks/use-slide-renderer';
 import { ExportModal, ExportMode } from '../export/ExportModal';
@@ -109,35 +109,33 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   }, [canvasConfig.width]);
 
   return (
-    <div className="flex h-full">
-      {/* Left: AI Sidebar (30%) */}
-      <motion.div
-        initial={{ width: 0, opacity: 0 }}
-        animate={{ width: '30%', opacity: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="border-r flex flex-col h-full overflow-hidden shrink-0"
-        style={{
-          borderColor: 'var(--border-subtle)',
-          background: 'var(--bg-sidebar)',
-        }}
-      >
-        <AiAssistantSidebar
-          messages={messages}
-          onSendMessage={onSendMessage}
-          isGenerating={isGenerating}
-          error={error}
-          onRetry={onRetry}
-          canvasRatio={canvasRatio}
-        />
-      </motion.div>
+    <div className="h-full">
+    <PanelGroup orientation="horizontal" className="h-full" style={{ height: '100%' }}>
+      {/* Left: AI Sidebar */}
+      <Panel defaultSize="30%" minSize="20%" maxSize="45%" className="overflow-hidden">
+        <div
+          className="border-r flex flex-col h-full overflow-hidden"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            background: 'var(--bg-sidebar)',
+          }}
+        >
+          <AiAssistantSidebar
+            messages={messages}
+            onSendMessage={onSendMessage}
+            isGenerating={isGenerating}
+            error={error}
+            onRetry={onRetry}
+            canvasRatio={canvasRatio}
+          />
+        </div>
+      </Panel>
 
-      {/* Right: Content Area (70%) */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="flex-1 flex flex-col h-full overflow-hidden"
-      >
+      <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+
+      {/* Right: Content Area */}
+      <Panel defaultSize="70%" minSize="55%" className="overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden">
         {/* Top control bar */}
         <div
           className="flex items-center justify-between px-4 py-2 border-b shrink-0"
@@ -297,7 +295,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
 
           {/* Code mode */}
           <div
-            className={`absolute inset-0 transition-opacity duration-300 ${
+            className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${
               activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 -z-10 pointer-events-none'
             }`}
           >
@@ -308,26 +306,28 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             />
           </div>
         </div>
-      </motion.div>
+        </div>
+      </Panel>
+    </PanelGroup>
 
-      {/* Export Modal - rendered inside workspace */}
-      <ExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        isExporting={isExporting}
-        exportMode={exportMode}
-        setExportMode={setExportMode}
-        exportRangeStart={exportRangeStart}
-        setExportRangeStart={setExportRangeStart}
-        exportRangeEnd={exportRangeEnd}
-        setExportRangeEnd={setExportRangeEnd}
-        exportSpecificPage={exportSpecificPage}
-        setExportSpecificPage={setExportSpecificPage}
-        currentSlideIndex={currentSlideIndex}
-        totalSlides={slides.length}
-        currentSlideName={slides[currentSlideIndex]?.name || ''}
-        onExport={handleConfirmExport}
-      />
+    {/* Export Modal */}
+    <ExportModal
+      isOpen={showExportModal}
+      onClose={() => setShowExportModal(false)}
+      isExporting={isExporting}
+      exportMode={exportMode}
+      setExportMode={setExportMode}
+      exportRangeStart={exportRangeStart}
+      setExportRangeStart={setExportRangeStart}
+      exportRangeEnd={exportRangeEnd}
+      setExportRangeEnd={setExportRangeEnd}
+      exportSpecificPage={exportSpecificPage}
+      setExportSpecificPage={setExportSpecificPage}
+      currentSlideIndex={currentSlideIndex}
+      totalSlides={slides.length}
+      currentSlideName={slides[currentSlideIndex]?.name || ''}
+      onExport={handleConfirmExport}
+    />
     </div>
   );
 };

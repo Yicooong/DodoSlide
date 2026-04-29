@@ -38,7 +38,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
   const [editingSlideName, setEditingSlideName] = useState<string | null>(null);
 
   return (
-    <div className={`${collapsed ? 'w-12' : 'w-64'} border-r flex flex-col transition-all duration-300 relative`} style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
+    <div className="w-full h-full border-r flex flex-col relative" style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-subtle)' }}>
       {/* Header */}
       <div className="h-16 border-b flex items-center justify-between px-2" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className={`flex items-center gap-2 ${collapsed ? 'justify-center w-full' : ''}`}>

@@ -32,6 +32,7 @@ npm run lint         # TypeScript type check
 | PPTX generation | `pptxgenjs` |
 | Animations | `motion` (Framer Motion) |
 | Icons | `lucide-react` |
+| Resizable panels | `react-resizable-panels` |
 | Server | Express + Vite (dev) / static serve (prod) |
 
 ---
@@ -54,8 +55,9 @@ The AI generation page uses internal phase state (`'entry' | 'workspace'`) withi
    - Canvas ratio selector (16:9 / 4:3)
 
 2. **Workspace Phase** (`WorkspacePhase.tsx`):
-   - Left: AI assistant sidebar (30% width) with conversation history
-   - Right: Preview/code area (70%) with tab switching
+   - Left: AI assistant sidebar (resizable, default 30%) with conversation history
+   - Right: Preview/code area (resizable, default 70%) with tab switching
+   - Drag handle between panels for custom sizing (persisted to localStorage)
    - Stop button during generation
    - Export button triggers PPTX download (not navigation)
 
@@ -153,6 +155,14 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 - Provider manager pattern with strategy registry for API formats
 - AbortController support for cancelling generation
 
+### Resizable Panel System
+- Uses `react-resizable-panels` library for drag-to-resize functionality
+- **Editor view**: SlideSidebar (10-35%, collapsible) + Main content (50-100%)
+- **AI workspace**: AI sidebar (20-45%) + Content area (55-100%)
+- Panel sizes are automatically persisted to localStorage via `id` prop
+- `Separator` component provides visual drag handle with hover effects
+- `Group` component wraps panels with `orientation="horizontal"` for layout
+
 ---
 
 ## Development Guidelines
@@ -191,3 +201,25 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 3. **Export triggers PPTX download** — not navigation to code editor
 4. **Stop button available** — uses AbortController to cancel AI requests
 5. **Single slide generation only** — multi-slide feature was removed
+6. **Settings button is global** — available in both editor and AI generation pages
+7. **Panel sizes persist** — `react-resizable-panels` saves layout to localStorage automatically
+
+---
+
+## 自动化文档更新规则
+
+每次完成重大任务（包括但不限于：新增功能、修改架构、添加新组件、
+修改构建流程、新增依赖等）后，你必须：
+
+1. 检查 README.md 是否需要更新（项目功能说明、使用方法、依赖变化等）
+2. 检查 CLAUDE.md 是否需要更新（架构变化、新组件说明、开发指南等）
+3. 如果需要，直接修改对应文件，确保文档与代码保持同步
+
+## 端口清理规则
+
+每次完成任务后，必须清理可能占用的端口：
+```bash
+kill $(lsof -t -i:3000) 2>/dev/null; kill $(lsof -t -i:24678) 2>/dev/null
+```
+- 端口 3000：Vite 开发服务器
+- 端口 24678：Vite WebSocket 热更新服务
