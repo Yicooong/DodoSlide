@@ -37,6 +37,9 @@
   --shadow-preview: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   --ai-gradient-from: #f59e0b;
   --ai-gradient-to: #ef4444;
+  --glass-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(148, 163, 184, 0.15);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 /* Light Theme Variables */
@@ -63,4 +66,7 @@
   --shadow-preview: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   --ai-gradient-from: #f59e0b;
   --ai-gradient-to: #ef4444;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(148, 163, 184, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }

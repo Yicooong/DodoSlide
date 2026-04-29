@@ -121,14 +121,72 @@ export const buildFullPrompt = (
   canvasRatio?: CanvasRatio
 ): string => {
   const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
-  const basePrompt = settings.useDefaultPrompt 
+  const basePrompt = settings.useDefaultPrompt
     ? defaultPrompt
     : settings.customPrompt || defaultPrompt;
-  
+
   return `${basePrompt}
 
 ## User Request
 ${userInput}
 
+${settings.userInstructions ? `\n## Additional Instructions\n${settings.userInstructions}` : ''}`;
+};
+
+/**
+ * Build prompt with style template applied
+ */
+export const buildStylePrompt = (
+  userInput: string,
+  stylePrompt: string,
+  settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
+  canvasRatio?: CanvasRatio
+): string => {
+  const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
+  const basePrompt = settings.useDefaultPrompt
+    ? defaultPrompt
+    : settings.customPrompt || defaultPrompt;
+
+  return `${basePrompt}
+
+## Design Style
+${stylePrompt}
+
+## User Request
+${userInput}
+
+${settings.userInstructions ? `\n## Additional Instructions\n${settings.userInstructions}` : ''}`;
+};
+
+/**
+ * Build prompt for multi-slide generation
+ */
+export const buildMultiSlidePrompt = (
+  userInput: string,
+  slideIndex: number,
+  totalSlides: number,
+  previousSlidesSummary: string,
+  stylePrompt: string,
+  settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
+  canvasRatio?: CanvasRatio
+): string => {
+  const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
+  const basePrompt = settings.useDefaultPrompt
+    ? defaultPrompt
+    : settings.customPrompt || defaultPrompt;
+
+  return `${basePrompt}
+
+## Design Style
+${stylePrompt}
+
+## Multi-Slide Context
+This is slide ${slideIndex + 1} of ${totalSlides} total slides.
+${previousSlidesSummary ? `\n### Previous Slides Summary\n${previousSlidesSummary}` : ''}
+
+## User Request
+${userInput}
+
+Generate ONLY this single slide (slide ${slideIndex + 1}). Do not generate other slides.
 ${settings.userInstructions ? `\n## Additional Instructions\n${settings.userInstructions}` : ''}`;
 };

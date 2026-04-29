@@ -24,13 +24,12 @@ interface AppHeaderProps {
   appTheme: string;
   setAppTheme: (theme: string) => void;
   themeConfigs: ThemeConfig[];
-  showAiInput: boolean;
-  setShowAiInput: (show: boolean) => void;
   isGenerating: boolean;
   showSettings: boolean;
   setShowSettings: (show: boolean) => void;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExport: () => void;
+  onNavigateToAi?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -42,13 +41,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   appTheme,
   setAppTheme,
   themeConfigs,
-  showAiInput,
-  setShowAiInput,
   isGenerating,
   showSettings,
   setShowSettings,
   onUpload,
   onExport,
+  onNavigateToAi,
 }) => {
   return (
     <header className="h-16 border-b px-6 flex items-center justify-between" style={{ background: 'var(--bg-header)', borderColor: 'var(--border-subtle)', backdropFilter: 'blur(20px)' }}>
@@ -116,19 +114,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
-         <button
-            onClick={() => setShowAiInput(!showAiInput)}
-            disabled={isGenerating}
-            className="px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95"
-            style={{
-              background: showAiInput ? 'var(--accent-bg)' : 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))',
-              color: showAiInput ? 'var(--accent)' : 'white',
-              boxShadow: showAiInput ? 'none' : '0 4px 14px rgba(245, 158, 11, 0.3)'
-            }}
-         >
-            <Sparkles size={16} />
-            {showAiInput ? '关闭 AI' : 'AI 生成'}
-         </button>
+         {onNavigateToAi && (
+           <button
+              onClick={onNavigateToAi}
+              disabled={isGenerating}
+              className="px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))',
+                color: 'white',
+                boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
+              }}
+           >
+              <Sparkles size={16} />
+              AI 生成
+           </button>
+         )}
          <button
             onClick={() => setShowSettings(!showSettings)}
             className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:opacity-90"

@@ -21,7 +21,6 @@ import { SlidePreview } from './components/preview/SlidePreview';
 import { AppHeader } from './components/header/AppHeader';
 import { ExportModal, ExportMode } from './components/export/ExportModal';
 import { SettingsModal } from './components/SettingsModal';
-import { AiGenerationPanel } from './components/AiGenerationPanel';
 import LandingPage from './components/landing/LandingPage';
 import AiGeneratePage from './components/ai-generate/AiGeneratePage';
 
@@ -53,7 +52,6 @@ const App = () => {
   const [exportRangeStart, setExportRangeStart] = useState(1);
   const [exportRangeEnd, setExportRangeEnd] = useState(1);
   const [exportSpecificPage, setExportSpecificPage] = useState(1);
-  const [showAiInput, setShowAiInput] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Update code when current slide changes
@@ -84,32 +82,6 @@ const App = () => {
       };
       reader.readAsText(file);
     }
-  };
-
-  // Handle AI Generation
-  const handleAiGenerate = async (userInput: string, styleId: string = 'modern') => {
-    const styleInstructions: Record<string, string> = {
-      modern: '使用现代简约的设计风格，白色背景，深色文字，简洁的布局',
-      tech: '使用科技感的设计风格，蓝色为主色调，包含科技元素图标',
-      creative: '使用创意活泼的设计风格，鲜艳的色彩，动态的布局',
-      professional: '使用专业严谨的设计风格，简洁的配色，清晰的层次',
-      elegant: '使用优雅典雅的设计风格，柔和的色调，精致的排版',
-    };
-
-    const stylePrompt = styleInstructions[styleId] || '';
-    const enhancedPrompt = stylePrompt ? `${userInput}\n\n设计要求：${stylePrompt}` : userInput;
-
-    const result = await aiGen.generate(enhancedPrompt, appState.canvasRatio);
-    if (result.success && result.code) {
-      slidesHook.updateCurrentSlideCode(result.code);
-    }
-    return result;
-  };
-
-  // Handle AI Replace
-  const handleAiReplace = (code: string) => {
-    slidesHook.updateCurrentSlideCode(code);
-    appState.setActiveTab('code');
   };
 
   // Main export function supporting both current and all slides
@@ -218,7 +190,13 @@ const App = () => {
   if (appState.viewType === 'ai-generate') {
     return (
       <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
-        <AiGeneratePage onNavigate={handleNavigate} />
+        <AiGeneratePage
+          onNavigate={handleNavigate}
+          aiGen={aiGen}
+          canvasRatio={appState.canvasRatio}
+          setCanvasRatio={handleCanvasRatioChange}
+          slidesHook={slidesHook}
+        />
       </div>
     );
   }
@@ -253,13 +231,12 @@ const App = () => {
           appTheme={appState.appTheme}
           setAppTheme={handleThemeChange}
           themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
-          showAiInput={showAiInput}
-          setShowAiInput={setShowAiInput}
           isGenerating={aiGen.isGenerating}
           showSettings={showSettings}
           setShowSettings={setShowSettings}
           onUpload={handleFileUpload}
           onExport={handleExportClick}
+          onNavigateToAi={() => appState.setViewType('ai-generate')}
         />
 
         {/* Workspace Container */}
@@ -295,21 +272,6 @@ const App = () => {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         providerManager={aiGen.providerManager}
-        promptSettings={aiGen.promptSettings}
-        onUpdatePromptSettings={aiGen.updatePromptSettings}
-      />
-
-      {/* AI Generation Panel */}
-      <AiGenerationPanel
-        isVisible={showAiInput}
-        onClose={() => {
-          setShowAiInput(false);
-          aiGen.clearError();
-        }}
-        onGenerate={handleAiGenerate}
-        onReplace={handleAiReplace}
-        isGenerating={aiGen.isGenerating}
-        error={aiGen.error}
         promptSettings={aiGen.promptSettings}
         onUpdatePromptSettings={aiGen.updatePromptSettings}
       />

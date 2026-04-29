@@ -89,6 +89,38 @@ export const useSlides = (canvasRatio: CanvasRatio = '16:9') => {
     setCurrentSlideIndex(index + 1);
   }, [slides]);
 
+  /**
+   * Replace all slides at once
+   */
+  const setSlidesBulk = useCallback((newSlides: Slide[]) => {
+    setSlides(newSlides);
+    setCurrentSlideIndex(0);
+  }, []);
+
+  /**
+   * Update code for a specific slide by index
+   */
+  const setSlideCode = useCallback((index: number, code: string) => {
+    setSlides((prev: Slide[]) => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index] = { ...updated[index], code };
+      }
+      return updated;
+    });
+  }, []);
+
+  /**
+   * Insert slides after a given index
+   */
+  const insertSlides = useCallback((afterIndex: number, newSlides: Slide[]) => {
+    setSlides((prev: Slide[]) => {
+      const updated = [...prev];
+      updated.splice(afterIndex + 1, 0, ...newSlides);
+      return updated;
+    });
+  }, []);
+
   return {
     slides,
     currentSlideIndex,
@@ -98,5 +130,8 @@ export const useSlides = (canvasRatio: CanvasRatio = '16:9') => {
     deleteSlide,
     renameSlide,
     duplicateSlide,
+    setSlidesBulk,
+    setSlideCode,
+    insertSlides,
   };
 };

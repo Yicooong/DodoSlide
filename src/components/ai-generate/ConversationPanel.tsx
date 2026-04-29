@@ -1,6 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle, Edit3, Check, ChevronRight } from 'lucide-react';
 import { GenerationMode, GenerationContext } from './AiGeneratePage';
+import { CanvasRatio } from '../../lib/canvas-config';
+import { ViewType } from '../../hooks/use-app-state';
+
+interface AiGenProps {
+  isGenerating: boolean;
+  error: string | null;
+  generate: (userInput: string, canvasRatio?: CanvasRatio) => Promise<{ success: boolean; code?: string; error?: string }>;
+  clearError: () => void;
+}
+
+interface SlidesHook {
+  slides: Array<{ id: string; name: string; code: string }>;
+  currentSlideIndex: number;
+  setCurrentSlideIndex: (index: number) => void;
+  updateCurrentSlideCode: (code: string) => void;
+  addNewSlide: () => void;
+  setSlideCode: (index: number, code: string) => void;
+  setSlidesBulk: (slides: Array<{ id: string; name: string; code: string }>) => void;
+}
 
 // Guided mode conversation steps
 interface ConversationStep {
@@ -51,6 +70,10 @@ interface ConversationPanelProps {
   setMode: (mode: GenerationMode) => void;
   context: GenerationContext;
   onContextUpdate: (updates: Partial<GenerationContext>) => void;
+  aiGen: AiGenProps;
+  canvasRatio: CanvasRatio;
+  slidesHook: SlidesHook;
+  onNavigate: (view: ViewType) => void;
 }
 
 const ConversationPanel: React.FC<ConversationPanelProps> = ({
@@ -58,6 +81,10 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
   setMode,
   context,
   onContextUpdate,
+  aiGen,
+  canvasRatio,
+  slidesHook,
+  onNavigate,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [inputValue, setInputValue] = useState('');
@@ -127,13 +154,36 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     setInputValue('');
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate generation - in real app, this would call AI
-    setTimeout(() => {
+    aiGen.clearError();
+
+    // Build the user prompt from context
+    const promptParts: string[] = [];
+    if (context.purpose) promptParts.push(`目的：${context.purpose}`);
+    if (context.scenario) promptParts.push(`场景：${context.scenario}`);
+    if (context.tone) promptParts.push(`风格：${context.tone}`);
+    if (context.memory) promptParts.push(`核心信息：${context.memory}`);
+    if (context.preference) promptParts.push(`偏好：${context.preference}`);
+    if (context.directInput) promptParts.push(context.directInput);
+
+    const userPrompt = promptParts.length > 0
+      ? promptParts.join('\n')
+      : context.directInput || '创建一份演示文稿';
+
+    const selectedRatio = context.canvasRatio || canvasRatio;
+
+    try {
+      const result = await aiGen.generate(userPrompt, selectedRatio);
+      if (result.success && result.code) {
+        slidesHook.updateCurrentSlideCode(result.code);
+        onNavigate('code');
+      }
+    } catch (err) {
+      console.error('Generation failed:', err);
+    } finally {
       setIsGenerating(false);
-      // Navigate to code view with generated content
-    }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
