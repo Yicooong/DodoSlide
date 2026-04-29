@@ -11,6 +11,8 @@ import WorkspacePhase from './WorkspacePhase';
 
 interface AiGeneratePageProps {
   onNavigate: (view: ViewType) => void;
+  onExport: () => void;
+  onStopGenerate: () => void;
   aiGen: AiGenerationState & {
     generate: (userInput: string, canvasRatio?: CanvasRatio) => Promise<{ success: boolean; code?: string; error?: string }>;
     clearError: () => void;
@@ -24,8 +26,6 @@ interface AiGeneratePageProps {
     setCurrentSlideIndex: (index: number) => void;
     updateCurrentSlideCode: (code: string) => void;
     addNewSlide: () => void;
-    setSlideCode: (index: number, code: string) => void;
-    setSlidesBulk: (slides: Array<{ id: string; name: string; code: string }>) => void;
   };
 }
 
@@ -53,17 +53,17 @@ interface ChatMessage {
 
 const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   onNavigate,
+  onExport,
+  onStopGenerate,
   aiGen,
   canvasRatio,
   slidesHook,
 }) => {
   const [phase, setPhase] = useState<Phase>('entry');
   const [context, setContext] = useState<GenerationContext>({
-    pageCount: 10,
     canvasRatio: '16:9',
   });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [multiProgress, setMultiProgress] = useState<{ current: number; total: number } | undefined>();
 
   const handleContextUpdate = (updates: Partial<GenerationContext>) => {
     setContext(prev => ({ ...prev, ...updates }));
@@ -74,7 +74,6 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
     if (!prompt) return;
 
     const selectedRatio = context.canvasRatio || canvasRatio;
-    const pageCount = context.pageCount || 10;
     const styleId = context.selectedStyle || 'modern';
 
     // Add user message
@@ -83,13 +82,8 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
     // Transition to workspace
     setPhase('workspace');
 
-    if (pageCount > 1) {
-      // Multi-slide generation
-      await generateMultiSlides(prompt, pageCount, styleId, selectedRatio);
-    } else {
-      // Single slide generation
-      await generateSingleSlide(prompt, styleId, selectedRatio);
-    }
+    // Single slide generation only
+    await generateSingleSlide(prompt, styleId, selectedRatio);
   }, [context, canvasRatio, aiGen]);
 
   const generateSingleSlide = async (prompt: string, styleId: string, ratio: CanvasRatio) => {
@@ -104,52 +98,6 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
       setMessages(prev => [...prev, { role: 'ai', content: '幻灯片已生成！你可以在右侧预览效果，或告诉我需要修改的地方。' }]);
     } else {
       setMessages(prev => [...prev, { role: 'ai', content: `生成失败：${result.error || '未知错误'}` }]);
-    }
-  };
-
-  const generateMultiSlides = async (
-    prompt: string,
-    pageCount: number,
-    styleId: string,
-    ratio: CanvasRatio
-  ) => {
-    const stylePrompt = getStylePrompt(styleId);
-    const generated: Array<{ id: string; name: string; code: string }> = [];
-
-    setMultiProgress({ current: 0, total: pageCount });
-
-    for (let i = 0; i < pageCount; i++) {
-      setMultiProgress({ current: i, total: pageCount });
-
-      const summary = generated.length > 0
-        ? generated.map((s, idx) => `第${idx + 1}页：${s.name}`).join('；')
-        : '';
-
-      const slidePrompt = `${prompt}\n\n这是第 ${i + 1} 页，共 ${pageCount} 页。${summary ? `\n前面的页面：${summary}` : ''}\n\n设计要求：\n${stylePrompt}`;
-
-      const result = await aiGen.generate(slidePrompt, ratio);
-
-      if (result.success && result.code) {
-        generated.push({
-          id: Date.now().toString() + i,
-          name: `幻灯片 ${i + 1}`,
-          code: result.code,
-        });
-        // Update slides incrementally
-        slidesHook.setSlideCode(i, result.code);
-      } else {
-        setMessages(prev => [...prev, { role: 'ai', content: `第 ${i + 1} 页生成失败：${result.error}` }]);
-        break;
-      }
-    }
-
-    setMultiProgress(undefined);
-
-    if (generated.length > 0) {
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        content: `已成功生成 ${generated.length} 页幻灯片！你可以在下方切换页面预览，或告诉我需要修改的地方。`,
-      }]);
     }
   };
 
@@ -176,7 +124,6 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   const handleBack = () => {
     setPhase('entry');
     setMessages([]);
-    setMultiProgress(undefined);
   };
 
   return (
@@ -246,11 +193,11 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 isGenerating={aiGen.isGenerating}
-                generationProgress={multiProgress}
                 error={aiGen.error}
                 onRetry={handleStartGenerate}
                 onBack={handleBack}
-                onExport={() => onNavigate('code')}
+                onExport={onExport}
+                onStopGenerate={onStopGenerate}
               />
             </motion.div>
           )}

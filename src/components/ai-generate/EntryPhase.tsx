@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, MessageCircle, Edit3, ChevronDown } from 'lucide-react';
+import { Sparkles, Send, MessageCircle, Edit3 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { GenerationContext, GenerationMode } from './AiGeneratePage';
 import { STYLE_TEMPLATES } from '../../prompts/templates/index';
@@ -14,8 +14,6 @@ interface EntryPhaseProps {
   canvasRatio: CanvasRatio;
 }
 
-const PAGE_COUNT_OPTIONS = [5, 8, 10, 12, 15];
-
 const EntryPhase: React.FC<EntryPhaseProps> = ({
   context,
   onContextUpdate,
@@ -25,10 +23,8 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
 }) => {
   const [mode, setMode] = useState<GenerationMode>('direct');
   const [inputValue, setInputValue] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -63,16 +59,22 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
     }
   };
 
+  const quickPrompts = [
+    { label: '产品发布', icon: '🚀', prompt: '帮我做一份产品发布演示文稿，包含产品介绍、核心功能、市场分析和未来规划' },
+    { label: '技术分享', icon: '💻', prompt: '帮我做一份技术分享PPT，主题是微服务架构的最佳实践' },
+    { label: '商业路演', icon: '📊', prompt: '帮我做一份商业路演演示文稿，面向投资人，包含痛点、解决方案、商业模式和团队介绍' },
+    { label: '季度汇报', icon: '📈', prompt: '帮我做一份Q1季度工作汇报，包含业绩数据、项目进展和下季度计划' },
+  ];
+
   return (
     <div className="flex flex-col h-full overflow-auto">
-      {/* Hero area */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-8"
         >
           <h1
             className="text-4xl font-bold tracking-tight mb-3"
@@ -83,9 +85,41 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           >
             今天可以帮你做什么？
           </h1>
-          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
-            选择一个风格模板，描述你的需求，AI 为你生成专业幻灯片
+          <p className="text-base" style={{ color: 'var(--text-muted)' }}>
+            选择风格模板，描述你的需求，AI 为你生成专业幻灯片
           </p>
+        </motion.div>
+
+        {/* Quick prompt cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="w-full max-w-2xl mb-6"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {quickPrompts.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  setInputValue(item.prompt);
+                  setMode('direct');
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:scale-[1.01] cursor-pointer"
+                style={{
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid var(--glass-border)',
+                }}
+              >
+                <span className="text-xl">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
+                  <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>{item.prompt}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         {/* Glassmorphism Chat Box */}
@@ -139,7 +173,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="用 AnyGen 创造无限可能"
+                placeholder="描述你想要的幻灯片内容..."
                 rows={2}
                 className="w-full bg-transparent outline-none resize-none text-base leading-relaxed"
                 style={{
@@ -158,111 +192,41 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
             style={{ borderColor: 'var(--glass-border)' }}
           >
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all cursor-pointer hover:opacity-80"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                设置
-              </button>
-              <button
-                onClick={() => {
-                  const tags = ['10页左右', '包含数据图表', '简洁文字'];
-                  const current = inputValue || '';
-                  const newInput = current ? `${current} ${tags[0]}` : tags.join('，');
-                  setInputValue(newInput);
-                }}
-                className="px-2 py-1 rounded-md text-xs transition-all cursor-pointer hover:opacity-80"
-                style={{
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--glass-border)',
-                }}
-              >
-                + 标签
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                className="p-2 rounded-lg transition-all cursor-pointer hover:opacity-80"
-                style={{ color: 'var(--text-muted)' }}
-                title="语音输入"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  background: 'var(--accent)',
-                  color: 'var(--text-inverse)',
-                }}
-              >
-                {isGenerating ? (
-                  <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Settings panel */}
-          {showSettings && (
-            <div
-              className="px-4 py-3 border-t"
-              style={{ borderColor: 'var(--glass-border)' }}
-            >
-              <div className="flex items-center gap-4">
-                <div>
-                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
-                    页数
-                  </label>
-                  <div className="flex gap-1">
-                    {PAGE_COUNT_OPTIONS.map((count) => (
-                      <button
-                        key={count}
-                        onClick={() => onContextUpdate({ pageCount: count })}
-                        className="px-2 py-1 rounded text-xs transition-all cursor-pointer"
-                        style={{
-                          background: context.pageCount === count ? 'var(--accent)' : 'var(--bg-input)',
-                          color: context.pageCount === count ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                        }}
-                      >
-                        {count}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
-                    比例
-                  </label>
-                  <div className="flex gap-1">
-                    {(['16:9', '4:3'] as const).map((ratio) => (
-                      <button
-                        key={ratio}
-                        onClick={() => onContextUpdate({ canvasRatio: ratio })}
-                        className="px-2 py-1 rounded text-xs transition-all cursor-pointer"
-                        style={{
-                          background: context.canvasRatio === ratio ? 'var(--accent)' : 'var(--bg-input)',
-                          color: context.canvasRatio === ratio ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                        }}
-                      >
-                        {ratio}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="flex gap-1">
+                {(['16:9', '4:3'] as const).map((ratio) => (
+                  <button
+                    key={ratio}
+                    onClick={() => onContextUpdate({ canvasRatio: ratio })}
+                    className="px-2 py-1 rounded text-[10px] transition-all cursor-pointer"
+                    style={{
+                      background: context.canvasRatio === ratio ? 'var(--accent)' : 'transparent',
+                      color: context.canvasRatio === ratio ? 'var(--text-inverse)' : 'var(--text-muted)',
+                      border: `1px solid ${context.canvasRatio === ratio ? 'var(--accent)' : 'var(--glass-border)'}`,
+                    }}
+                  >
+                    {ratio}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: 'var(--accent)',
+                color: 'var(--text-inverse)',
+              }}
+            >
+              {isGenerating ? (
+                <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              生成
+            </button>
+          </div>
         </motion.div>
 
         {/* Style Template Cards */}
@@ -294,7 +258,6 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   );
 };
 
-// Guided mode inline input
 const GuidedInput: React.FC<{
   context: GenerationContext;
   onContextUpdate: (updates: Partial<GenerationContext>) => void;
@@ -304,8 +267,6 @@ const GuidedInput: React.FC<{
     { key: 'scenario' as const, label: '使用场景是什么？', placeholder: '例如：商业路演' },
     { key: 'tone' as const, label: '希望什么风格？', placeholder: '例如：科技未来感' },
   ];
-
-  const currentEmpty = steps.find(s => !context[s.key]);
 
   return (
     <div className="space-y-3">

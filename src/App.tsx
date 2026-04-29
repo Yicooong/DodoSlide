@@ -192,6 +192,8 @@ const App = () => {
       <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
         <AiGeneratePage
           onNavigate={handleNavigate}
+          onExport={handleExportClick}
+          onStopGenerate={aiGen.stopGenerate}
           aiGen={aiGen}
           canvasRatio={appState.canvasRatio}
           setCanvasRatio={handleCanvasRatioChange}
@@ -252,7 +254,7 @@ const App = () => {
           </div>
 
           {/* View: Preview */}
-          <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview)' }}>
+          <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
             <SlidePreview
               canvasConfig={appState.canvasConfig}
               scale={scale}

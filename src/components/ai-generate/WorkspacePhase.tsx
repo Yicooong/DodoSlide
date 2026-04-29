@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Code, Eye, RotateCcw, Download, ArrowLeft, Loader2 } from 'lucide-react';
+import { Code, Eye, RotateCcw, Download, ArrowLeft, Loader2, Square } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CanvasRatio, getCanvasConfig } from '../../lib/canvas-config';
 import { useSlideRenderer } from '../../hooks/use-slide-renderer';
@@ -25,11 +25,11 @@ interface WorkspacePhaseProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
-  generationProgress?: { current: number; total: number };
   error: string | null;
   onRetry: () => void;
   onBack: () => void;
   onExport: () => void;
+  onStopGenerate: () => void;
 }
 
 const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
@@ -41,11 +41,11 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   messages,
   onSendMessage,
   isGenerating,
-  generationProgress,
   error,
   onRetry,
   onBack,
   onExport,
+  onStopGenerate,
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [scale, setScale] = useState(0.75);
@@ -85,7 +85,6 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
           messages={messages}
           onSendMessage={onSendMessage}
           isGenerating={isGenerating}
-          generationProgress={generationProgress}
           error={error}
           onRetry={onRetry}
           canvasRatio={canvasRatio}
@@ -151,15 +150,29 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
                 生成中...
               </div>
             )}
-            <button
-              onClick={onRetry}
-              disabled={isGenerating}
-              className="p-1.5 rounded-lg transition-all cursor-pointer hover:opacity-80 disabled:opacity-40"
-              style={{ color: 'var(--text-muted)' }}
-              title="重新生成"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+            {isGenerating ? (
+              <button
+                onClick={onStopGenerate}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                style={{
+                  background: '#EF4444',
+                  color: '#ffffff',
+                }}
+                title="停止生成"
+              >
+                <Square className="w-3 h-3" />
+                停止
+              </button>
+            ) : (
+              <button
+                onClick={onRetry}
+                className="p-1.5 rounded-lg transition-all cursor-pointer hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
+                title="重新生成"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={onExport}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
@@ -204,7 +217,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 ${
               activeTab === 'preview' ? 'opacity-100 z-10' : 'opacity-0 -z-10 pointer-events-none'
             }`}
-            style={{ background: 'var(--bg-preview)' }}
+            style={{ background: 'var(--bg-preview-canvas)' }}
           >
             <div
               ref={containerRef}

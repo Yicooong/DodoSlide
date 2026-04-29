@@ -11,7 +11,6 @@ interface AiAssistantSidebarProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
-  generationProgress?: { current: number; total: number };
   error: string | null;
   onRetry: () => void;
   canvasRatio: CanvasRatio;
@@ -21,7 +20,6 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
   messages,
   onSendMessage,
   isGenerating,
-  generationProgress,
   error,
   onRetry,
   canvasRatio,
@@ -69,11 +67,6 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
         <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
           AI 助手
         </span>
-        {generationProgress && (
-          <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
-            {generationProgress.current}/{generationProgress.total}
-          </span>
-        )}
       </div>
 
       {/* Messages */}
@@ -111,33 +104,6 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
             </div>
           </div>
         ))}
-
-        {/* Generation progress */}
-        {isGenerating && generationProgress && (
-          <div className="flex gap-2">
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 animate-pulse"
-              style={{ background: 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))' }}
-            >
-              <Sparkles className="w-3 h-3 text-white" />
-            </div>
-            <div
-              className="px-3 py-2 rounded-xl rounded-tl-sm text-xs"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
-            >
-              正在生成第 {generationProgress.current + 1} 页...
-              <div className="mt-2 h-1 bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${((generationProgress.current + 1) / generationProgress.total) * 100}%`,
-                    background: 'linear-gradient(90deg, var(--ai-gradient-from), var(--ai-gradient-to))',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Error */}
         {error && (

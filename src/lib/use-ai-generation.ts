@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { PromptSettings, loadPromptSettings, savePromptSettings, buildFullPrompt } from './prompt-manager';
 import { useProviderManager } from './providers/use-provider-manager';
 import { apiStrategyRegistry } from './providers/api-strategy';
@@ -41,6 +41,7 @@ export const useAiGeneration = () => {
 
   const [promptSettings, setPromptSettings] = useState<PromptSettings>(() => loadPromptSettings());
   const providerManager = useProviderManager();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * Update prompt settings
@@ -106,6 +107,13 @@ export const useAiGeneration = () => {
       return { success: false, error: '请输入幻灯片描述' };
     }
 
+    // Abort any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setState({ isGenerating: true, error: null, lastGeneratedCode: null });
 
     try {
@@ -115,13 +123,17 @@ export const useAiGeneration = () => {
       if (!currentProvider.settingsConfig.endpoint) throw new Error('请先配置 API 端点');
       if (!currentProvider.settingsConfig.model) throw new Error('请先选择模型');
 
+      if (abortController.signal.aborted) throw new Error('已取消');
+
       const fullPrompt = buildFullPrompt(userInput, promptSettings, canvasRatio);
       const apiFormat = currentProvider.meta?.apiFormat ?? 'openai_compatible';
       const strategy = apiStrategyRegistry.getStrategy(apiFormat);
       const responseText = await strategy.callApi(fullPrompt, currentProvider.settingsConfig);
 
+      if (abortController.signal.aborted) throw new Error('已取消');
+
       const extractedCode = extractCodeFromResponse(responseText);
-      
+
       if (!extractedCode) {
         throw new Error('无法从 AI 响应中提取代码');
       }
@@ -134,6 +146,10 @@ export const useAiGeneration = () => {
 
       return { success: true, code: extractedCode };
     } catch (error: unknown) {
+      if (error instanceof Error && error.message === '已取消') {
+        setState({ isGenerating: false, error: null, lastGeneratedCode: null });
+        return { success: false, error: '已取消' };
+      }
       const errorMessage = error instanceof Error ? error.message : '生成失败，请重试';
       setState({
         isGenerating: false,
@@ -143,6 +159,14 @@ export const useAiGeneration = () => {
       return { success: false, error: errorMessage };
     }
   }, [providerManager, promptSettings]);
+
+  const stopGenerate = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setState({ isGenerating: false, error: null, lastGeneratedCode: null });
+  }, []);
 
   /**
    * Clear error state
@@ -154,6 +178,7 @@ export const useAiGeneration = () => {
   return {
     ...state,
     generate,
+    stopGenerate,
     clearError,
     providerManager,
     promptSettings,

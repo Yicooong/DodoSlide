@@ -16,7 +16,7 @@ export const useAppState = () => {
   const [viewType, setViewType] = useState<ViewType>('landing');
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('code');
   const [canvasRatio, setCanvasRatio] = useState<CanvasRatio>('16:9');
-  const [appTheme, setAppTheme] = useState<AppTheme>('dark');
+  const [appTheme, setAppTheme] = useState<AppTheme>('light');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const themeConfig = getThemeConfig(appTheme);

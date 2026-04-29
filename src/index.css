@@ -23,6 +23,7 @@
   --bg-input: #334155;
   --bg-button: #334155;
   --bg-preview: #0f172a;
+  --bg-preview-canvas: #ffffff;
   --bg-modal: #1e293b;
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
@@ -52,6 +53,7 @@
   --bg-input: #f1f5f9;
   --bg-button: #f1f5f9;
   --bg-preview: #f8fafc;
+  --bg-preview-canvas: #ffffff;
   --bg-modal: #ffffff;
   --text-primary: #1e293b;
   --text-secondary: #475569;
