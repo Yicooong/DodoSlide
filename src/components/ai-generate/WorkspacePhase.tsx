@@ -3,6 +3,8 @@ import { Code, Eye, RotateCcw, Download, ArrowLeft, Loader2, Square } from 'luci
 import { motion } from 'motion/react';
 import { CanvasRatio, getCanvasConfig } from '../../lib/canvas-config';
 import { useSlideRenderer } from '../../hooks/use-slide-renderer';
+import { ExportModal, ExportMode } from '../export/ExportModal';
+import { CodeEditor } from '../editor/CodeEditor';
 import AiAssistantSidebar from './AiAssistantSidebar';
 
 interface Slide {
@@ -22,13 +24,14 @@ interface WorkspacePhaseProps {
   setCurrentSlideIndex: (index: number) => void;
   updateCurrentSlideCode: (code: string) => void;
   canvasRatio: CanvasRatio;
+  monacoTheme: string;
   messages: Message[];
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
   error: string | null;
   onRetry: () => void;
   onBack: () => void;
-  onExport: () => void;
+  onExportPPTX: (mode: 'all' | 'current' | 'range', startPage?: number, endPage?: number) => Promise<void>;
   onStopGenerate: () => void;
 }
 
@@ -38,19 +41,56 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   setCurrentSlideIndex,
   updateCurrentSlideCode,
   canvasRatio,
+  monacoTheme,
   messages,
   onSendMessage,
   isGenerating,
   error,
   onRetry,
   onBack,
-  onExport,
+  onExportPPTX,
   onStopGenerate,
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [scale, setScale] = useState(0.75);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Export modal state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMode, setExportMode] = useState<ExportMode>('all');
+  const [exportRangeStart, setExportRangeStart] = useState(1);
+  const [exportRangeEnd, setExportRangeEnd] = useState(1);
+  const [exportSpecificPage, setExportSpecificPage] = useState(1);
+
+  const handleExportClick = () => {
+    setExportRangeStart(1);
+    setExportRangeEnd(slides.length);
+    setExportSpecificPage(currentSlideIndex + 1);
+    setShowExportModal(true);
+  };
+
+  const handleConfirmExport = async () => {
+    setIsExporting(true);
+    try {
+      if (exportMode === 'current') {
+        const pageIndex = exportSpecificPage - 1;
+        setCurrentSlideIndex(pageIndex);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await onExportPPTX('current');
+      } else if (exportMode === 'range') {
+        const start = Math.min(exportRangeStart, exportRangeEnd);
+        const end = Math.max(exportRangeStart, exportRangeEnd);
+        await onExportPPTX('range', start, end);
+      } else {
+        await onExportPPTX('all');
+      }
+    } finally {
+      setIsExporting(false);
+      setShowExportModal(false);
+    }
+  };
 
   const currentCode = slides[currentSlideIndex]?.code || '';
   const { error: renderError, RenderedSlide } = useSlideRenderer(currentCode);
@@ -174,7 +214,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
               </button>
             )}
             <button
-              onClick={onExport}
+              onClick={handleExportClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
               style={{
                 background: 'var(--accent)',
@@ -261,17 +301,33 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
               activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 -z-10 pointer-events-none'
             }`}
           >
-            <div className="h-full overflow-auto p-4">
-              <pre
-                className="text-xs leading-relaxed font-mono whitespace-pre-wrap"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {currentCode || '// 等待生成...'}
-              </pre>
-            </div>
+            <CodeEditor
+              code={currentCode || '// 等待生成...'}
+              onChange={updateCurrentSlideCode}
+              monacoTheme={monacoTheme}
+            />
           </div>
         </div>
       </motion.div>
+
+      {/* Export Modal - rendered inside workspace */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        isExporting={isExporting}
+        exportMode={exportMode}
+        setExportMode={setExportMode}
+        exportRangeStart={exportRangeStart}
+        setExportRangeStart={setExportRangeStart}
+        exportRangeEnd={exportRangeEnd}
+        setExportRangeEnd={setExportRangeEnd}
+        exportSpecificPage={exportSpecificPage}
+        setExportSpecificPage={setExportSpecificPage}
+        currentSlideIndex={currentSlideIndex}
+        totalSlides={slides.length}
+        currentSlideName={slides[currentSlideIndex]?.name || ''}
+        onExport={handleConfirmExport}
+      />
     </div>
   );
 };

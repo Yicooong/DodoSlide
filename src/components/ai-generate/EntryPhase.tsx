@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, MessageCircle, Edit3 } from 'lucide-react';
+import { Sparkles, Send, MessageCircle, Edit3, Layout } from 'lucide-react';
 import { motion } from 'motion/react';
 import { GenerationContext, GenerationMode } from './AiGeneratePage';
 import { STYLE_TEMPLATES } from '../../prompts/templates/index';
@@ -10,6 +10,7 @@ interface EntryPhaseProps {
   context: GenerationContext;
   onContextUpdate: (updates: Partial<GenerationContext>) => void;
   onStartGenerate: () => void;
+  onEnterWorkspace: () => void;
   isGenerating: boolean;
   canvasRatio: CanvasRatio;
 }
@@ -18,6 +19,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   context,
   onContextUpdate,
   onStartGenerate,
+  onEnterWorkspace,
   isGenerating,
   canvasRatio,
 }) => {
@@ -210,22 +212,37 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handleSubmit}
-              disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: 'var(--accent)',
-                color: 'var(--text-inverse)',
-              }}
-            >
-              {isGenerating ? (
-                <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              生成
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onEnterWorkspace}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer hover:opacity-80"
+                style={{
+                  background: 'var(--bg-button)',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--glass-border)',
+                }}
+                title="直接进入编辑模式"
+              >
+                <Layout className="w-4 h-4" />
+                直接编辑
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--text-inverse)',
+                }}
+              >
+                {isGenerating ? (
+                  <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                生成
+              </button>
+            </div>
           </div>
         </motion.div>
 

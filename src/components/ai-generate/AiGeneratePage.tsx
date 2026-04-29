@@ -11,7 +11,7 @@ import WorkspacePhase from './WorkspacePhase';
 
 interface AiGeneratePageProps {
   onNavigate: (view: ViewType) => void;
-  onExport: () => void;
+  onExportPPTX: (mode: 'all' | 'current' | 'range', startPage?: number, endPage?: number) => Promise<void>;
   onStopGenerate: () => void;
   aiGen: AiGenerationState & {
     generate: (userInput: string, canvasRatio?: CanvasRatio) => Promise<{ success: boolean; code?: string; error?: string }>;
@@ -20,6 +20,7 @@ interface AiGeneratePageProps {
   };
   canvasRatio: CanvasRatio;
   setCanvasRatio: (ratio: string) => void;
+  monacoTheme: string;
   slidesHook: {
     slides: Array<{ id: string; name: string; code: string }>;
     currentSlideIndex: number;
@@ -53,10 +54,11 @@ interface ChatMessage {
 
 const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   onNavigate,
-  onExport,
+  onExportPPTX,
   onStopGenerate,
   aiGen,
   canvasRatio,
+  monacoTheme,
   slidesHook,
 }) => {
   const [phase, setPhase] = useState<Phase>('entry');
@@ -121,6 +123,13 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
     }
   }, [context, canvasRatio, aiGen, slidesHook]);
 
+  const handleEnterWorkspace = useCallback(() => {
+    setPhase('workspace');
+    if (messages.length === 0) {
+      setMessages([{ role: 'ai', content: '已进入编辑模式。你可以在右侧预览幻灯片，或告诉我需要修改的地方。' }]);
+    }
+  }, [messages]);
+
   const handleBack = () => {
     setPhase('entry');
     setMessages([]);
@@ -171,6 +180,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 context={context}
                 onContextUpdate={handleContextUpdate}
                 onStartGenerate={handleStartGenerate}
+                onEnterWorkspace={handleEnterWorkspace}
                 isGenerating={aiGen.isGenerating}
                 canvasRatio={canvasRatio}
               />
@@ -190,13 +200,14 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 setCurrentSlideIndex={slidesHook.setCurrentSlideIndex}
                 updateCurrentSlideCode={slidesHook.updateCurrentSlideCode}
                 canvasRatio={canvasRatio}
+                monacoTheme={monacoTheme}
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 isGenerating={aiGen.isGenerating}
                 error={aiGen.error}
                 onRetry={handleStartGenerate}
                 onBack={handleBack}
-                onExport={onExport}
+                onExportPPTX={onExportPPTX}
                 onStopGenerate={onStopGenerate}
               />
             </motion.div>

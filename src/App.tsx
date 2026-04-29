@@ -192,11 +192,12 @@ const App = () => {
       <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
         <AiGeneratePage
           onNavigate={handleNavigate}
-          onExport={handleExportClick}
+          onExportPPTX={exportToPPTX}
           onStopGenerate={aiGen.stopGenerate}
           aiGen={aiGen}
           canvasRatio={appState.canvasRatio}
           setCanvasRatio={handleCanvasRatioChange}
+          monacoTheme={appState.themeConfig.monacoTheme}
           slidesHook={slidesHook}
         />
       </div>
