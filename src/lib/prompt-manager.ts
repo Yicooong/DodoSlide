@@ -22,10 +22,12 @@ import { IconName1, IconName2 } from 'lucide-react';
 
 const App = () => {
   return (
-    <div className="w-[1280px] h-[720px] bg-white p-12 flex flex-col">
-      <h1 className="text-6xl font-bold text-gray-900">Title</h1>
-      <div className="mt-8 text-2xl text-gray-600">Content here</div>
+    <div className="xxx xxx">
+      <h1 className="xxx">Title</h1>
+      <div className="xxx xxx">Content here</div>
     </div>
+    xxx
+    xxx
   );
 };
 
