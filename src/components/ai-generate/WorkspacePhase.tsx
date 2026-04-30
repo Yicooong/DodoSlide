@@ -1,21 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Code, Eye, RotateCcw, Download, ArrowLeft, Loader2, Square } from 'lucide-react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Code, Eye, RotateCcw, Download, ArrowLeft, PanelLeft, Plus } from 'lucide-react';
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { CanvasRatio, getCanvasConfig } from '../../lib/canvas-config';
 import { useSlideRenderer } from '../../hooks/use-slide-renderer';
 import { ExportModal, ExportMode } from '../export/ExportModal';
 import { CodeEditor } from '../editor/CodeEditor';
+import { UseConversationReturn } from '../../lib/chat/use-conversation';
 import AiAssistantSidebar from './AiAssistantSidebar';
+import ConversationListSidebar from './ConversationListSidebar';
 
 interface Slide {
   id: string;
   name: string;
   code: string;
-}
-
-interface Message {
-  role: 'user' | 'ai';
-  content: string;
 }
 
 interface WorkspacePhaseProps {
@@ -25,12 +27,14 @@ interface WorkspacePhaseProps {
   updateCurrentSlideCode: (code: string) => void;
   canvasRatio: CanvasRatio;
   monacoTheme: string;
-  messages: Message[];
+  conversation: UseConversationReturn;
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
   error: string | null;
   onRetry: () => void;
   onBack: () => void;
+  onNewConversation: () => void;
+  onSwitchConversation: (id: string) => void;
   onExportPPTX: (mode: 'all' | 'current' | 'range', startPage?: number, endPage?: number) => Promise<void>;
   onStopGenerate: () => void;
 }
@@ -42,17 +46,20 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   updateCurrentSlideCode,
   canvasRatio,
   monacoTheme,
-  messages,
+  conversation,
   onSendMessage,
   isGenerating,
   error,
   onRetry,
   onBack,
+  onNewConversation,
+  onSwitchConversation,
   onExportPPTX,
   onStopGenerate,
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [scale, setScale] = useState(0.75);
+  const [showConversations, setShowConversations] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -96,6 +103,11 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   const { error: renderError, RenderedSlide } = useSlideRenderer(currentCode);
   const canvasConfig = getCanvasConfig(canvasRatio);
 
+  // Get current message chain for display
+  const displayMessages = useMemo(() => {
+    return conversation.currentChain.filter(m => m.role !== 'system');
+  }, [conversation.currentChain]);
+
   // Auto-scale preview
   useEffect(() => {
     if (!containerRef.current) return;
@@ -111,8 +123,33 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   return (
     <div className="h-full">
     <PanelGroup orientation="horizontal" className="h-full" style={{ height: '100%' }}>
-      {/* Left: AI Sidebar */}
-      <Panel defaultSize="30%" minSize="20%" maxSize="45%" className="overflow-hidden">
+      {/* Left: Conversation List (collapsible) */}
+      {showConversations && (
+        <>
+          <Panel defaultSize="15%" minSize="12%" maxSize="25%" className="overflow-hidden">
+            <div
+              className="border-r flex flex-col h-full overflow-hidden"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                background: 'var(--bg-sidebar)',
+              }}
+            >
+              <ConversationListSidebar
+                conversations={conversation.conversations}
+                activeId={conversation.activeId}
+                onSwitch={onSwitchConversation}
+                onCreate={onNewConversation}
+                onDelete={conversation.deleteConversation}
+                onRename={conversation.renameConversation}
+              />
+            </div>
+          </Panel>
+          <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+        </>
+      )}
+
+      {/* Middle: AI Sidebar */}
+      <Panel defaultSize={showConversations ? '25%' : '30%'} minSize="20%" maxSize="45%" className="overflow-hidden">
         <div
           className="border-r flex flex-col h-full overflow-hidden"
           style={{
@@ -120,13 +157,34 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             background: 'var(--bg-sidebar)',
           }}
         >
+          {/* Toggle conversation list button */}
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+            <button
+              onClick={() => setShowConversations(!showConversations)}
+              className="p-1 rounded-md transition-all cursor-pointer hover:opacity-80"
+              style={{ color: showConversations ? 'var(--accent)' : 'var(--text-muted)' }}
+              title={showConversations ? '隐藏对话列表' : '显示对话列表'}
+            >
+              <PanelLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onNewConversation}
+              className="p-1 rounded-md transition-all cursor-pointer hover:opacity-80"
+              style={{ color: 'var(--text-muted)' }}
+              title="新建对话"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
           <AiAssistantSidebar
-            messages={messages}
+            messages={displayMessages}
             onSendMessage={onSendMessage}
             isGenerating={isGenerating}
             error={error}
             onRetry={onRetry}
+            onStopGenerate={onStopGenerate}
             canvasRatio={canvasRatio}
+            welcomeMessage="描述你想要的幻灯片，AI 将为你生成"
           />
         </div>
       </Panel>
@@ -134,7 +192,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
       <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
       {/* Right: Content Area */}
-      <Panel defaultSize="70%" minSize="55%" className="overflow-hidden">
+      <Panel defaultSize={showConversations ? '60%' : '70%'} minSize="45%" className="overflow-hidden">
         <div className="flex flex-col h-full overflow-hidden">
         {/* Top control bar */}
         <div
@@ -182,26 +240,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {isGenerating && (
-              <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                生成中...
-              </div>
-            )}
-            {isGenerating ? (
-              <button
-                onClick={onStopGenerate}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
-                style={{
-                  background: '#EF4444',
-                  color: '#ffffff',
-                }}
-                title="停止生成"
-              >
-                <Square className="w-3 h-3" />
-                停止
-              </button>
-            ) : (
+            {!isGenerating && (
               <button
                 onClick={onRetry}
                 className="p-1.5 rounded-lg transition-all cursor-pointer hover:opacity-80"

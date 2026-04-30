@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ApiFormat, ProviderSettingsConfig, ModelListResult } from './types';
+import type { ApiFormat, ApiCallOptions, ProviderSettingsConfig, ModelListResult } from './types';
 import { OpenAiCompatibleStrategy } from './openai-strategy';
 
 /**
@@ -11,6 +11,7 @@ import { OpenAiCompatibleStrategy } from './openai-strategy';
  */
 export interface ApiCallStrategy {
   callApi(prompt: string, config: ProviderSettingsConfig): Promise<string>;
+  callApiStream(options: ApiCallOptions, config: ProviderSettingsConfig): Promise<string>;
   listModels(config: ProviderSettingsConfig): Promise<ModelListResult>;
 }
 

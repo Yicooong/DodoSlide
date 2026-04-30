@@ -158,6 +158,53 @@ ${userInput}
 ${settings.userInstructions ? `\n## Additional Instructions\n${settings.userInstructions}` : ''}`;
 };
 
+/** Message in OpenAI messages format */
+export interface PromptMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * Build messages array for OpenAI-compatible API with conversation history.
+ * Uses proper system role and includes conversation context.
+ */
+export const buildMessages = (
+  systemPrompt: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant' | 'ai'; content: string }>,
+  currentUserInput: string,
+  stylePrompt?: string,
+  settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
+  canvasRatio?: CanvasRatio,
+): PromptMessage[] => {
+  const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
+  const baseSystemPrompt = settings.useDefaultPrompt
+    ? defaultPrompt
+    : settings.customPrompt || defaultPrompt;
+
+  const messages: PromptMessage[] = [
+    { role: 'system', content: baseSystemPrompt },
+  ];
+
+  // Add conversation history (last 10 messages to avoid token overflow)
+  const recentHistory = conversationHistory.slice(-10);
+  for (const msg of recentHistory) {
+    const role = msg.role === 'ai' ? 'assistant' : msg.role as 'user' | 'assistant';
+    messages.push({ role, content: msg.content });
+  }
+
+  // Build user message with optional style and instructions
+  let userContent = currentUserInput;
+  if (stylePrompt) {
+    userContent += `\n\n设计要求：\n${stylePrompt}`;
+  }
+  if (settings.userInstructions) {
+    userContent += `\n\n## Additional Instructions\n${settings.userInstructions}`;
+  }
+  messages.push({ role: 'user', content: userContent });
+
+  return messages;
+};
+
 /**
  * Build prompt for multi-slide generation
  */

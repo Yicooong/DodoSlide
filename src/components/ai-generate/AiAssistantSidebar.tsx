@@ -1,19 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, RotateCcw } from 'lucide-react';
-import { CanvasRatio } from '../../lib/canvas-config';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-interface Message {
-  role: 'user' | 'ai';
-  content: string;
-}
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Sparkles, Square } from 'lucide-react';
+import { CanvasRatio } from '../../lib/canvas-config';
+import type { ChatMessage } from '../../lib/chat/types';
+import MessageBubble from './MessageBubble';
 
 interface AiAssistantSidebarProps {
-  messages: Message[];
+  messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
   error: string | null;
   onRetry: () => void;
+  onStopGenerate: () => void;
+  onRetryMessage?: (messageId: string) => void;
   canvasRatio: CanvasRatio;
+  welcomeMessage?: string;
 }
 
 const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
@@ -22,14 +27,17 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
   isGenerating,
   error,
   onRetry,
+  onStopGenerate,
+  onRetryMessage,
   canvasRatio,
+  welcomeMessage,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isGenerating]);
 
   const handleSubmit = () => {
     if (!inputValue.trim() || isGenerating) return;
@@ -51,6 +59,8 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
     '换个配色方案',
   ];
 
+  const showWelcome = messages.length === 0 && !isGenerating;
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -71,48 +81,31 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
 
       {/* Messages */}
       <div className="flex-1 overflow-auto p-3 space-y-3">
-        {messages.length === 0 && !isGenerating && (
+        {showWelcome && (
           <div className="text-center py-8">
             <Sparkles className="w-8 h-8 mx-auto mb-3 opacity-30" style={{ color: 'var(--accent)' }} />
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              幻灯片已生成，你可以告诉我需要修改的地方
+              {welcomeMessage || '幻灯片已生成，你可以告诉我需要修改的地方'}
             </p>
           </div>
         )}
 
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            {msg.role === 'ai' && (
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))' }}
-              >
-                <Sparkles className="w-3 h-3 text-white" />
-              </div>
-            )}
-            <div
-              className={`max-w-[85%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
-                msg.role === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'
-              }`}
-              style={{
-                background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-card)',
-                color: msg.role === 'user' ? 'var(--text-inverse)' : 'var(--text-primary)',
-                border: msg.role === 'ai' ? '1px solid var(--border-subtle)' : 'none',
-              }}
-            >
-              {msg.content}
-            </div>
-          </div>
+        {messages.map((msg) => (
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            onRetry={onRetryMessage}
+          />
         ))}
 
-        {/* Error */}
-        {error && (
+        {/* Global error (legacy fallback) */}
+        {error && !messages.some(m => m.status === 'error') && (
           <div className="flex gap-2">
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
               style={{ background: '#EF4444' }}
             >
-              <RotateCcw className="w-3 h-3 text-white" />
+              <span className="text-white text-[10px]">!</span>
             </div>
             <div className="flex-1">
               <div
@@ -134,6 +127,36 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Generation status indicator — inside chat area */}
+      {isGenerating && (
+        <div
+          className="mx-3 mb-2 flex items-center justify-between px-3 py-2 rounded-lg"
+          style={{
+            background: 'rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(99, 102, 241, 0.2)',
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '300ms' }} />
+            </div>
+            <span className="text-[11px]" style={{ color: 'var(--accent)' }}>
+              AI 正在生成幻灯片...
+            </span>
+          </div>
+          <button
+            onClick={onStopGenerate}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-all cursor-pointer hover:opacity-80"
+            style={{ background: '#EF4444', color: '#fff' }}
+          >
+            <Square className="w-2.5 h-2.5" />
+            停止
+          </button>
+        </div>
+      )}
 
       {/* Quick actions */}
       {messages.length > 0 && !isGenerating && (

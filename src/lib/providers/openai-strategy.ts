@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ProviderSettingsConfig, ModelListResult } from './types';
+import type { ProviderSettingsConfig, ApiCallOptions, ModelListResult } from './types';
 import { normalizeEndpointUrl } from './types';
 import type { ApiCallStrategy } from './api-strategy';
 
@@ -47,6 +47,76 @@ export class OpenAiCompatibleStrategy implements ApiCallStrategy {
 
     const data = await response.json();
     return data.choices?.[0]?.message?.content || '';
+  }
+
+  /**
+   * Call the OpenAI-compatible API with streaming support.
+   * Uses ReadableStream to parse SSE events and call onDelta for each token.
+   */
+  async callApiStream(options: ApiCallOptions, config: ProviderSettingsConfig): Promise<string> {
+    const baseUrl = normalizeEndpointUrl(config.endpoint);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    };
+
+    if (config.customHeaders) {
+      Object.assign(headers, config.customHeaders);
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: config.model,
+        messages: options.messages,
+        temperature: options.temperature ?? config.temperature ?? 0.7,
+        max_tokens: options.maxTokens ?? config.maxTokens ?? 8192,
+        stream: true,
+      }),
+      signal: options.signal,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = this.getHttpErrorMessage(response.status, errorData);
+      throw new Error(errorMessage);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop()!;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') break;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content ?? '';
+          if (delta) {
+            fullContent += delta;
+            options.onDelta?.(delta);
+          }
+        } catch {
+          // Skip malformed JSON lines
+        }
+      }
+    }
+
+    return fullContent;
   }
 
   /**

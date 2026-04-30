@@ -86,6 +86,18 @@ export interface ProviderManagerState {
   currentProviderId: string;
 }
 
+// === API Call Options ===
+
+/** Options for API calls, supporting both single-prompt and messages-based calls */
+export interface ApiCallOptions {
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  signal?: AbortSignal;
+  stream?: boolean;
+  onDelta?: (delta: string) => void;
+  temperature?: number;
+  maxTokens?: number;
+}
+
 // === Result Types ===
 
 /** Validation result */

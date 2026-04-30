@@ -1,11 +1,22 @@
-import React, { useState, useCallback } from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useCallback, useRef } from 'react';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ViewType } from '../../hooks/use-app-state';
-import { CanvasRatio } from '../../lib/canvas-config';
+import { CanvasRatio, CANVAS_CONFIGS } from '../../lib/canvas-config';
 import { AiGenerationState } from '../../lib/use-ai-generation';
-import { buildStylePrompt } from '../../lib/prompt-manager';
+import { buildMessages, getDefaultSystemPrompt } from '../../lib/prompt-manager';
 import { getStylePrompt } from '../../prompts/templates/index';
+import { useConversation } from '../../lib/chat/use-conversation';
+import { useStreaming } from '../../lib/chat/use-streaming';
+import { extractCodeFromResponse } from '../../lib/chat/code-extractor';
+import { getDefaultCode } from '../../constants';
+import type { ProviderSettingsConfig } from '../../lib/providers/types';
+import type { Slide } from '../../hooks/use-slides';
 import EntryPhase from './EntryPhase';
 import WorkspacePhase from './WorkspacePhase';
 
@@ -17,15 +28,22 @@ interface AiGeneratePageProps {
     generate: (userInput: string, canvasRatio?: CanvasRatio) => Promise<{ success: boolean; code?: string; error?: string }>;
     clearError: () => void;
     promptSettings: any;
+    stopGenerate: () => void;
+    providerManager: {
+      getCurrentProvider: () => {
+        settingsConfig: ProviderSettingsConfig;
+      } | null;
+    };
   };
   canvasRatio: CanvasRatio;
   setCanvasRatio: (ratio: string) => void;
   monacoTheme: string;
   slidesHook: {
-    slides: Array<{ id: string; name: string; code: string }>;
+    slides: Slide[];
     currentSlideIndex: number;
     setCurrentSlideIndex: (index: number) => void;
     updateCurrentSlideCode: (code: string) => void;
+    setSlidesBulk: (slides: Slide[]) => void;
     addNewSlide: () => void;
   };
   showSettings: boolean;
@@ -49,11 +67,6 @@ export interface GenerationContext {
 
 type Phase = 'entry' | 'workspace';
 
-interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-}
-
 const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   onNavigate,
   onExportPPTX,
@@ -69,74 +82,237 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
   const [context, setContext] = useState<GenerationContext>({
     canvasRatio: '16:9',
   });
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const conversation = useConversation();
+  const { isStreaming, streamGenerate } = useStreaming();
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleContextUpdate = (updates: Partial<GenerationContext>) => {
     setContext(prev => ({ ...prev, ...updates }));
   };
 
+  const getProviderConfig = useCallback((): ProviderSettingsConfig | null => {
+    const provider = aiGen.providerManager.getCurrentProvider();
+    if (!provider?.settingsConfig?.apiKey || !provider?.settingsConfig?.endpoint || !provider?.settingsConfig?.model) {
+      return null;
+    }
+    return provider.settingsConfig;
+  }, [aiGen.providerManager]);
+
+  /** Save current slides to the active conversation */
+  const saveCurrentSlides = useCallback(() => {
+    if (conversation.activeId) {
+      conversation.updateSlides(conversation.activeId, slidesHook.slides);
+    }
+  }, [conversation, slidesHook.slides]);
+
+  /** Load slides from a conversation */
+  const loadSlidesFromConversation = useCallback((convId: string) => {
+    const savedSlides = conversation.getSlides(convId);
+    if (savedSlides && savedSlides.length > 0) {
+      slidesHook.setSlidesBulk(savedSlides);
+    } else {
+      // No saved slides, use default
+      const ratio = conversation.activeConversation?.canvasRatio || canvasRatio;
+      slidesHook.setSlidesBulk([{ id: '1', name: '幻灯片 1', code: getDefaultCode(ratio) }]);
+    }
+  }, [conversation, canvasRatio, slidesHook]);
+
+  /** Handle conversation switch — save current, load target */
+  const handleSwitchConversation = useCallback((id: string) => {
+    saveCurrentSlides();
+    conversation.switchConversation(id);
+    loadSlidesFromConversation(id);
+  }, [saveCurrentSlides, conversation, loadSlidesFromConversation]);
+
+  /** Create a new conversation and stay in workspace */
+  const handleNewConversation = useCallback(() => {
+    // Save current slides to current conversation
+    saveCurrentSlides();
+
+    const ratio = canvasRatio;
+    const newSlides: Slide[] = [{ id: '1', name: '幻灯片 1', code: getDefaultCode(ratio) }];
+
+    const conv = conversation.createConversation('新对话', undefined, ratio, newSlides);
+
+    // Clear slides to default
+    slidesHook.setSlidesBulk(newSlides);
+
+    // Stay in workspace
+    setPhase('workspace');
+  }, [saveCurrentSlides, canvasRatio, conversation, slidesHook]);
+
   const handleStartGenerate = useCallback(async () => {
     const prompt = context.directInput || buildGuidedPrompt(context);
     if (!prompt) return;
 
+    const config = getProviderConfig();
+    if (!config) {
+      // Fallback to legacy generate if provider not configured
+      const selectedRatio = context.canvasRatio || canvasRatio;
+      const result = await aiGen.generate(prompt, selectedRatio);
+      if (result.success && result.code) {
+        slidesHook.updateCurrentSlideCode(result.code);
+      }
+      return;
+    }
+
     const selectedRatio = context.canvasRatio || canvasRatio;
     const styleId = context.selectedStyle || 'modern';
+    const stylePrompt = getStylePrompt(styleId);
+    const systemPrompt = getDefaultSystemPrompt(selectedRatio);
+
+    // Create new conversation with current slides
+    const conv = conversation.createConversation(
+      prompt.slice(0, 30) + (prompt.length > 30 ? '...' : ''),
+      styleId,
+      selectedRatio,
+      [...slidesHook.slides],
+    );
 
     // Add user message
-    setMessages([{ role: 'user', content: prompt }]);
+    const userMsg = conversation.addUserMessage(conv.id, prompt);
 
     // Transition to workspace
     setPhase('workspace');
 
-    // Single slide generation only
-    await generateSingleSlide(prompt, styleId, selectedRatio);
-  }, [context, canvasRatio, aiGen]);
+    // Create assistant placeholder
+    const assistantMsg = conversation.addAssistantMessage(conv.id, userMsg.id, '');
 
-  const generateSingleSlide = async (prompt: string, styleId: string, ratio: CanvasRatio) => {
-    const stylePrompt = getStylePrompt(styleId);
-    const enhancedPrompt = stylePrompt
-      ? `${prompt}\n\n设计要求：\n${stylePrompt}`
-      : prompt;
+    // Build messages with proper system role
+    const messages = buildMessages(systemPrompt, [], prompt, stylePrompt, aiGen.promptSettings, selectedRatio);
 
-    const result = await aiGen.generate(enhancedPrompt, ratio);
-    if (result.success && result.code) {
-      slidesHook.updateCurrentSlideCode(result.code);
-      setMessages(prev => [...prev, { role: 'ai', content: '幻灯片已生成！你可以在右侧预览效果，或告诉我需要修改的地方。' }]);
-    } else {
-      setMessages(prev => [...prev, { role: 'ai', content: `生成失败：${result.error || '未知错误'}` }]);
-    }
-  };
+    // Stream generate
+    abortRef.current = new AbortController();
+    await streamGenerate({
+      messages,
+      config,
+      signal: abortRef.current.signal,
+      onDelta: (delta) => {
+        conversation.appendToMessage(conv.id, assistantMsg.id, delta);
+      },
+      onDone: (fullContent) => {
+        const extracted = extractCodeFromResponse(fullContent);
+        if (extracted) {
+          slidesHook.updateCurrentSlideCode(extracted);
+          // Save slides to conversation after generation
+          const updatedSlides = [...slidesHook.slides];
+          updatedSlides[slidesHook.currentSlideIndex] = {
+            ...updatedSlides[slidesHook.currentSlideIndex],
+            code: extracted,
+          };
+          conversation.updateSlides(conv.id, updatedSlides);
+
+          conversation.updateMessage(conv.id, assistantMsg.id, {
+            status: 'complete',
+            content: '幻灯片已生成并同步到编辑区',
+            code: extracted,
+          });
+        } else {
+          conversation.updateMessage(conv.id, assistantMsg.id, {
+            status: 'error',
+            content: fullContent,
+            error: '无法从 AI 响应中提取代码',
+          });
+        }
+        conversation.commitMessage(conv.id);
+      },
+      onError: (error) => {
+        conversation.updateMessage(conv.id, assistantMsg.id, {
+          status: 'error',
+          error,
+        });
+        conversation.commitMessage(conv.id);
+      },
+    });
+  }, [context, canvasRatio, aiGen, slidesHook, conversation, streamGenerate, getProviderConfig]);
 
   const handleSendMessage = useCallback(async (message: string) => {
-    setMessages(prev => [...prev, { role: 'user', content: message }]);
+    if (!conversation.activeId) return;
 
-    const selectedRatio = context.canvasRatio || canvasRatio;
-    const styleId = context.selectedStyle || 'modern';
-    const stylePrompt = getStylePrompt(styleId);
-
-    const result = await aiGen.generate(
-      `${message}\n\n基于当前幻灯片内容进行修改。\n\n设计要求：\n${stylePrompt}`,
-      selectedRatio
-    );
-
-    if (result.success && result.code) {
-      slidesHook.updateCurrentSlideCode(result.code);
-      setMessages(prev => [...prev, { role: 'ai', content: '已更新！告诉我还需要调整什么。' }]);
-    } else {
-      setMessages(prev => [...prev, { role: 'ai', content: `修改失败：${result.error || '未知错误'}` }]);
+    const config = getProviderConfig();
+    if (!config) {
+      // Fallback to legacy
+      await aiGen.generate(message, canvasRatio);
+      return;
     }
-  }, [context, canvasRatio, aiGen, slidesHook]);
+
+    const conv = conversation.activeConversation!;
+    const userMsg = conversation.addUserMessage(conv.id, message);
+
+    const selectedRatio = conv.canvasRatio || canvasRatio;
+    const styleId = conv.styleId || 'modern';
+    const stylePrompt = getStylePrompt(styleId);
+    const systemPrompt = getDefaultSystemPrompt(selectedRatio);
+
+    // Build conversation history for context
+    const chain = conversation.currentChain;
+    const historyMessages = chain
+      .filter(m => m.id !== userMsg.id) // Exclude the just-added user message
+      .map(m => ({
+        role: m.role === 'assistant' ? 'assistant' as const : m.role as 'user' | 'assistant',
+        content: m.role === 'assistant' ? (m.code || m.content) : m.content,
+      }));
+
+    const messages = buildMessages(systemPrompt, historyMessages, message, stylePrompt, aiGen.promptSettings, selectedRatio);
+
+    const assistantMsg = conversation.addAssistantMessage(conv.id, userMsg.id, '');
+
+    abortRef.current = new AbortController();
+    await streamGenerate({
+      messages,
+      config,
+      signal: abortRef.current.signal,
+      onDelta: (delta) => {
+        conversation.appendToMessage(conv.id, assistantMsg.id, delta);
+      },
+      onDone: (fullContent) => {
+        const extracted = extractCodeFromResponse(fullContent);
+        if (extracted) {
+          slidesHook.updateCurrentSlideCode(extracted);
+          // Save slides to conversation after generation
+          const updatedSlides = [...slidesHook.slides];
+          updatedSlides[slidesHook.currentSlideIndex] = {
+            ...updatedSlides[slidesHook.currentSlideIndex],
+            code: extracted,
+          };
+          conversation.updateSlides(conv.id, updatedSlides);
+
+          conversation.updateMessage(conv.id, assistantMsg.id, {
+            status: 'complete',
+            content: '幻灯片已更新并同步到编辑区',
+            code: extracted,
+          });
+        } else {
+          conversation.updateMessage(conv.id, assistantMsg.id, {
+            status: 'error',
+            content: fullContent,
+            error: '无法从 AI 响应中提取代码',
+          });
+        }
+        conversation.commitMessage(conv.id);
+      },
+      onError: (error) => {
+        conversation.updateMessage(conv.id, assistantMsg.id, {
+          status: 'error',
+          error,
+        });
+        conversation.commitMessage(conv.id);
+      },
+    });
+  }, [conversation, canvasRatio, aiGen, slidesHook, streamGenerate, getProviderConfig]);
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+    aiGen.stopGenerate();
+  }, [aiGen]);
 
   const handleEnterWorkspace = useCallback(() => {
     setPhase('workspace');
-    if (messages.length === 0) {
-      setMessages([{ role: 'ai', content: '已进入编辑模式。你可以在右侧预览幻灯片，或告诉我需要修改的地方。' }]);
-    }
-  }, [messages]);
+  }, []);
 
   const handleBack = () => {
     setPhase('entry');
-    setMessages([]);
   };
 
   return (
@@ -195,7 +371,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 onContextUpdate={handleContextUpdate}
                 onStartGenerate={handleStartGenerate}
                 onEnterWorkspace={handleEnterWorkspace}
-                isGenerating={aiGen.isGenerating}
+                isGenerating={aiGen.isGenerating || isStreaming}
                 canvasRatio={canvasRatio}
               />
             </motion.div>
@@ -215,14 +391,16 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 updateCurrentSlideCode={slidesHook.updateCurrentSlideCode}
                 canvasRatio={canvasRatio}
                 monacoTheme={monacoTheme}
-                messages={messages}
+                conversation={conversation}
                 onSendMessage={handleSendMessage}
-                isGenerating={aiGen.isGenerating}
+                isGenerating={aiGen.isGenerating || isStreaming}
                 error={aiGen.error}
                 onRetry={handleStartGenerate}
                 onBack={handleBack}
+                onNewConversation={handleNewConversation}
+                onSwitchConversation={handleSwitchConversation}
                 onExportPPTX={onExportPPTX}
-                onStopGenerate={onStopGenerate}
+                onStopGenerate={handleStop}
               />
             </motion.div>
           )}

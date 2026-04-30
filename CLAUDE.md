@@ -33,6 +33,7 @@ npm run lint         # TypeScript type check
 | Animations | `motion` (Framer Motion) |
 | Icons | `lucide-react` |
 | Resizable panels | `react-resizable-panels` |
+| ID generation | `nanoid` |
 | Server | Express + Vite (dev) / static serve (prod) |
 
 ---
@@ -55,13 +56,40 @@ The AI generation page uses internal phase state (`'entry' | 'workspace'`) withi
    - Canvas ratio selector (16:9 / 4:3)
 
 2. **Workspace Phase** (`WorkspacePhase.tsx`):
-   - Left: AI assistant sidebar (resizable, default 30%) with conversation history
-   - Right: Preview/code area (resizable, default 70%) with tab switching
+   - Left: Conversation list sidebar (collapsible, default 15%)
+   - Middle: AI assistant sidebar (resizable, default 25%)
+   - Right: Preview/code area (resizable, default 60%) with tab switching
    - Drag handle between panels for custom sizing (persisted to localStorage)
    - Stop button during generation
    - Export button triggers PPTX download (not navigation)
 
 3. **Phase Transition**: Uses `motion` `AnimatePresence` for smooth morphing animation
+
+### Chat System
+The chat system provides conversation management with history persistence:
+
+1. **Data Model** (`lib/chat/types.ts`):
+   - `ChatMessage`: Messages with tree structure (parentId/childrenIds), supports branching
+   - `Conversation`: Contains messages map, currentId for active chain
+   - `MessageStatus`: pending → streaming → complete/error
+
+2. **Storage Layer** (`lib/chat/conversation-storage.ts`):
+   - localStorage persistence under `gemini_conversations`
+   - Auto-trim to 50 conversations max
+
+3. **Conversation Manager** (`lib/chat/conversation-manager.ts`):
+   - CRUD operations for conversations and messages
+   - Message chain traversal from root to leaf
+   - Streaming append support with commit
+
+4. **Streaming Support** (`lib/providers/openai-strategy.ts`):
+   - `callApiStream()`: SSE streaming via ReadableStream
+   - `onDelta` callback for real-time token updates
+   - Proper system role usage in messages array
+
+5. **Hooks**:
+   - `useConversation`: React hook for conversation state management
+   - `useStreaming`: Hook for SSE streaming API calls
 
 ### Theme System
 - **Default theme**: Light mode
@@ -98,8 +126,10 @@ src/
 │   ├── ai-generate/
 │   │   ├── AiGeneratePage.tsx  — Phase orchestrator (entry ↔ workspace)
 │   │   ├── EntryPhase.tsx      — Glassmorphism chat + style cards
-│   │   ├── WorkspacePhase.tsx  — AI sidebar + preview/code area
-│   │   ├── AiAssistantSidebar.tsx — Conversation UI
+│   │   ├── WorkspacePhase.tsx  — Conversation list + AI sidebar + preview/code
+│   │   ├── AiAssistantSidebar.tsx — Conversation UI with MessageBubble
+│   │   ├── ConversationListSidebar.tsx — Conversation list with search/rename
+│   │   ├── MessageBubble.tsx   — Message rendering with streaming/status support
 │   │   ├── TemplateCard.tsx    — Style preset card with thumbnail
 │   │   ├── ConversationPanel.tsx — Legacy panel (unused)
 │   │   └── StylePanel.tsx      — Legacy panel (unused)
@@ -122,7 +152,21 @@ src/
 │   ├── prompt-manager.ts       — System prompt + style prompt building
 │   ├── use-ai-generation.ts    — AI generation hook with abort support
 │   ├── pptx-exporter.ts        — DOM-to-PPTX conversion pipeline
-│   └── utils.ts                — cn() utility (clsx + tailwind-merge)
+│   ├── utils.ts                — cn() utility (clsx + tailwind-merge)
+│   ├── chat/
+│   │   ├── types.ts            — ChatMessage, Conversation types
+│   │   ├── conversation-storage.ts — localStorage persistence
+│   │   ├── conversation-manager.ts — Conversation CRUD logic
+│   │   ├── use-conversation.ts — React hook for conversations
+│   │   ├── use-streaming.ts    — SSE streaming hook
+│   │   └── code-extractor.ts   — Extract JSX from AI responses
+│   └── providers/
+│       ├── types.ts            — Provider, ApiCallOptions types
+│       ├── api-strategy.ts     — Strategy registry
+│       ├── openai-strategy.ts  — OpenAI-compatible API (streaming)
+│       ├── provider-manager.ts — Provider CRUD
+│       ├── provider-storage.ts — localStorage persistence
+│       └── use-provider-manager.ts — React hook bridge
 └── prompts/
     └── templates/
         ├── index.ts            — Template registry (5 styles)
@@ -154,6 +198,8 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 - API settings stored in localStorage under `api_settings`
 - Provider manager pattern with strategy registry for API formats
 - AbortController support for cancelling generation
+- **Streaming support**: `callApiStream()` uses SSE via ReadableStream for real-time token delivery
+- **Message format**: Uses OpenAI messages array with proper system role (not single prompt)
 
 ### Resizable Panel System
 - Uses `react-resizable-panels` library for drag-to-resize functionality
@@ -203,6 +249,10 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 5. **Single slide generation only** — multi-slide feature was removed
 6. **Settings button is global** — available in both editor and AI generation pages
 7. **Panel sizes persist** — `react-resizable-panels` saves layout to localStorage automatically
+8. **Conversation system** — Messages use tree structure with parentId/childrenIds for branching
+9. **Streaming responses** — AI responses stream token-by-token via SSE (ReadableStream)
+10. **Conversation history** — Last 10 messages sent as context for follow-up requests
+11. **localStorage persistence** — Conversations stored under `gemini_conversations` key (max 50)
 
 ---
 
