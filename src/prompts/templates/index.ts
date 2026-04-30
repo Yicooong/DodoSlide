@@ -4,12 +4,32 @@ import creativeStyle from './creative/style.txt?raw';
 import professionalStyle from './professional/style.txt?raw';
 import elegantStyle from './elegant/style.txt?raw';
 
+// Workflow imports (explicit per style)
+import modernWorkflow from './modern/workflow.md?raw';
+
+// Reference JSX imports (glob auto-discovery)
+const referenceModules = import.meta.glob('./**/reference_*.jsx', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+function getReferencesForStyle(styleId: string): string[] {
+  const prefix = `./${styleId}/reference_`;
+  return Object.entries(referenceModules)
+    .filter(([path]) => path.startsWith(prefix))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, content]) => content);
+}
+
 export interface StyleTemplate {
   id: string;
   name: string;
   description: string;
   colors: string[];
   stylePrompt: string;
+  workflowPrompt?: string;
+  referenceExamples?: string[];
 }
 
 export const STYLE_TEMPLATES: StyleTemplate[] = [
@@ -19,6 +39,8 @@ export const STYLE_TEMPLATES: StyleTemplate[] = [
     description: '白色背景，深色文字，简洁留白',
     colors: ['#FFFFFF', '#6366F1', '#1E293B'],
     stylePrompt: modernStyle,
+    workflowPrompt: modernWorkflow,
+    referenceExamples: getReferencesForStyle('modern'),
   },
   {
     id: 'tech',
@@ -56,4 +78,28 @@ export function getStyleTemplate(id: string): StyleTemplate | undefined {
 
 export function getStylePrompt(id: string): string {
   return getStyleTemplate(id)?.stylePrompt || '';
+}
+
+export function getWorkflowPrompt(id: string): string | undefined {
+  return getStyleTemplate(id)?.workflowPrompt;
+}
+
+export function getReferenceExamples(id: string): string[] {
+  return getStyleTemplate(id)?.referenceExamples || [];
+}
+
+/** Complete prompt bundle for a style (style + workflow + references). */
+export interface StylePromptBundle {
+  stylePrompt: string;
+  workflowPrompt?: string;
+  referenceExamples?: string[];
+}
+
+export function getStylePromptBundle(id: string): StylePromptBundle {
+  const t = getStyleTemplate(id);
+  return {
+    stylePrompt: t?.stylePrompt || '',
+    workflowPrompt: t?.workflowPrompt,
+    referenceExamples: t?.referenceExamples,
+  };
 }

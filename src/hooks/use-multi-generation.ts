@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { CanvasRatio } from '../lib/canvas-config';
 import { buildMultiSlidePrompt, PromptSettings } from '../lib/prompt-manager';
-import { getStylePrompt } from '../prompts/templates/index';
+import { getStylePromptBundle } from '../prompts/templates/index';
 
 export interface MultiSlideGenerationState {
   isGenerating: boolean;
@@ -47,7 +47,7 @@ export const useMultiGeneration = () => {
       error: null,
     });
 
-    const stylePrompt = getStylePrompt(styleId);
+    const styleBundle = getStylePromptBundle(styleId);
     const generated: Array<{ index: number; code: string }> = [];
     const summaries: string[] = [];
 
@@ -64,7 +64,7 @@ export const useMultiGeneration = () => {
           i,
           pageCount,
           previousSummary,
-          stylePrompt,
+          styleBundle,
           promptSettings,
           canvasRatio
         );

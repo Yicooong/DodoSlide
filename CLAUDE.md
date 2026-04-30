@@ -99,12 +99,13 @@ The chat system provides conversation management with history persistence:
 
 ### AI Generation Flow
 1. User enters prompt in EntryPhase (direct or guided mode)
-2. Style prompt is appended via `getStylePrompt(styleId)`
-3. `useAiGeneration().generate()` calls the API
-4. Response is extracted via regex patterns
-5. Code is applied to current slide via `slidesHook.updateCurrentSlideCode()`
-6. Phase transitions to workspace for preview and refinement
-7. User can send follow-up messages to modify the slide
+2. Style prompt bundle is assembled via `getStylePromptBundle(styleId)` (style.txt + workflow.md + reference JSX)
+3. `buildMessages()` places workflow & references in system message, style.txt in user message
+4. `useAiGeneration().generate()` calls the API
+5. Response is extracted via regex patterns
+6. Code is applied to current slide via `slidesHook.updateCurrentSlideCode()`
+7. Phase transitions to workspace for preview and refinement
+8. User can send follow-up messages to modify the slide
 
 ---
 
@@ -169,8 +170,11 @@ src/
 │       └── use-provider-manager.ts — React hook bridge
 └── prompts/
     └── templates/
-        ├── index.ts            — Template registry (5 styles)
-        └── {style}/style.txt   — Style prompt files (?raw import)
+        ├── index.ts            — Template registry (5 styles) + bundle accessors
+        └── {style}/
+            ├── style.txt       — Visual style prompt (required, ?raw import)
+            ├── workflow.md      — Design methodology SOP (optional, ?raw import)
+            └── reference_*.jsx  — Reference slide examples (optional, glob auto-discovery)
 ```
 
 ---
@@ -201,6 +205,13 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 - **Streaming support**: `callApiStream()` uses SSE via ReadableStream for real-time token delivery
 - **Message format**: Uses OpenAI messages array with proper system role (not single prompt)
 
+### Prompt Assembly System
+- **StylePromptBundle**: Combines style.txt (visual rules), workflow.md (design methodology), and reference JSX (few-shot examples)
+- **Placement**: workflow.md & references go in system message; style.txt stays in user message
+- **Backward compatible**: `buildMessages()` accepts either a plain string or a `StylePromptBundle`
+- **Token control**: `PromptAssemblyOptions` allows disabling workflow/references per call
+- **Auto-discovery**: Reference JSX files are loaded via `import.meta.glob('./**/reference_*.jsx')` — adding files to any style directory requires no code changes
+
 ### Resizable Panel System
 - Uses `react-resizable-panels` library for drag-to-resize functionality
 - **Editor view**: SlideSidebar (10-35%, collapsible) + Main content (50-100%)
@@ -219,9 +230,11 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 3. Test thumbnail rendering and export
 
 ### Adding New AI Styles
-1. Create `src/prompts/templates/{name}/style.txt` with style instructions
-2. Register in `src/prompts/templates/index.ts`
-3. Style is automatically available in EntryPhase template cards
+1. Create `src/prompts/templates/{name}/style.txt` with style instructions (required)
+2. Optionally add `workflow.md` (design methodology) and `reference_*.jsx` (example slides)
+3. Register in `src/prompts/templates/index.ts`: add style.txt import, workflow.md import if present, and template entry
+4. Reference JSX files are auto-discovered via `import.meta.glob` — no import needed
+5. Style is automatically available in EntryPhase template cards
 
 ### Theme Extensions
 1. Add CSS variables to both `.dark` and `.light` in `index.css`

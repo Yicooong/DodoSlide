@@ -10,7 +10,7 @@ import { ViewType } from '../../hooks/use-app-state';
 import { CanvasRatio, CANVAS_CONFIGS } from '../../lib/canvas-config';
 import { AiGenerationState } from '../../lib/use-ai-generation';
 import { buildMessages, getDefaultSystemPrompt } from '../../lib/prompt-manager';
-import { getStylePrompt } from '../../prompts/templates/index';
+import { getStylePromptBundle } from '../../prompts/templates/index';
 import { useConversation } from '../../lib/chat/use-conversation';
 import { useStreaming } from '../../lib/chat/use-streaming';
 import { extractCodeFromResponse } from '../../lib/chat/code-extractor';
@@ -159,7 +159,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
 
     const selectedRatio = context.canvasRatio || canvasRatio;
     const styleId = context.selectedStyle || 'modern';
-    const stylePrompt = getStylePrompt(styleId);
+    const styleBundle = getStylePromptBundle(styleId);
     const systemPrompt = getDefaultSystemPrompt(selectedRatio);
 
     // Create new conversation with current slides
@@ -180,7 +180,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
     const assistantMsg = conversation.addAssistantMessage(conv.id, userMsg.id, '');
 
     // Build messages with proper system role
-    const messages = buildMessages(systemPrompt, [], prompt, stylePrompt, aiGen.promptSettings, selectedRatio);
+    const messages = buildMessages(systemPrompt, [], prompt, styleBundle, aiGen.promptSettings, selectedRatio);
 
     // Stream generate
     abortRef.current = new AbortController();
@@ -242,7 +242,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
 
     const selectedRatio = conv.canvasRatio || canvasRatio;
     const styleId = conv.styleId || 'modern';
-    const stylePrompt = getStylePrompt(styleId);
+    const styleBundle = getStylePromptBundle(styleId);
     const systemPrompt = getDefaultSystemPrompt(selectedRatio);
 
     // Build conversation history for context
@@ -254,7 +254,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
         content: m.role === 'assistant' ? (m.code || m.content) : m.content,
       }));
 
-    const messages = buildMessages(systemPrompt, historyMessages, message, stylePrompt, aiGen.promptSettings, selectedRatio);
+    const messages = buildMessages(systemPrompt, historyMessages, message, styleBundle, aiGen.promptSettings, selectedRatio);
 
     const assistantMsg = conversation.addAssistantMessage(conv.id, userMsg.id, '');
 

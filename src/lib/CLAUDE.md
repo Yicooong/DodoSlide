@@ -70,20 +70,25 @@ AI generation hook with abort support.
 
 ## prompt-manager.ts
 
-System prompt and style prompt management.
+System prompt and style prompt management with bundle support.
 
 **Functions:**
 ```typescript
-buildFullPrompt(userInput, settings, canvasRatio?)  // Build complete prompt
-buildStylePrompt(styleId)                           // Get style instructions
+buildFullPrompt(userInput, settings, canvasRatio?)                    // Build complete prompt (legacy)
+buildStylePrompt(userInput, stylePrompt, settings, canvasRatio?)     // Build prompt with style section
+buildMessages(systemPrompt, history, input, styleOrBundle, settings?) // Build messages array (supports bundle)
+buildMultiSlidePrompt(input, index, total, summary, styleOrBundle?)   // Multi-slide prompt (supports bundle)
 ```
 
-**Style Templates:**
-- `modern` — 现代简约
-- `tech` — 科技感
-- `creative` — 创意活泼
-- `professional` — 专业严谨
-- `elegant` — 优雅典雅
+**StylePromptBundle** (from templates/index.ts):
+- `stylePrompt` — Visual style rules from style.txt (required)
+- `workflowPrompt` — Design methodology from workflow.md (optional, goes in system message)
+- `referenceExamples` — Reference JSX examples (optional, goes in system message as few-shot)
+
+**PromptAssemblyOptions:**
+- `includeWorkflow` — Include workflow.md in system message (default: true)
+- `includeReferences` — Include reference JSX in system message (default: true)
+- `maxReferences` — Limit number of references (default: all)
 
 ## api-providers.ts
 

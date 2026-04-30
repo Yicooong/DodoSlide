@@ -4,6 +4,7 @@
  */
 
 import { CanvasRatio, CANVAS_CONFIGS } from './canvas-config';
+import type { StylePromptBundle } from '../prompts/templates/index';
 
 /**
  * Default system prompt for slide generation
@@ -166,25 +167,68 @@ export interface PromptMessage {
   content: string;
 }
 
+/** Options for controlling prompt assembly (token budget, etc.) */
+export interface PromptAssemblyOptions {
+  includeWorkflow?: boolean;
+  includeReferences?: boolean;
+  maxReferences?: number;
+}
+
+function formatReferences(references: string[]): string {
+  return references
+    .map((ref, i) => `### Example ${i + 1}\n\`\`\`jsx\n${ref}\n\`\`\``)
+    .join('\n\n');
+}
+
+/** Normalize styleOrBundle to a bundle object. */
+function normalizeBundle(styleOrBundle?: string | StylePromptBundle): StylePromptBundle {
+  if (!styleOrBundle) return { stylePrompt: '' };
+  if (typeof styleOrBundle === 'string') return { stylePrompt: styleOrBundle };
+  return styleOrBundle;
+}
+
 /**
  * Build messages array for OpenAI-compatible API with conversation history.
  * Uses proper system role and includes conversation context.
+ *
+ * The fourth parameter accepts either a plain style prompt string (backward compatible)
+ * or a StylePromptBundle containing style, workflow, and reference examples.
  */
 export const buildMessages = (
   systemPrompt: string,
   conversationHistory: Array<{ role: 'user' | 'assistant' | 'ai'; content: string }>,
   currentUserInput: string,
-  stylePrompt?: string,
+  styleOrBundle?: string | StylePromptBundle,
   settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
   canvasRatio?: CanvasRatio,
+  assemblyOptions?: PromptAssemblyOptions,
 ): PromptMessage[] => {
   const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
   const baseSystemPrompt = settings.useDefaultPrompt
     ? defaultPrompt
     : settings.customPrompt || defaultPrompt;
 
+  const bundle = normalizeBundle(styleOrBundle);
+  const opts: PromptAssemblyOptions = {
+    includeWorkflow: true,
+    includeReferences: true,
+    ...assemblyOptions,
+  };
+
+  // Build system message: base + workflow + references
+  let systemContent = baseSystemPrompt;
+  if (opts.includeWorkflow && bundle.workflowPrompt) {
+    systemContent += `\n\n## Design Methodology\n${bundle.workflowPrompt}`;
+  }
+  if (opts.includeReferences && bundle.referenceExamples && bundle.referenceExamples.length > 0) {
+    const refs = opts.maxReferences
+      ? bundle.referenceExamples.slice(0, opts.maxReferences)
+      : bundle.referenceExamples;
+    systemContent += `\n\n## Reference Examples\n\nHere are example slides demonstrating the target quality and patterns:\n\n${formatReferences(refs)}`;
+  }
+
   const messages: PromptMessage[] = [
-    { role: 'system', content: baseSystemPrompt },
+    { role: 'system', content: systemContent },
   ];
 
   // Add conversation history (last 10 messages to avoid token overflow)
@@ -196,8 +240,8 @@ export const buildMessages = (
 
   // Build user message with optional style and instructions
   let userContent = currentUserInput;
-  if (stylePrompt) {
-    userContent += `\n\n设计要求：\n${stylePrompt}`;
+  if (bundle.stylePrompt) {
+    userContent += `\n\n设计要求：\n${bundle.stylePrompt}`;
   }
   if (settings.userInstructions) {
     userContent += `\n\n## Additional Instructions\n${settings.userInstructions}`;
@@ -215,19 +259,37 @@ export const buildMultiSlidePrompt = (
   slideIndex: number,
   totalSlides: number,
   previousSlidesSummary: string,
-  stylePrompt: string,
+  styleOrBundle: string | StylePromptBundle,
   settings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
-  canvasRatio?: CanvasRatio
+  canvasRatio?: CanvasRatio,
+  assemblyOptions?: PromptAssemblyOptions,
 ): string => {
   const defaultPrompt = canvasRatio ? getDefaultSystemPrompt(canvasRatio) : DEFAULT_SYSTEM_PROMPT;
   const basePrompt = settings.useDefaultPrompt
     ? defaultPrompt
     : settings.customPrompt || defaultPrompt;
 
-  return `${basePrompt}
+  const bundle = normalizeBundle(styleOrBundle);
+  const opts: PromptAssemblyOptions = {
+    includeWorkflow: true,
+    includeReferences: true,
+    ...assemblyOptions,
+  };
 
-## Design Style
-${stylePrompt}
+  let promptContent = basePrompt;
+
+  if (opts.includeWorkflow && bundle.workflowPrompt) {
+    promptContent += `\n\n## Design Methodology\n${bundle.workflowPrompt}`;
+  }
+  if (opts.includeReferences && bundle.referenceExamples && bundle.referenceExamples.length > 0) {
+    const refs = opts.maxReferences
+      ? bundle.referenceExamples.slice(0, opts.maxReferences)
+      : bundle.referenceExamples;
+    promptContent += `\n\n## Reference Examples\n\nHere are example slides demonstrating the target quality and patterns:\n\n${formatReferences(refs)}`;
+  }
+
+  promptContent += `\n\n## Design Style
+${bundle.stylePrompt}
 
 ## Multi-Slide Context
 This is slide ${slideIndex + 1} of ${totalSlides} total slides.
@@ -238,4 +300,6 @@ ${userInput}
 
 Generate ONLY this single slide (slide ${slideIndex + 1}). Do not generate other slides.
 ${settings.userInstructions ? `\n## Additional Instructions\n${settings.userInstructions}` : ''}`;
+
+  return promptContent;
 };
