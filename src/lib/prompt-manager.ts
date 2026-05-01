@@ -46,33 +46,21 @@ export default App;
 8. Return ONLY the code, no explanations, no markdown formatting outside code
 
 ## Slide Specifications
-- The slide should be 1280x720 pixels (16:9 aspect ratio)
+{{CANVAS_SPECS}}
 - Use Tailwind CSS classes for styling
 - You can use lucide-react icons
-
-## Design Guidelines
-- Use modern, clean design aesthetics
-- Ensure good visual hierarchy
-- Use appropriate spacing and typography
-- Support Chinese characters with 'Microsoft YaHei' font
-
-## Technical Constraints
-- Use only React and lucide-react (pre-installed)
-- Do not use external images or assets
-- SVG icons from lucide-react are available
-- All colors should be web-safe or use Tailwind's color palette
 
 Generate a slide based on the user's request. Return only the code in the exact format shown above.`.trim();
 
 /**
  * Get system prompt for slide generation based on canvas ratio.
- * Dynamically replaces width/height/ratio in the prompt to match the selected ratio.
+ * Dynamically replaces {{CANVAS_SPECS}} placeholder with actual dimensions.
  */
 export const getDefaultSystemPrompt = (canvasRatio: CanvasRatio): string => {
   const config = CANVAS_CONFIGS[canvasRatio] || CANVAS_CONFIGS['16:9'];
-  return DEFAULT_SYSTEM_PROMPT
-    .replace('w-[1280px] h-[720px]', `w-[${config.width}px] h-[${config.height}px]`)
-    .replace('1280x720 pixels (16:9 aspect ratio)', `${config.width}x${config.height} pixels (${config.ratio} aspect ratio)`);
+  const canvasSpecs = `- The slide should be ${config.width}x${config.height} pixels (${config.ratio} aspect ratio)
+- The outer container must use w-[${config.width}px] h-[${config.height}px]`;
+  return DEFAULT_SYSTEM_PROMPT.replace('{{CANVAS_SPECS}}', canvasSpecs);
 };
 
 /**
