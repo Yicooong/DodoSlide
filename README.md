@@ -132,6 +132,19 @@ src/
 
 ---
 
+## 浏览器扩展
+
+项目附带一个独立的 Chrome/Edge 浏览器扩展，位于 `chrome-extension/` 目录。点击扩展图标即可粘贴 React JSX 代码并一键导出 PPTX，无需 AI 功能和代码编辑器。
+
+**快速安装：**
+1. 打开 `chrome://extensions`（或 `edge://extensions`）
+2. 开启「开发者模式」
+3. 将 `chrome-extension/react-slide-to-pptx.zip` 拖入页面即可
+
+详细说明见 [chrome-extension/README.md](chrome-extension/README.md)。
+
+---
+
 ## 导出功能
 
 支持三种导出模式：
