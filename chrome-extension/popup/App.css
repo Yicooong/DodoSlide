@@ -1,0 +1,129 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 240px;
+  height: 150x;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #ffffff;
+  color: #1e293b;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.export-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.export-btn.exporting {
+  background: #1d4ed8;
+}
+
+.code-area {
+  flex: 1;
+  position: relative;
+}
+
+.code-area textarea {
+  width: 100%;
+  height: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.code-area textarea:focus {
+  border-color: #3b82f6;
+}
+
+.code-area textarea::placeholder {
+  color: #94a3b8;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  min-height: 16px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.idle { background: #94a3b8; }
+.status-dot.valid { background: #34d399; }
+.status-dot.invalid { background: #f87171; }
+.status-dot.exporting { background: #fbbf24; animation: pulse 1s infinite; }
+.status-dot.error { background: #f87171; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-text {
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-text.error {
+  color: #f87171;
+}
+
+.status-text.valid {
+  color: #34d399;
+}

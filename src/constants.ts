@@ -1,5 +1,6 @@
 import React from 'react';
 import { Activity, CheckCircle, Cpu, ShieldCheck } from 'lucide-react';
+import { CanvasRatio, CANVAS_CONFIGS } from './lib/canvas-config';
 
 export const DEFAULT_CODE = `
 
@@ -167,3 +168,14 @@ const App = () => {
 export default App;
 
 `;
+
+/**
+ * Get default slide code template based on canvas ratio.
+ * Dynamically replaces width/height in the template to match the selected ratio.
+ */
+export const getDefaultCode = (canvasRatio: CanvasRatio): string => {
+  const config = CANVAS_CONFIGS[canvasRatio] || CANVAS_CONFIGS['16:9'];
+  return DEFAULT_CODE
+    .replace('w-[1280px] h-[720px]', `w-[${config.width}px] h-[${config.height}px]`)
+    .replace('{/* 16:9 画布: 1280x720 */}', `{/* ${config.ratio} 画布: ${config.width}x${config.height} */}`);
+};

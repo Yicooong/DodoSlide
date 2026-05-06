@@ -1,11 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
-    <!-- Inject Tailwind v4 Browser Runtime to support dynamically generated classes -->
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+      :root {
+        --bg-root: #0f172a;
+        --bg-sidebar: #1e293b;
+        --bg-main: #0f172a;
+        --bg-header: rgba(30, 41, 59, 0.8);
+        --bg-card: #1e293b;
+        --bg-input: #334155;
+        --bg-button: #334155;
+        --bg-preview: #1e293b;
+        --accent: #6366f1;
+        --accent-bg: rgba(99, 102, 241, 0.2);
+        --accent-text: #818cf8;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --text-inverse: #ffffff;
+        --border-subtle: #334155;
+        --border-default: #475569;
+        --border-active: #6366f1;
+        --ai-gradient-from: #f59e0b;
+        --ai-gradient-to: #ef4444;
+        --shadow-preview: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

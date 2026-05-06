@@ -1,0 +1,24 @@
+## 科技感风格 (Tech / Cyberpunk)
+
+### 视觉规范
+- 背景：深蓝黑 (#0F172A) 或渐变深色 (#0F172A → #1E293B)
+- 主文字：亮白 (#F1F5F9)
+- 次要文字：浅蓝灰 (#94A3B8)
+- 强调色：电光蓝 (#3B82F6) 或霓虹青 (#06B6D4)
+- 辅助色：紫色 (#8B5CF6)
+
+### 排版
+- 标题：font-bold, text-3xl~5xl, tracking-wide
+- 正文：text-base~lg, leading-relaxed
+- 可使用等宽字体 JetBrains Mono 作为装饰
+
+### 布局原则
+- 使用网格布局和卡片式结构
+- 添加微妙的光晕效果 (box-shadow with accent color)
+- 使用边框发光效果 (border with glow)
+- 图标使用 lucide-react，可添加旋转/脉动动画
+
+### 装饰元素
+- 使用虚线边框或点阵背景
+- 角落装饰 (corner accents)
+- 渐变线条分隔
