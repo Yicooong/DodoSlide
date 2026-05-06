@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { transpileCode } from './lib/slide-renderer';
 import { exportSlideByCode } from './lib/pptx-exporter';
 
-type Status = 'idle' | 'valid' | 'invalid' | 'exporting' | 'done' | 'error';
+type Status = 'idle' | 'valid' | 'invalid' | 'exporting' | 'error';
 
 const STORAGE_KEY = 'react_slide_pptx_last_code';
 
@@ -74,9 +74,6 @@ export default function App() {
         a.click();
         URL.revokeObjectURL(url);
       }
-
-      setStatus('done');
-      setTimeout(() => setStatus('valid'), 2000);
     } catch (e: any) {
       setStatus('error');
       setErrorMsg(e.message || '导出失败');
@@ -93,8 +90,6 @@ export default function App() {
         return errorMsg;
       case 'exporting':
         return '正在生成 PPTX...';
-      case 'done':
-        return '导出成功！';
       case 'error':
         return errorMsg;
     }
@@ -125,7 +120,7 @@ export default function App() {
       <div className="status-bar">
         <span className={`status-dot ${status}`} />
         <span
-          className={`status-text ${status === 'invalid' || status === 'error' ? 'error' : ''} ${status === 'valid' ? 'valid' : ''} ${status === 'done' ? 'done' : ''}`}
+          className={`status-text ${status === 'invalid' || status === 'error' ? 'error' : ''} ${status === 'valid' ? 'valid' : ''}`}
         >
           {statusMessage()}
         </span>

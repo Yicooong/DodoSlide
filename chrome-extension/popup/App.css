@@ -5,11 +5,11 @@
 }
 
 body {
-  width: 500px;
-  height: 400px;
+  width: 240px;
+  height: 150x;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  background: #ffffff;
+  color: #1e293b;
   overflow: hidden;
 }
 
@@ -17,8 +17,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 12px;
-  gap: 10px;
+  padding: 10px;
+  gap: 8px;
 }
 
 .header {
@@ -28,25 +28,25 @@ body {
 }
 
 .header h1 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #a78bfa;
+  color: #1e293b;
 }
 
 .export-btn {
-  padding: 6px 16px;
+  padding: 5px 14px;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  background: #7c3aed;
+  background: #3b82f6;
   color: #fff;
 }
 
 .export-btn:hover:not(:disabled) {
-  background: #6d28d9;
+  background: #2563eb;
 }
 
 .export-btn:disabled {
@@ -55,7 +55,7 @@ body {
 }
 
 .export-btn.exporting {
-  background: #4c1d95;
+  background: #1d4ed8;
 }
 
 .code-area {
@@ -66,10 +66,10 @@ body {
 .code-area textarea {
   width: 100%;
   height: 100%;
-  background: #0f0f23;
-  border: 1px solid #2d2d44;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: #c4b5fd;
+  color: #334155;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -80,19 +80,19 @@ body {
 }
 
 .code-area textarea:focus {
-  border-color: #7c3aed;
+  border-color: #3b82f6;
 }
 
 .code-area textarea::placeholder {
-  color: #4a4a6a;
+  color: #94a3b8;
 }
 
 .status-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  min-height: 20px;
+  font-size: 11px;
+  min-height: 16px;
 }
 
 .status-dot {
@@ -102,11 +102,10 @@ body {
   flex-shrink: 0;
 }
 
-.status-dot.idle { background: #4a4a6a; }
+.status-dot.idle { background: #94a3b8; }
 .status-dot.valid { background: #34d399; }
 .status-dot.invalid { background: #f87171; }
 .status-dot.exporting { background: #fbbf24; animation: pulse 1s infinite; }
-.status-dot.done { background: #34d399; }
 .status-dot.error { background: #f87171; }
 
 @keyframes pulse {
@@ -115,7 +114,7 @@ body {
 }
 
 .status-text {
-  color: #8888aa;
+  color: #64748b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,9 +125,5 @@ body {
 }
 
 .status-text.valid {
-  color: #34d399;
-}
-
-.status-text.done {
   color: #34d399;
 }

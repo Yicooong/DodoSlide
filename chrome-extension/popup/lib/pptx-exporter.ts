@@ -11,6 +11,19 @@ import { transpileCode, executeSlideCode, SlideErrorBoundary } from './slide-ren
 // @ts-ignore — import CSS as raw string (not applied as stylesheet)
 import tailwindCSS from './tailwind.css?raw';
 
+/**
+ * Preprocess Tailwind CSS for iframe injection.
+ * - @import: removed because Google Fonts fetch fails in extension iframe, blocking entire stylesheet
+ * - @layer: kept as-is (browser native support, removing would break brace matching)
+ * - @property: removed (only needed for CSS animation interpolation, not static export)
+ */
+function preprocessTailwindForExport(css: string): string {
+  return css
+    .replace(/@import[^;]+;/g, '')
+    .replace(/@property\s+--[a-zA-Z0-9-]+\{[^}]*\}/g, '')
+    .trim();
+}
+
 /** Hardcoded 16:9 canvas config */
 const CANVAS_16x9 = {
   width: 1280,
@@ -379,7 +392,8 @@ export const exportSlideByCode = async (
   document.body.appendChild(iframe);
 
   try {
-    // Write a clean HTML document into the iframe with Tailwind CSS
+    // Preprocess and inject CSS directly into the iframe HTML document
+    const preprocessedCSS = preprocessTailwindForExport(tailwindCSS);
     const iframeDoc = iframe.contentDocument!;
     iframeDoc.open();
     iframeDoc.write(`<!DOCTYPE html>
@@ -389,7 +403,7 @@ export const exportSlideByCode = async (
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: ${canvasConfig.width}px; height: ${canvasConfig.height}px; overflow: hidden; font-family: sans-serif; }
-    ${tailwindCSS}
+    ${preprocessedCSS}
   </style>
 </head>
 <body>
@@ -398,8 +412,18 @@ export const exportSlideByCode = async (
 </html>`);
     iframeDoc.close();
 
-    // Wait for iframe document to be ready
-    await new Promise((r) => setTimeout(r, 50));
+    // Wait for CSS to be ready
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Verify Tailwind CSS loaded: check if bg-white produces a white background
+    const testEl = iframeDoc.createElement('div');
+    testEl.className = 'bg-white';
+    iframeDoc.body.appendChild(testEl);
+    const testBg = iframeDoc.defaultView!.getComputedStyle(testEl).backgroundColor;
+    iframeDoc.body.removeChild(testEl);
+    if (testBg === 'rgba(0, 0, 0, 0)' || testBg === 'transparent') {
+      console.warn('Tailwind CSS may not have loaded in iframe. bg-white resolved to:', testBg);
+    }
 
     // Transpile and execute
     const wrappedCode = transpileCode(slideCode);
@@ -445,7 +469,7 @@ export const exportSlideByCode = async (
           React.createElement(Component)
         )
       );
-      setTimeout(resolve, 200);
+      setTimeout(resolve, 500);
     });
 
     // Generate PPTX from the iframe's rendered DOM
