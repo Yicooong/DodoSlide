@@ -4,18 +4,29 @@
  */
 
 import React, { useState, useRef } from 'react';
+// 导入图标：Plus(新建)、Search(搜索)、Trash2(删除)、Edit3(编辑)、Check(确认)、X(取消)、MessageSquare(消息)
 import { Plus, Search, Trash2, Edit3, Check, X, MessageSquare } from 'lucide-react';
+// 导入对话摘要类型
 import type { ConversationSummary } from '../../lib/chat/types';
 
+/** 对话列表侧边栏组件属性接口 */
 interface ConversationListSidebarProps {
-  conversations: ConversationSummary[];
-  activeId: string | null;
-  onSwitch: (id: string) => void;
-  onCreate: () => void;
-  onDelete: (id: string) => void;
-  onRename: (id: string, title: string) => void;
+  conversations: ConversationSummary[];  // 对话列表
+  activeId: string | null;               // 当前活跃的对话 ID
+  onSwitch: (id: string) => void;        // 切换对话回调
+  onCreate: () => void;                  // 创建新对话回调
+  onDelete: (id: string) => void;        // 删除对话回调
+  onRename: (id: string, title: string) => void;  // 重命名对话回调
 }
 
+/**
+ * 对话列表侧边栏组件
+ * 功能：
+ * - 显示所有对话的列表，支持搜索过滤
+ * - 支持重命名和删除操作
+ * - 高亮显示当前活跃的对话
+ * - 显示对话的相对时间和消息数量
+ */
 const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
   conversations,
   activeId,
@@ -24,21 +35,28 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
   onDelete,
   onRename,
 }) => {
+  // 搜索关键词状态
   const [search, setSearch] = useState('');
+  // 正在编辑的对话 ID
   const [editingId, setEditingId] = useState<string | null>(null);
+  // 编辑中的标题内容
   const [editTitle, setEditTitle] = useState('');
+  // 编辑输入框引用：用于自动聚焦
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  // 根据搜索关键词过滤对话列表（不区分大小写）
   const filtered = conversations.filter(c =>
     c.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  /** 开始编辑对话标题：设置编辑状态并聚焦输入框 */
   const handleStartEdit = (conv: ConversationSummary) => {
     setEditingId(conv.id);
     setEditTitle(conv.title);
     setTimeout(() => editInputRef.current?.focus(), 50);
   };
 
+  /** 确认编辑：调用重命名回调并清除编辑状态 */
   const handleConfirmEdit = () => {
     if (editingId && editTitle.trim()) {
       onRename(editingId, editTitle.trim());
@@ -46,15 +64,21 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
     setEditingId(null);
   };
 
+  /** 取消编辑：清除编辑状态 */
   const handleCancelEdit = () => {
     setEditingId(null);
   };
 
+  /** 处理编辑框键盘事件：Enter 确认，Escape 取消 */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleConfirmEdit();
     if (e.key === 'Escape') handleCancelEdit();
   };
 
+  /**
+   * 格式化相对时间
+   * 根据时间戳计算与当前时间的差值，返回人类可读的相对时间描述
+   */
   const formatRelativeTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -71,7 +95,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {/* 头部区域：标题 + 新建按钮 + 搜索框 */}
       <div className="px-3 py-3 border-b shrink-0" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -87,7 +111,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
           </button>
         </div>
 
-        {/* Search */}
+        {/* 搜索框 */}
         <div
           className="flex items-center gap-1.5 px-2 py-1 rounded-md"
           style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}
@@ -104,9 +128,10 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
         </div>
       </div>
 
-      {/* List */}
+      {/* 对话列表区域 */}
       <div className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
+          /* 空状态：搜索无结果或暂无对话 */
           <div className="flex flex-col items-center justify-center h-full py-8">
             <MessageSquare className="w-6 h-6 mb-2 opacity-20" style={{ color: 'var(--text-muted)' }} />
             <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
@@ -131,6 +156,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
                     borderColor: isActive ? 'var(--accent)' : 'transparent',
                     ringColor: isActive ? 'var(--accent)' : undefined,
                   }}
+                  // 鼠标悬停效果：非活跃项显示背景色
                   onMouseEnter={(e) => {
                     if (!isActive) e.currentTarget.style.background = 'var(--bg-input)';
                   }}
@@ -139,6 +165,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
                   }}
                 >
                   {isEditing ? (
+                    /* 编辑模式：显示输入框和确认/取消按钮 */
                     <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                       <input
                         ref={editInputRef}
@@ -168,6 +195,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
                       </button>
                     </div>
                   ) : (
+                    /* 普通模式：显示对话信息和操作按钮 */
                     <>
                       <div className="text-[11px] font-medium truncate pr-10" style={{ color: 'var(--text-primary)' }}>
                         {conv.title}
@@ -181,7 +209,7 @@ const ConversationListSidebar: React.FC<ConversationListSidebarProps> = ({
                         {formatRelativeTime(conv.updatedAt)} · {conv.messageCount} 条消息
                       </div>
 
-                      {/* Action buttons - visible on hover */}
+                      {/* 操作按钮：悬停时显示编辑和删除按钮 */}
                       <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {

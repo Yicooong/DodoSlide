@@ -4,22 +4,37 @@
  */
 
 import React, { useState, useEffect } from 'react';
+// 导入图标：Save(保存)、X(取消)、Wifi(连接成功)、WifiOff(连接失败)、Loader2(加载中)
 import { Save, X, Wifi, WifiOff, Loader2 } from 'lucide-react';
+// 导入提供商相关类型
 import type { Provider, ProviderSettingsConfig, ProviderMeta, ConnectionTestResult } from '../../lib/providers/types';
+// 导入默认配置和 URL 标准化函数
 import { DEFAULT_PROVIDER_SETTINGS_CONFIG, DEFAULT_PROVIDER_META, normalizeEndpointUrl } from '../../lib/providers/types';
+// 导入子组件
 import { ApiKeyInput } from './ApiKeyInput';
 import { ModelSelectInput } from './ModelSelectInput';
 import { CustomEndpointEditor } from './CustomEndpointEditor';
 
+/** 提供商详情编辑器组件属性接口 */
 interface ProviderDetailEditorProps {
-  provider?: Provider; // undefined = add mode
-  onSave: (provider: Omit<Provider, 'id' | 'createdAt' | 'sortIndex'>) => void;
-  onUpdate?: (id: string, updates: Partial<Provider>) => void;
-  onCancel: () => void;
-  onTestConnection: (providerId: string) => Promise<ConnectionTestResult>;
-  onListModels: (endpoint: string, apiKey: string) => Promise<{ success: boolean; models?: string[]; error?: string }>;
+  provider?: Provider;  // 编辑时传入提供商数据，undefined 表示添加模式
+  onSave: (provider: Omit<Provider, 'id' | 'createdAt' | 'sortIndex'>) => void;  // 保存新提供商
+  onUpdate?: (id: string, updates: Partial<Provider>) => void;  // 更新已有提供商
+  onCancel: () => void;  // 取消编辑
+  onTestConnection: (providerId: string) => Promise<ConnectionTestResult>;  // 测试连接
+  onListModels: (endpoint: string, apiKey: string) => Promise<{ success: boolean; models?: string[]; error?: string }>;  // 获取模型列表
 }
 
+/**
+ * 提供商详情编辑器组件
+ * 功能：
+ * - 支持添加和编辑两种模式
+ * - 表单字段：名称、端点、API Key、模型、Temperature、Max Tokens、自定义端点、备注
+ * - 表单验证：名称、端点、API Key 不能为空
+ * - 连接测试：测试 API 端点和 Key 是否有效，获取可用模型
+ * - 失焦时自动标准化端点 URL
+ * - 编辑模式下，provider 变化时自动重置表单
+ */
 export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
   provider,
   onSave,
@@ -28,9 +43,10 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
   onTestConnection,
   onListModels,
 }) => {
+  // 是否为编辑模式
   const isEditMode = !!provider;
 
-  // Form state
+  // 表单状态
   const [name, setName] = useState(provider?.name || '');
   const [settingsConfig, setSettingsConfig] = useState<ProviderSettingsConfig>(
     provider?.settingsConfig || { ...DEFAULT_PROVIDER_SETTINGS_CONFIG }
@@ -41,13 +57,13 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
   const [notes, setNotes] = useState(provider?.notes || '');
   const [websiteUrl, setWebsiteUrl] = useState(provider?.websiteUrl || '');
 
-  // UI state
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [isTesting, setIsTesting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionTestResult | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  // UI 状态
+  const [availableModels, setAvailableModels] = useState<string[]>([]);  // 可用模型列表
+  const [isTesting, setIsTesting] = useState(false);  // 是否正在测试连接
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionTestResult | null>(null);  // 连接测试结果
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);  // 表单验证错误
 
-  // Update form when provider changes
+  // 当 provider 变化时（进入编辑模式），重置表单数据
   useEffect(() => {
     if (provider) {
       setName(provider.name);
@@ -58,7 +74,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
     }
   }, [provider]);
 
-  // Normalize endpoint on blur
+  /** 失焦时标准化端点 URL */
   const handleEndpointBlur = () => {
     const normalized = normalizeEndpointUrl(settingsConfig.endpoint);
     if (normalized !== settingsConfig.endpoint) {
@@ -66,7 +82,11 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
     }
   };
 
-  // Test connection
+  /**
+   * 测试连接：调用 API 获取模型列表
+   * 成功后显示绿色状态和模型列表
+   * 失败后显示红色错误信息
+   */
   const handleTestConnection = async () => {
     setIsTesting(true);
     setConnectionStatus(null);
@@ -87,7 +107,11 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
     }
   };
 
-  // Validate and save
+  /**
+   * 验证并保存
+   * 验证规则：名称、端点、API Key 不能为空
+   * 验证通过后调用 onSave（添加模式）或 onUpdate（编辑模式）
+   */
   const handleSave = () => {
     const errors: string[] = [];
     if (!name.trim()) errors.push('提供商名称不能为空');
@@ -119,7 +143,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* 头部：标题和关闭按钮 */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
           {isEditMode ? '编辑提供商' : '添加提供商'}
@@ -133,7 +157,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         </button>
       </div>
 
-      {/* Validation errors */}
+      {/* 验证错误提示 */}
       {validationErrors.length > 0 && (
         <div className="p-3 rounded-xl" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
           {validationErrors.map((err, i) => (
@@ -142,7 +166,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         </div>
       )}
 
-      {/* Name */}
+      {/* 提供商名称 */}
       <div>
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
           提供商名称
@@ -162,7 +186,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         />
       </div>
 
-      {/* Endpoint */}
+      {/* API 端点 */}
       <div>
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
           API 端点
@@ -181,6 +205,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
             border: '1px solid var(--border-default)',
           }}
         />
+        {/* 显示完整的 API 调用地址 */}
         {settingsConfig.endpoint && (
           <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
             完整地址: <span style={{ color: 'var(--text-secondary)' }}>{normalizeEndpointUrl(settingsConfig.endpoint)}/chat/completions</span>
@@ -199,7 +224,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         />
       </div>
 
-      {/* Model */}
+      {/* 模型选择 */}
       <div>
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
           选择模型
@@ -213,7 +238,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         />
       </div>
 
-      {/* Connection Status */}
+      {/* 连接状态显示 */}
       {connectionStatus && (
         <div className="p-3 rounded-xl" style={{
           background: connectionStatus.success ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
@@ -232,7 +257,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         </div>
       )}
 
-      {/* Temperature & MaxTokens */}
+      {/* Temperature 和 Max Tokens 并排输入 */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -275,13 +300,13 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         </div>
       </div>
 
-      {/* Custom Endpoints */}
+      {/* 自定义端点编辑器 */}
       <CustomEndpointEditor
         endpoints={meta.customEndpoints}
         onChange={(endpoints) => setMeta(prev => ({ ...prev, customEndpoints: endpoints }))}
       />
 
-      {/* Notes */}
+      {/* 备注（可选） */}
       <div>
         <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
           备注 (可选)
@@ -301,7 +326,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         />
       </div>
 
-      {/* Actions */}
+      {/* 操作按钮：取消和保存 */}
       <div className="flex gap-3">
         <button
           onClick={onCancel}

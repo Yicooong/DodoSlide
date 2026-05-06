@@ -17,21 +17,27 @@ Main landing page with animated entry effects.
 - Radial gradient background effect
 - Animated logo with gradient shadow
 - Two main action buttons:
-  - **开始创作** → AI generation page
-  - **代码编辑器** → Monaco editor
+  - **开始创作** → AI generation page (phase-based UI with conversation system)
+  - **代码编辑器** → Monaco editor workspace
 - Four feature cards with glassmorphism:
-  - AI 智能生成
-  - 多种风格模板
-  - 实时预览
-  - 一键导出
-- Footer with canvas ratio info
+  - AI 智能生成 (AI-powered generation with multi-slide support)
+  - 多种风格模板 (5 preset style templates)
+  - 实时预览 (Live preview with Babel transpilation)
+  - 一键导出 (One-click PPTX export)
+- Footer with canvas ratio info (16:9 / 4:3)
 
 **Styling:**
 - Uses `motion` for entrance animations
-- Feature cards use `var(--glass-bg)` and `var(--glass-border)`
-- Main button has gradient background
-- All colors use CSS variables
+- Feature cards use `var(--glass-bg)` and `var(--glass-border)` for glassmorphism
+- Main button has gradient background (`var(--accent)`)
+- All colors use CSS variables for theme support
+- Responsive design for different screen sizes
+
+**Animation:**
+- Logo: scale + fade in
+- Feature cards: stagger animation
+- Buttons: hover scale effect
 
 **Navigation:**
-- `onNavigate('ai-generate')` → AI generation page
-- `onNavigate('code')` → Monaco editor workspace
+- `onNavigate('ai-generate')` → AI generation page (EntryPhase → WorkspacePhase)
+- `onNavigate('code')` → Monaco editor workspace (SlideSidebar + CodeEditor + SlidePreview)

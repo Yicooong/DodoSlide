@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Name:** Gemini Canvas
 **Type:** Browser-based slide editor with AI generation
-**Summary:** A React app where users write JSX code in a Monaco editor, see live slide previews in multiple aspect ratios, and export the result as a `.pptx` file using `pptxgenjs`. Features AI-powered slide generation with glassmorphism UI, phase-based transitions, and comprehensive theme support.
+**Summary:** A React app where users write JSX code in a Monaco editor, see live slide previews in multiple aspect ratios, and export the result as a `.pptx` file using `pptxgenjs`. Features AI-powered slide generation with glassmorphism UI, phase-based transitions, conversation system, and comprehensive theme support.
 
 ---
 
@@ -18,6 +18,13 @@ npm run dev          # Start dev server (Vite + Express, port 3000)
 npm run build        # Production build
 npm start            # Start production server
 npm run lint         # TypeScript type check
+```
+
+### Chrome Extension
+```bash
+cd chrome-extension
+npm install          # Install extension dependencies
+npm run build        # Build extension to dist/
 ```
 
 ---
@@ -34,6 +41,7 @@ npm run lint         # TypeScript type check
 | Icons | `lucide-react` |
 | Resizable panels | `react-resizable-panels` |
 | ID generation | `nanoid` |
+| Streaming | SSE via ReadableStream |
 | Server | Express + Vite (dev) / static serve (prod) |
 
 ---
@@ -43,7 +51,7 @@ npm run lint         # TypeScript type check
 ### View System
 The app has three main views managed by `useAppState().viewType`:
 - **`landing`** — Hero page with feature cards and action buttons
-- **`ai-generate`** — AI-powered slide generation with phase-based UI
+- **`ai-generate`** — AI-powered slide generation with phase-based UI and conversation system
 - **`code`** / **`preview`** — Monaco editor + live preview workspace
 
 ### AI Generation Page (Phase-Based)
@@ -52,52 +60,58 @@ The AI generation page uses internal phase state (`'entry' | 'workspace'`) withi
 1. **Entry Phase** (`EntryPhase.tsx`):
    - Centered glassmorphism chat box
    - Quick prompt cards (产品发布, 技术分享, 商业路演, 季度汇报)
-   - Style template selection (5 presets)
+   - Style template selection (5 presets with thumbnails)
    - Canvas ratio selector (16:9 / 4:3)
 
 2. **Workspace Phase** (`WorkspacePhase.tsx`):
-   - Left: Conversation list sidebar (collapsible, default 15%)
-   - Middle: AI assistant sidebar (resizable, default 25%)
+   - Left: Conversation list sidebar (collapsible, default 15%, search/rename support)
+   - Middle: AI assistant sidebar (resizable, default 25%, message history)
    - Right: Preview/code area (resizable, default 60%) with tab switching
    - Drag handle between panels for custom sizing (persisted to localStorage)
-   - Stop button during generation
+   - Stop button during generation (red, uses AbortController)
    - Export button triggers PPTX download (not navigation)
 
 3. **Phase Transition**: Uses `motion` `AnimatePresence` for smooth morphing animation
 
 ### Chat System
-The chat system provides conversation management with history persistence:
+The chat system provides conversation management with tree-structured messages and history persistence:
 
 1. **Data Model** (`lib/chat/types.ts`):
    - `ChatMessage`: Messages with tree structure (parentId/childrenIds), supports branching
-   - `Conversation`: Contains messages map, currentId for active chain
+   - `Conversation`: Contains messages map, currentId for active chain, title
    - `MessageStatus`: pending → streaming → complete/error
+   - `ConversationSummary`: Lightweight summary for list display
 
 2. **Storage Layer** (`lib/chat/conversation-storage.ts`):
-   - localStorage persistence under `gemini_conversations`
+   - localStorage persistence under `gemini_conversations` key
    - Auto-trim to 50 conversations max
+   - Functions: `saveConversations()`, `loadConversations()`, `clearConversations()`
 
 3. **Conversation Manager** (`lib/chat/conversation-manager.ts`):
    - CRUD operations for conversations and messages
    - Message chain traversal from root to leaf
-   - Streaming append support with commit
+   - Streaming append support with `appendStreamingContent()` and `commitStreaming()`
+   - Branch support via parentId/childrenIds
 
 4. **Streaming Support** (`lib/providers/openai-strategy.ts`):
    - `callApiStream()`: SSE streaming via ReadableStream
    - `onDelta` callback for real-time token updates
    - Proper system role usage in messages array
+   - AbortController support for cancellation
 
 5. **Hooks**:
    - `useConversation`: React hook for conversation state management
    - `useStreaming`: Hook for SSE streaming API calls
+   - `useMultiGeneration`: Hook for multi-slide generation with context preservation
 
 ### Theme System
-- **Default theme**: Light mode
+- **Default theme**: Light mode (set in `use-app-state.ts`)
 - **CSS Variables**: Defined in `index.css` for both `.dark` and `.light` scopes
 - **Preview independence**: `--bg-preview-canvas` is always white regardless of theme
 - **Glassmorphism**: `--glass-bg`, `--glass-border`, `--glass-shadow` for translucent effects
 
 ### AI Generation Flow
+**Single Slide Generation:**
 1. User enters prompt in EntryPhase (direct or guided mode)
 2. Style prompt bundle is assembled via `getStylePromptBundle(styleId)` (style.txt + workflow.md + reference JSX)
 3. `buildMessages()` places workflow & references in system message, style.txt in user message
@@ -106,6 +120,14 @@ The chat system provides conversation management with history persistence:
 6. Code is applied to current slide via `slidesHook.updateCurrentSlideCode()`
 7. Phase transitions to workspace for preview and refinement
 8. User can send follow-up messages to modify the slide
+
+**Multi-Slide Generation:**
+1. User specifies page count in prompt (e.g., "Generate 5 slides about...")
+2. `useMultiGeneration().generateSlides()` is called
+3. For each slide, `buildMultiSlidePrompt()` creates prompt with context from previous slides
+4. Slides are generated sequentially with progress tracking
+5. All slides are applied via `slidesHook.setSlidesBulk()`
+6. User can stop generation at any time
 
 ---
 
@@ -120,7 +142,8 @@ src/
 ├── hooks/
 │   ├── use-slides.ts           — Slide CRUD, bulk operations
 │   ├── use-app-state.ts        — View type, theme, canvas ratio, tabs
-│   └── use-slide-renderer.tsx  — JSX transpilation via Babel
+│   ├── use-slide-renderer.tsx  — JSX transpilation via Babel
+│   └── use-multi-generation.ts — Multi-slide generation hook
 ├── components/
 │   ├── landing/
 │   │   └── LandingPage.tsx     — Hero page with feature cards
@@ -145,7 +168,15 @@ src/
 │   │   └── AppHeader.tsx       — Top nav (editor/preview tabs, controls)
 │   ├── export/
 │   │   └── ExportModal.tsx     — PPTX export dialog
-│   └── SettingsModal.tsx       — API configuration
+│   ├── settings/
+│   │   ├── ProviderList.tsx    — Provider list view
+│   │   ├── ProviderListItem.tsx — Single provider row
+│   │   ├── ProviderDetailEditor.tsx — Add/edit provider form
+│   │   ├── ApiKeyInput.tsx     — Password input with show/hide
+│   │   ├── ModelSelectInput.tsx — Combobox model selector
+│   │   └── CustomEndpointEditor.tsx — Collapsible custom endpoints
+│   ├── SettingsModal.tsx        — API configuration + Prompt settings
+│   └── AiGenerationPanel.tsx    — Legacy panel (unused)
 ├── lib/
 │   ├── canvas-config.ts        — 16:9 and 4:3 configurations
 │   ├── theme-config.ts         — Dark/light theme definitions
@@ -167,6 +198,7 @@ src/
 │       ├── openai-strategy.ts  — OpenAI-compatible API (streaming)
 │       ├── provider-manager.ts — Provider CRUD
 │       ├── provider-storage.ts — localStorage persistence
+│       ├── provider-validator.ts — Provider validation
 │       └── use-provider-manager.ts — React hook bridge
 └── prompts/
     └── templates/
@@ -175,6 +207,16 @@ src/
             ├── style.txt       — Visual style prompt (required, ?raw import)
             ├── workflow.md      — Design methodology SOP (optional, ?raw import)
             └── reference_*.jsx  — Reference slide examples (optional, glob auto-discovery)
+```
+
+### Chrome Extension Directory
+```
+chrome-extension/
+├── manifest.json               — Extension manifest
+├── popup/                      — Popup window files
+├── dist/                       — Build output
+├── react-slide-to-pptx.zip     — Packaged extension
+└── vite.config.ts              — Vite configuration
 ```
 
 ---
@@ -259,13 +301,35 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 2. **Preview background is always white** — uses `--bg-preview-canvas` variable
 3. **Export triggers PPTX download** — not navigation to code editor
 4. **Stop button available** — uses AbortController to cancel AI requests
-5. **Single slide generation only** — multi-slide feature was removed
+5. **Multi-slide generation supported** — use `useMultiGeneration()` hook for sequential generation
 6. **Settings button is global** — available in both editor and AI generation pages
 7. **Panel sizes persist** — `react-resizable-panels` saves layout to localStorage automatically
 8. **Conversation system** — Messages use tree structure with parentId/childrenIds for branching
 9. **Streaming responses** — AI responses stream token-by-token via SSE (ReadableStream)
 10. **Conversation history** — Last 10 messages sent as context for follow-up requests
 11. **localStorage persistence** — Conversations stored under `gemini_conversations` key (max 50)
+12. **Provider management** — Multiple API providers supported, managed via `useProviderManager()`
+
+---
+
+## 自动化文档更新规则
+
+每次完成重大任务（包括但不限于：新增功能、修改架构、添加新组件、
+修改构建流程、新增依赖等）后，你必须：
+
+1. 检查 README.md 是否需要更新（项目功能说明、使用方法、依赖变化等）
+2. 检查 CLAUDE.md 是否需要更新（架构变化、新组件说明、开发指南等）
+3. 检查各子目录 CLAUDE.md 是否需要更新
+4. 如果需要，直接修改对应文件，确保文档与代码保持同步
+
+## 端口清理规则
+
+每次完成任务后，必须清理可能占用的端口：
+```bash
+kill $(lsof -t -i:3000) 2>/dev/null; kill $(lsof -t -i:24678) 2>/dev/null
+```
+- 端口 3000：Vite 开发服务器
+- 端口 24678：Vite WebSocket 热更新服务
 
 ---
 

@@ -4,16 +4,28 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+// 导入图标：Wifi(连接测试)、Loader2(加载中)、ChevronDown(下拉)
 import { Wifi, Loader2, ChevronDown } from 'lucide-react';
 
+/** 模型选择输入组件属性接口 */
 interface ModelSelectInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  availableModels: string[];
-  onRefresh: () => void;
-  isTesting: boolean;
+  value: string;           // 当前选中的模型名称
+  onChange: (value: string) => void;  // 值变更回调
+  availableModels: string[];  // 可用模型列表（从 API 获取）
+  onRefresh: () => void;   // 刷新模型列表回调（触发连接测试）
+  isTesting: boolean;      // 是否正在测试连接
 }
 
+/**
+ * 模型选择输入组件
+ * 功能：
+ * - 支持手动输入任意模型名称
+ * - 显示可用模型下拉列表（有数据时）
+ * - 下拉列表支持搜索过滤（不区分大小写）
+ * - 显示模型芯片按钮供快速选择
+ * - 点击外部区域关闭下拉列表
+ * - 连接测试按钮用于获取可用模型列表
+ */
 export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
   value,
   onChange,
@@ -21,12 +33,16 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
   onRefresh,
   isTesting,
 }) => {
+  // 是否显示下拉列表
   const [showDropdown, setShowDropdown] = useState(false);
+  // 过滤关键词
   const [filter, setFilter] = useState('');
+  // 输入框引用
   const inputRef = useRef<HTMLInputElement>(null);
+  // 下拉列表引用
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // 点击外部区域时关闭下拉列表
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -40,10 +56,12 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 根据过滤关键词筛选模型列表
   const filteredModels = availableModels.filter(m =>
     m.toLowerCase().includes(filter.toLowerCase())
   );
 
+  /** 处理输入框内容变更：更新值并打开下拉列表 */
   const handleInputChange = (newValue: string) => {
     onChange(newValue);
     setFilter(newValue);
@@ -52,12 +70,14 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
     }
   };
 
+  /** 选择模型：更新值、同步过滤词、关闭下拉 */
   const handleSelectModel = (model: string) => {
     onChange(model);
     setFilter(model);
     setShowDropdown(false);
   };
 
+  /** 输入框获得焦点：有可用模型时显示下拉列表 */
   const handleInputFocus = () => {
     if (availableModels.length > 0) {
       setShowDropdown(true);
@@ -67,7 +87,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        {/* Text input with dropdown */}
+        {/* 文本输入框：支持下拉选择 */}
         <div className="flex-1 relative">
           <input
             ref={inputRef}
@@ -84,6 +104,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
               border: '1px solid var(--border-default)',
             }}
           />
+          {/* 下拉按钮：有可用模型时显示 */}
           {availableModels.length > 0 && (
             <button
               onClick={() => setShowDropdown(!showDropdown)}
@@ -94,7 +115,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
             </button>
           )}
 
-          {/* Dropdown list */}
+          {/* 下拉列表：显示过滤后的模型 */}
           {showDropdown && filteredModels.length > 0 && (
             <div
               ref={dropdownRef}
@@ -127,7 +148,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
           )}
         </div>
 
-        {/* Test connection button */}
+        {/* 连接测试按钮：点击获取可用模型列表 */}
         <button
           onClick={onRefresh}
           disabled={isTesting}
@@ -142,7 +163,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
         </button>
       </div>
 
-      {/* Model chips for quick selection */}
+      {/* 模型芯片列表：用于快速选择 */}
       {availableModels.length > 0 && (
         <div>
           <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -166,6 +187,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
         </div>
       )}
 
+      {/* 无可用模型时的提示 */}
       {availableModels.length === 0 && (
         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
           点击右侧按钮测试连接并获取可用模型列表，或直接输入模型名称

@@ -4,30 +4,48 @@
  */
 
 import React, { useState } from 'react';
+// 导入图标：ChevronDown(下箭头)、ChevronUp(上箭头)、Plus(添加)、Pencil(编辑)、Trash2(删除)、X(取消)、Check(确认)
 import { ChevronDown, ChevronUp, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+// 导入自定义端点类型
 import type { CustomEndpoint } from '../../lib/providers/types';
+// 导入端点 URL 标准化函数
 import { normalizeEndpointUrl } from '../../lib/providers/types';
 
+/** 自定义端点编辑器组件属性接口 */
 interface CustomEndpointEditorProps {
-  endpoints: Record<string, CustomEndpoint>;
-  onChange: (endpoints: Record<string, CustomEndpoint>) => void;
+  endpoints: Record<string, CustomEndpoint>;  // 当前端点映射（key -> 端点）
+  onChange: (endpoints: Record<string, CustomEndpoint>) => void;  // 端点变更回调
 }
 
+/**
+ * 自定义端点编辑器组件
+ * 功能：
+ * - 可折叠的面板，管理提供商的自定义端点
+ * - 支持添加、编辑、删除端点
+ * - 编辑时若名称变更，自动更新 key 并删除旧 key
+ * - URL 在失焦时自动标准化
+ * - 默认折叠状态，避免占用过多空间
+ */
 export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
   endpoints,
   onChange,
 }) => {
+  // 是否展开面板
   const [expanded, setExpanded] = useState(false);
+  // 是否处于添加模式
   const [isAdding, setIsAdding] = useState(false);
+  // 正在编辑的端点 key
   const [editingKey, setEditingKey] = useState<string | null>(null);
 
-  // Form state for add/edit
+  // 表单状态：用于添加/编辑端点
   const [formName, setFormName] = useState('');
   const [formUrl, setFormUrl] = useState('');
   const [formDescription, setFormDescription] = useState('');
 
-  const endpointEntries = Object.entries(endpoints);
+  // 端点条目数组（显式类型标注以解决 TypeScript 推断问题）
+  const endpointEntries = Object.entries(endpoints) as [string, CustomEndpoint][];
 
+  /** 重置表单状态：清空输入并退出编辑/添加模式 */
   const resetForm = () => {
     setFormName('');
     setFormUrl('');
@@ -36,9 +54,11 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
     setEditingKey(null);
   };
 
+  /** 添加新端点 */
   const handleAdd = () => {
     if (!formName.trim() || !formUrl.trim()) return;
 
+    // 从名称生成 key：小写、空格替换为连字符
     const key = formName.trim().toLowerCase().replace(/\s+/g, '-');
     const endpoint: CustomEndpoint = {
       name: formName.trim(),
@@ -50,6 +70,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
     resetForm();
   };
 
+  /** 进入编辑模式：加载端点数据到表单 */
   const handleEdit = (key: string) => {
     const ep = endpoints[key];
     setFormName(ep.name);
@@ -59,6 +80,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
     setIsAdding(false);
   };
 
+  /** 更新已存在的端点 */
   const handleUpdate = () => {
     if (!editingKey || !formName.trim() || !formUrl.trim()) return;
 
@@ -69,7 +91,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
     };
 
     const updated = { ...endpoints };
-    // If key changed, remove old key
+    // 如果 key 变更（名称变了），删除旧 key
     const newKey = formName.trim().toLowerCase().replace(/\s+/g, '-');
     if (newKey !== editingKey) {
       delete updated[editingKey];
@@ -80,6 +102,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
     resetForm();
   };
 
+  /** 删除端点 */
   const handleDelete = (key: string) => {
     const updated = { ...endpoints };
     delete updated[key];
@@ -88,7 +111,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
 
   return (
     <div>
-      {/* Collapsible header */}
+      {/* 可折叠头部：显示标题和数量徽章 */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-xs transition-colors w-full"
@@ -105,7 +128,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
 
       {expanded && (
         <div className="mt-3 space-y-2">
-          {/* Existing endpoints */}
+          {/* 已有端点列表 */}
           {endpointEntries.map(([key, ep]) => (
             <div
               key={key}
@@ -125,6 +148,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
                   </div>
                 )}
               </div>
+              {/* 操作按钮：悬停时显示 */}
               <button
                 onClick={() => handleEdit(key)}
                 className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
@@ -142,7 +166,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
             </div>
           ))}
 
-          {/* Add/Edit form */}
+          {/* 添加/编辑表单 */}
           {(isAdding || editingKey) && (
             <div className="p-3 rounded-lg space-y-2" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
               <input
@@ -162,7 +186,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
                 type="text"
                 value={formUrl}
                 onChange={(e) => setFormUrl(e.target.value)}
-                onBlur={() => setFormUrl(prev => normalizeEndpointUrl(prev))}
+                onBlur={() => setFormUrl(prev => normalizeEndpointUrl(prev))}  // 失焦时标准化 URL
                 placeholder="https://api.example.com/v1"
                 className="w-full px-3 py-2 rounded-lg focus:outline-none text-xs"
                 style={{
@@ -186,6 +210,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
                 }}
               />
               <div className="flex gap-2">
+                {/* 取消按钮 */}
                 <button
                   onClick={resetForm}
                   className="p-1.5 rounded-lg"
@@ -193,6 +218,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
                 >
                   <X size={14} />
                 </button>
+                {/* 确认按钮：根据模式调用添加或更新 */}
                 <button
                   onClick={editingKey ? handleUpdate : handleAdd}
                   disabled={!formName.trim() || !formUrl.trim()}
@@ -205,7 +231,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
             </div>
           )}
 
-          {/* Add button */}
+          {/* 添加按钮：无正在编辑时显示 */}
           {!isAdding && !editingKey && (
             <button
               onClick={() => { setIsAdding(true); resetForm(); setFormName(''); setFormUrl(''); setFormDescription(''); }}

@@ -1,13 +1,27 @@
 import React from 'react';
+// 导入图标：Sparkles(AI)、Code2(代码)、ArrowRight(右箭头)、Zap(闪电)、Palette(调色板)、Download(下载)、Layers(图层)
 import { Sparkles, Code2, ArrowRight, Zap, Palette, Download, Layers } from 'lucide-react';
+// 导入 motion 动画库
 import { motion } from 'motion/react';
+// 导入视图类型
 import { ViewType } from '../../hooks/use-app-state';
 
+/** 着陆页组件属性接口 */
 interface LandingPageProps {
-  onNavigate: (view: ViewType) => void;
+  onNavigate: (view: ViewType) => void;  // 页面导航回调
 }
 
+/**
+ * 着陆页组件（应用首页）
+ * 功能：
+ * - 显示应用 Logo 和标题
+ * - 提供两个主要入口按钮：开始创作（AI 生成）、代码编辑器
+ * - 展示四个核心功能特性卡片
+ * - 底部显示支持的画布比例和导出格式信息
+ * - 全部使用 motion 实现流畅的入场动画
+ */
 const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
+  // 功能特性列表
   const features = [
     {
       icon: <Sparkles className="w-5 h-5" />,
@@ -33,9 +47,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-root)' }}>
-      {/* Hero Section */}
+      {/* 主体区域：包含标题、按钮和功能卡片 */}
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-20 overflow-hidden">
-        {/* Background gradient effect */}
+        {/* 背景径向渐变效果：从顶部中心向外扩散 */}
         <div
           className="absolute inset-0 opacity-30"
           style={{
@@ -43,14 +57,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           }}
         />
 
-        {/* Content */}
+        {/* 主要内容区：使用 motion 实现从下方滑入的动画 */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="relative z-10 text-center max-w-3xl mx-auto"
         >
-          {/* Logo */}
+          {/* Logo：渐变背景 + 闪光图标 + 阴影效果 */}
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
@@ -64,7 +78,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <Sparkles className="w-10 h-10 text-white" />
           </motion.div>
 
-          {/* Title */}
+          {/* 应用标题 */}
           <h1
             className="text-5xl md:text-6xl font-bold mb-6 tracking-tight"
             style={{
@@ -75,7 +89,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             Gemini Canvas
           </h1>
 
-          {/* Subtitle */}
+          {/* 副标题：产品定位说明 */}
           <p
             className="text-xl md:text-2xl mb-12 leading-relaxed"
             style={{ color: 'var(--text-secondary)' }}
@@ -87,11 +101,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </span>
           </p>
 
-          {/* Main Action Buttons */}
+          {/* 主要操作按钮区 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            {/* 开始创作按钮：导航到 AI 生成页 */}
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.02 }}  // 悬停放大
+              whileTap={{ scale: 0.98 }}    // 点击缩小
               onClick={() => onNavigate('ai-generate')}
               className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all cursor-pointer"
               style={{
@@ -102,9 +117,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             >
               <Zap className="w-5 h-5" />
               开始创作
+              {/* 箭头悬停右移动画 */}
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </motion.button>
 
+            {/* 代码编辑器按钮：导航到代码编辑页 */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -122,7 +139,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           </div>
         </motion.div>
 
-        {/* Features Grid */}
+        {/* 功能特性卡片网格：2x2 布局（移动端）或 4x1（桌面端） */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -135,7 +152,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
+                transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}  // 依次延迟动画
                 className="flex flex-col items-center text-center p-6 rounded-xl"
                 style={{
                   background: 'var(--glass-bg)',
@@ -143,6 +160,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   border: '1px solid var(--glass-border)',
                 }}
               >
+                {/* 功能图标 */}
                 <div
                   className="inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3"
                   style={{ background: 'var(--accent-bg)', color: 'var(--accent)' }}
@@ -167,7 +185,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         </motion.div>
       </div>
 
-      {/* Footer */}
+      {/* 底部信息栏 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

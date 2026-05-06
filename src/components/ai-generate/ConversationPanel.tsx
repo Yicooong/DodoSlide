@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
+// 导入图标：Send(发送)、Sparkles(闪光)、MessageCircle(对话)、Edit3(编辑)、Check(确认)、ChevronRight(右箭头)
 import { Send, Sparkles, MessageCircle, Edit3, Check, ChevronRight } from 'lucide-react';
+// 导入生成模式和上下文类型
 import { GenerationMode, GenerationContext } from './AiGeneratePage';
+// 导入画布比例类型
 import { CanvasRatio } from '../../lib/canvas-config';
+// 导入视图类型
 import { ViewType } from '../../hooks/use-app-state';
 
+/** AI 生成属性接口 */
 interface AiGenProps {
   isGenerating: boolean;
   error: string | null;
@@ -11,6 +16,7 @@ interface AiGenProps {
   clearError: () => void;
 }
 
+/** 幻灯片管理 hook 接口 */
 interface SlidesHook {
   slides: Array<{ id: string; name: string; code: string }>;
   currentSlideIndex: number;
@@ -21,14 +27,15 @@ interface SlidesHook {
   setSlidesBulk: (slides: Array<{ id: string; name: string; code: string }>) => void;
 }
 
-// Guided mode conversation steps
+/** 引导式对话步骤接口 */
 interface ConversationStep {
   id: number;
   question: string;
-  options?: string[];
-  isMultiLine?: boolean;
+  options?: string[];      // 可选的选项列表
+  isMultiLine?: boolean;   // 是否多行输入
 }
 
+// 引导式对话步骤定义：5 个问题逐步引导用户输入
 const CONVERSATION_STEPS: ConversationStep[] = [
   {
     id: 1,
@@ -55,7 +62,7 @@ const CONVERSATION_STEPS: ConversationStep[] = [
   },
 ];
 
-// Quick tags for direct mode
+// 直接输入模式下的快捷标签
 const QUICK_TAGS = [
   '10页左右',
   '包含数据图表',
@@ -65,17 +72,28 @@ const QUICK_TAGS = [
   '简洁文字',
 ];
 
+/** 对话面板组件属性接口 */
 interface ConversationPanelProps {
-  mode: GenerationMode;
-  setMode: (mode: GenerationMode) => void;
-  context: GenerationContext;
-  onContextUpdate: (updates: Partial<GenerationContext>) => void;
-  aiGen: AiGenProps;
-  canvasRatio: CanvasRatio;
-  slidesHook: SlidesHook;
-  onNavigate: (view: ViewType) => void;
+  mode: GenerationMode;                                  // 当前模式
+  setMode: (mode: GenerationMode) => void;               // 设置模式
+  context: GenerationContext;                            // 生成上下文
+  onContextUpdate: (updates: Partial<GenerationContext>) => void;  // 更新上下文
+  aiGen: AiGenProps;                                     // AI 生成相关属性
+  canvasRatio: CanvasRatio;                              // 画布比例
+  slidesHook: SlidesHook;                                // 幻灯片管理
+  onNavigate: (view: ViewType) => void;                  // 页面导航
 }
 
+/**
+ * 对话面板组件（旧版，未被当前入口使用）
+ * 功能：
+ * - 支持两种模式：引导模式（逐步提问）和直接输入模式
+ * - 引导模式：5 个步骤逐步收集用户需求，显示 AI 回复
+ * - 直接输入模式：自由输入需求，支持快捷标签
+ * - 完成后显示需求摘要，可一键生成
+ *
+ * 注意：此组件为旧版组件，当前使用的是 EntryPhase 组件
+ */
 const ConversationPanel: React.FC<ConversationPanelProps> = ({
   mode,
   setMode,
@@ -86,29 +104,39 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
   slidesHook,
   onNavigate,
 }) => {
+  // 当前步骤（1-5）
   const [currentStep, setCurrentStep] = useState(1);
+  // 输入框内容
   const [inputValue, setInputValue] = useState('');
+  // 对话历史记录
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'ai', content: string}>>([]);
+  // 是否显示需求摘要
   const [showSummary, setShowSummary] = useState(false);
+  // 是否正在生成
   const [isGenerating, setIsGenerating] = useState(false);
+  // 消息列表底部引用
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
+  // 对话历史变化时自动滚动到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversationHistory]);
 
+  /**
+   * 处理选项选择或输入提交
+   * 流程：添加用户回复 → 更新上下文 → AI 确认 → 进入下一步或显示摘要
+   */
   const handleOptionSelect = (option: string) => {
     const step = CONVERSATION_STEPS.find(s => s.id === currentStep);
     if (!step) return;
 
-    // Add user response to history
+    // 添加用户回复到对话历史
     setConversationHistory(prev => [
       ...prev,
       { role: 'user', content: option }
     ]);
 
-    // Update context based on step
+    // 步骤 ID 到上下文字段的映射
     const contextKeyMap: Record<number, keyof GenerationContext> = {
       1: 'purpose',
       2: 'scenario',
@@ -122,7 +150,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
       onContextUpdate({ [key]: option });
     }
 
-    // AI confirmation
+    // AI 确认回复
     const confirmations: Record<number, string> = {
       1: `明白了，您需要一份面向 ${option.includes('投资人') ? '投资人' : option.includes('团队') ? '团队' : option} 的演示文稿。`,
       2: `好的，使用场景是「${option}」。`,
@@ -131,13 +159,14 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
       5: `了解了，您的偏好是「${option}」。`,
     };
 
+    // 延迟添加 AI 回复并进入下一步
     setTimeout(() => {
       setConversationHistory(prev => [
         ...prev,
         { role: 'ai', content: confirmations[currentStep] || '收到！' }
       ]);
 
-      // Move to next step or show summary
+      // 进入下一步或显示摘要
       setTimeout(() => {
         if (currentStep < 5) {
           setCurrentStep(prev => prev + 1);
@@ -148,17 +177,22 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     }, 300);
   };
 
+  /** 处理输入框提交 */
   const handleInputSubmit = () => {
     if (!inputValue.trim()) return;
     handleOptionSelect(inputValue.trim());
     setInputValue('');
   };
 
+  /**
+   * 处理生成：从上下文构建 prompt，调用 API 生成
+   * 成功后导航到代码编辑器页面
+   */
   const handleGenerate = async () => {
     setIsGenerating(true);
     aiGen.clearError();
 
-    // Build the user prompt from context
+    // 从上下文各字段构建 prompt
     const promptParts: string[] = [];
     if (context.purpose) promptParts.push(`目的：${context.purpose}`);
     if (context.scenario) promptParts.push(`场景：${context.scenario}`);
@@ -186,6 +220,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     }
   };
 
+  /** 处理键盘事件：Enter 发送 */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -193,10 +228,10 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     }
   };
 
-  // Render guided mode
+  /** 渲染引导模式界面 */
   const renderGuidedMode = () => (
     <div className="flex flex-col h-full">
-      {/* Mode Switcher */}
+      {/* 模式切换器 */}
       <div className="flex gap-2 p-4 border-b" style={{ borderColor: 'var(--border-primary)' }}>
         <button
           onClick={() => setMode('guided')}
@@ -228,9 +263,9 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
         </button>
       </div>
 
-      {/* Conversation Area */}
+      {/* 对话区域 */}
       <div className="flex-1 overflow-auto p-4 space-y-4">
-        {/* Welcome Message */}
+        {/* 欢迎消息：显示第一个问题 */}
         {conversationHistory.length === 0 && (
           <div className="flex gap-3">
             <div
@@ -244,7 +279,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
               style={{ backgroundColor: 'var(--bg-secondary)' }}
             >
               <p style={{ color: 'var(--text-primary)' }}>
-                你好！我是 AI 演示文稿助手 🚀<br /><br />
+                你好！我是 AI 演示文稿助手<br /><br />
                 我将通过几个简单的问题帮你明确需求，然后生成一份专业的演示文稿。<br /><br />
                 {CONVERSATION_STEPS[0]?.question}
               </p>
@@ -252,7 +287,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
           </div>
         )}
 
-        {/* Conversation History */}
+        {/* 对话历史消息列表 */}
         {conversationHistory.map((msg, idx) => (
           <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             {msg.role === 'ai' && (
@@ -283,7 +318,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
           </div>
         ))}
 
-        {/* Current Step Options */}
+        {/* 当前步骤的问题和选项 */}
         {!showSummary && currentStep <= 5 && (
           <div className="flex gap-3">
             <div
@@ -296,6 +331,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
               <p className="mb-3" style={{ color: 'var(--text-primary)' }}>
                 {CONVERSATION_STEPS[currentStep - 1]?.question}
               </p>
+              {/* 有选项时显示按钮组 */}
               {CONVERSATION_STEPS[currentStep - 1]?.options ? (
                 <div className="flex flex-wrap gap-2">
                   {CONVERSATION_STEPS[currentStep - 1]?.options?.map((option) => (
@@ -314,6 +350,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
                   ))}
                 </div>
               ) : (
+                /* 无选项时显示输入框 */
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -345,7 +382,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
           </div>
         )}
 
-        {/* Summary Card */}
+        {/* 需求摘要卡片 */}
         {showSummary && (
           <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--accent-primary)' }}>
             <div className="flex items-center gap-2 mb-3">
@@ -369,9 +406,10 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Action Buttons */}
+      {/* 底部操作按钮 */}
       <div className="p-4 border-t flex gap-3" style={{ borderColor: 'var(--border-primary)' }}>
         {showSummary ? (
+          /* 摘要模式：重新填写或生成 */
           <>
             <button
               onClick={() => {
@@ -412,6 +450,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
             </button>
           </>
         ) : (
+          /* 非摘要模式：显示上一步按钮 */
           currentStep > 1 && (
             <button
               onClick={() => {
@@ -433,10 +472,10 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     </div>
   );
 
-  // Render direct mode
+  /** 渲染直接输入模式界面 */
   const renderDirectMode = () => (
     <div className="flex flex-col h-full">
-      {/* Mode Switcher */}
+      {/* 模式切换器 */}
       <div className="flex gap-2 p-4 border-b" style={{ borderColor: 'var(--border-primary)' }}>
         <button
           onClick={() => setMode('guided')}
@@ -468,7 +507,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
         </button>
       </div>
 
-      {/* Input Area */}
+      {/* 输入区域 */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="flex-1">
           <textarea
@@ -485,7 +524,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
           />
         </div>
 
-        {/* Quick Tags */}
+        {/* 快捷标签：点击追加到输入框 */}
         <div className="flex flex-wrap gap-2 mt-4">
           {QUICK_TAGS.map((tag) => (
             <button
@@ -507,7 +546,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
           ))}
         </div>
 
-        {/* Generate Button */}
+        {/* 生成按钮 */}
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !context.directInput?.trim()}
@@ -534,6 +573,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
     </div>
   );
 
+  // 根据模式渲染不同界面
   return mode === 'guided' ? renderGuidedMode() : renderDirectMode();
 };
 
