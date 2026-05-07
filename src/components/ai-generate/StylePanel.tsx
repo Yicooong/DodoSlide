@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+// 导入图标：Check(确认)、Palette(调色板)、Layout(布局)、FileText(文件)
 import { Check, Palette, Layout, FileText } from 'lucide-react';
+// 导入生成上下文类型
 import { GenerationContext } from './AiGeneratePage';
 
-// Style presets
+/** 风格预设接口 */
 interface StylePreset {
   id: string;
   name: string;
@@ -10,6 +12,7 @@ interface StylePreset {
   colors: string[];
 }
 
+// 风格预设列表：定义各种视觉风格
 const STYLE_PRESETS: StylePreset[] = [
   {
     id: 'business-classic',
@@ -61,7 +64,7 @@ const STYLE_PRESETS: StylePreset[] = [
   },
 ];
 
-// Content templates
+/** 内容模板接口 */
 interface ContentTemplate {
   id: string;
   name: string;
@@ -69,6 +72,7 @@ interface ContentTemplate {
   structure: string[];
 }
 
+// 内容模板列表：定义各种演示文稿结构
 const CONTENT_TEMPLATES: ContentTemplate[] = [
   {
     id: 'product-launch',
@@ -102,22 +106,34 @@ const CONTENT_TEMPLATES: ContentTemplate[] = [
   },
 ];
 
-// Page count options
+// 页数选项
 const PAGE_COUNT_OPTIONS = [5, 8, 10, 12, 15];
 
+/** 风格面板组件属性接口 */
 interface StylePanelProps {
-  context: GenerationContext;
-  onContextUpdate: (updates: Partial<GenerationContext>) => void;
+  context: GenerationContext;                          // 生成上下文
+  onContextUpdate: (updates: Partial<GenerationContext>) => void;  // 更新上下文回调
 }
 
+/**
+ * 风格面板组件（旧版，未被当前入口使用）
+ * 功能：
+ * - 风格预设选择：8 种视觉风格，带颜色预览
+ * - 内容模板选择：5 种演示文稿结构
+ * - 页面设置：页数和画布比例
+ * - 三个区域均可折叠/展开
+ *
+ * 注意：此组件为旧版组件，当前使用的是 EntryPhase 中的 TemplateCard
+ */
 const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => {
+  // 各区域的展开/折叠状态
   const [stylesExpanded, setStylesExpanded] = useState(true);
   const [templatesExpanded, setTemplatesExpanded] = useState(true);
   const [settingsExpanded, setSettingsExpanded] = useState(true);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Style Presets */}
+      {/* 风格预设区域 */}
       <div className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
         <button
           onClick={() => setStylesExpanded(!stylesExpanded)}
@@ -146,6 +162,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
                     : '1px solid var(--border-primary)'
                 }}
               >
+                {/* 选中标记 */}
                 {context.selectedStyle === preset.id && (
                   <div
                     className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
@@ -154,7 +171,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
                     <Check className="w-3 h-3" style={{ color: 'var(--text-inverse)' }} />
                   </div>
                 )}
-                {/* Color preview */}
+                {/* 颜色预览 */}
                 <div className="flex gap-1 mb-2">
                   {preset.colors.map((color, idx) => (
                     <div
@@ -176,7 +193,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
         )}
       </div>
 
-      {/* Content Templates */}
+      {/* 内容模板区域 */}
       <div className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
         <button
           onClick={() => setTemplatesExpanded(!templatesExpanded)}
@@ -240,7 +257,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
         )}
       </div>
 
-      {/* Page Settings */}
+      {/* 页面设置区域 */}
       <div>
         <button
           onClick={() => setSettingsExpanded(!settingsExpanded)}
@@ -257,7 +274,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
 
         {settingsExpanded && (
           <div className="px-4 pb-4 space-y-4">
-            {/* Page Count */}
+            {/* 页数选择 */}
             <div>
               <label className="text-xs mb-2 block" style={{ color: 'var(--text-secondary)' }}>
                 页数
@@ -284,7 +301,7 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
               </div>
             </div>
 
-            {/* Canvas Ratio */}
+            {/* 画布比例选择 */}
             <div>
               <label className="text-xs mb-2 block" style={{ color: 'var(--text-secondary)' }}>
                 画布比例
@@ -317,7 +334,9 @@ const StylePanel: React.FC<StylePanelProps> = ({ context, onContextUpdate }) => 
   );
 };
 
-// Chevron icon component
+/**
+ *  Chevron 图标组件：根据展开状态旋转箭头方向
+ */
 const ChevronIcon: React.FC<{ expanded: boolean }> = ({ expanded }) => (
   <svg
     className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}

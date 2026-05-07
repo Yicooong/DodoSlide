@@ -23,8 +23,15 @@ interface SlidePreviewProps {
 **功能特性:**
 - **自适应缩放**: 使用 ResizeObserver 自动计算最佳缩放比例
 - **实时预览**: 实时显示幻灯片渲染结果
-- **错误显示**: 使用动画显示代码解析错误
+- **错误显示**: 使用动画显示代码解析错误（Framer Motion）
 - **画布适配**: 支持 16:9 和 4:3 两种画布比例
+- **主题独立**: 预览区域始终使用白色背景（`--bg-preview-canvas`）
+
+**实现细节:**
+- 使用 `ResizeObserver` 监听容器大小变化
+- 通过 CSS `transform: scale()` 实现缩放
+- 导出坐标使用原始值：`pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width`
+- 错误提示使用 `AnimatePresence` 实现进出动画
 
 ## 组件结构
 
@@ -105,7 +112,7 @@ const calculateScale = (containerWidth: number) => {
 - 背景色: 深红色半透明 (`rgba(127, 29, 29, 0.9)`)
 - 文字颜色: 浅红色 (`#fecaca`)
 - 位置: 底部居中
-- 动画: 从底部滑入，淡入淡出
+- 动画: 从底部滑入，淡入淡出（Framer Motion）
 
 ## 使用示例
 
@@ -174,14 +181,16 @@ transform: scale(缩放比例)
 ### 主题变量
 ```css
 --shadow-preview: 预览区域阴影效果
+--bg-preview-canvas: 预览画布背景（始终为白色）
 ```
 
 ## 性能优化
 
-1. **ResizeObserver**: 高效监听容器大小变化
+1. **ResizeObserver**: 高效监听容器大小变化，自动清理避免内存泄漏
 2. **transform 缩放**: 使用 GPU 加速的 CSS 变换
 3. **错误动画**: 使用 Framer Motion 优化动画性能
 4. **引用管理**: 使用 `useRef` 避免不必要的重渲染
+5. **条件渲染**: 仅在 error 存在时渲染错误提示（AnimatePresence）
 
 ## 扩展功能
 
@@ -244,3 +253,4 @@ A: 对于复杂的幻灯片，考虑：
 2. **错误边界**: 确保幻灯片内容有错误边界保护
 3. **响应式设计**: 测试不同屏幕尺寸下的显示效果
 4. **可访问性**: 为错误信息添加适当的 ARIA 标签
+5. **主题独立**: 预览区域始终使用白色背景，不受应用主题影响

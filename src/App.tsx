@@ -3,19 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// React 核心 hooks
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+// UI 图标库
 import { Loader2 } from 'lucide-react';
+// 动画库
 import { motion, AnimatePresence } from 'motion/react';
+// 可调整大小的面板组件
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
+// PPTX 生成库
 import pptxgen from 'pptxgenjs';
 
-// Hooks
+// Hooks - 自定义状态管理
 import { useSlides, Slide } from './hooks/use-slides';
 import { useAppState } from './hooks/use-app-state';
 import { useSlideRenderer } from './hooks/use-slide-renderer';
 import { useAiGeneration } from './lib/use-ai-generation';
 
-// Components
+// Components - UI 组件
 import { SlideSidebar } from './components/slide/SlideSidebar';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { SlidePreview } from './components/preview/SlidePreview';
@@ -25,42 +30,61 @@ import { SettingsModal } from './components/SettingsModal';
 import LandingPage from './components/landing/LandingPage';
 import AiGeneratePage from './components/ai-generate/AiGeneratePage';
 
-// Libs
+// Libs - 工具库
 import { CANVAS_CONFIGS, CanvasConfig } from './lib/canvas-config';
 import { THEME_CONFIGS, ThemeConfig } from './lib/theme-config';
 import { exportSingleSlide, exportSlideByCode } from './lib/pptx-exporter';
 
-// Utils
+// Utils - 工具函数
 import { cn } from './lib/utils';
 
+/**
+ * 主应用组件
+ * 负责管理应用状态、视图切换、幻灯片编辑/预览、导出等功能
+ */
 const App = () => {
-  // Hooks
+  // ========== Hooks 初始化 ==========
+  // 应用全局状态（视图类型、主题、画布比例等）
   const appState = useAppState();
+  // 幻灯片管理（增删改查、当前索引等）
   const slidesHook = useSlides(appState.canvasRatio);
+  // 获取当前幻灯片的代码
   const currentCode = slidesHook.slides[slidesHook.currentSlideIndex]?.code || '';
+  // JSX 转译器，将幻灯片代码转换为可渲染的 React 组件
   const { transpiledCode, error, RenderedSlide } = useSlideRenderer(currentCode);
+  // AI 生成相关功能
   const aiGen = useAiGeneration();
 
-  // Refs
+  // ========== Refs ==========
+  // 容器引用，用于计算缩放比例
   const containerRef = useRef<HTMLDivElement>(null);
+  // 预览区域引用，用于导出时获取 DOM
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // Local state
+  // ========== Local State ==========
+  // 画布缩放比例
   const [scale, setScale] = useState(0.75);
+  // 是否正在导出
   const [isExporting, setIsExporting] = useState(false);
+  // 是否显示导出弹窗
   const [showExportModal, setShowExportModal] = useState(false);
+  // 导出模式：'current' | 'all' | 'range'
   const [exportMode, setExportMode] = useState<ExportMode>('all');
+  // 导出范围起始页
   const [exportRangeStart, setExportRangeStart] = useState(1);
+  // 导出范围结束页
   const [exportRangeEnd, setExportRangeEnd] = useState(1);
+  // 导出指定页码
   const [exportSpecificPage, setExportSpecificPage] = useState(1);
+  // 是否显示设置弹窗
   const [showSettings, setShowSettings] = useState(false);
 
-  // Update code when current slide changes
+  // 当当前幻灯片变化时更新代码（由渲染器处理）
   useEffect(() => {
     // Code is already updated by the render
   }, [slidesHook.currentSlideIndex, slidesHook.slides]);
 
-  // Handle scale update
+  // 监听容器大小变化，自动计算缩放比例
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -72,7 +96,12 @@ const App = () => {
     return () => observer.disconnect();
   }, [appState.canvasRatio, appState.canvasConfig]);
 
-  // Handle File Upload
+  // ========== 事件处理函数 ==========
+  
+  /**
+   * 处理文件上传
+   * 读取上传的文本文件并更新当前幻灯片代码
+   */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -85,13 +114,16 @@ const App = () => {
     }
   };
 
-  // Main export function supporting both current and all slides
+  /**
+   * 导出为 PPTX 文件
+   * 支持三种模式：当前幻灯片、指定范围、全部幻灯片
+   */
   const exportToPPTX = async (mode: ExportMode, startPage?: number, endPage?: number) => {
     setIsExporting(true);
 
     try {
       if (mode === 'current') {
-        // Export only current slide
+        // 仅导出当前幻灯片
         const pres = new pptxgen();
         pres.layout = appState.canvasConfig.pptxLayout as any;
 
@@ -99,11 +131,11 @@ const App = () => {
 
         await pres.writeFile({ fileName: `Slide_${slidesHook.slides[slidesHook.currentSlideIndex].name}_${Date.now()}.pptx` });
       } else if (mode === 'range' && startPage !== undefined && endPage !== undefined) {
-        // Export range of slides
+        // 导出指定范围的幻灯片
         const pres = new pptxgen();
         pres.layout = appState.canvasConfig.pptxLayout as any;
 
-        const start = Math.max(1, startPage) - 1; // Convert to 0-based index
+        const start = Math.max(1, startPage) - 1; // 转换为 0 基索引
         const end = Math.min(slidesHook.slides.length, endPage);
 
         for (let i = start; i < end; i++) {
@@ -113,7 +145,7 @@ const App = () => {
 
         await pres.writeFile({ fileName: `Presentation_Slides_${startPage}-${endPage}_${Date.now()}.pptx` });
       } else {
-        // Export all slides
+        // 导出全部幻灯片
         const pres = new pptxgen();
         pres.layout = appState.canvasConfig.pptxLayout as any;
 
@@ -133,7 +165,10 @@ const App = () => {
     }
   };
 
-  // Handle export button click
+  /**
+   * 处理导出按钮点击
+   * 初始化导出参数并显示弹窗
+   */
   const handleExportClick = () => {
     setExportRangeStart(1);
     setExportRangeEnd(slidesHook.slides.length);
@@ -141,23 +176,30 @@ const App = () => {
     setShowExportModal(true);
   };
 
-  // Handle canvas ratio change
+  /**
+   * 处理画布比例变化
+   */
   const handleCanvasRatioChange = (ratio: string) => {
     appState.setCanvasRatio(ratio as any);
   };
 
-  // Handle theme change
+  /**
+   * 处理主题变化
+   */
   const handleThemeChange = (theme: string) => {
     appState.setAppTheme(theme as any);
   };
 
-  // Handle confirm export
+  /**
+   * 处理确认导出
+   * 根据导出模式执行相应的导出逻辑
+   */
   const handleConfirmExport = () => {
     if (exportMode === 'current') {
-      // Navigate to the specified page first, then export
+      // 先跳转到指定页，然后导出
       const pageIndex = exportSpecificPage - 1;
       slidesHook.setCurrentSlideIndex(pageIndex);
-      // Wait for state update then export
+      // 等待状态更新后导出
       setTimeout(() => {
         exportToPPTX('current');
       }, 100);
@@ -170,7 +212,10 @@ const App = () => {
     }
   };
 
-  // Handle navigation from landing page
+  /**
+   * 处理从着陆页导航
+   * 切换视图类型并设置相应的标签页
+   */
   const handleNavigate = (view: 'landing' | 'ai-generate' | 'code' | 'preview') => {
     appState.setViewType(view);
     if (view === 'code' || view === 'preview') {
@@ -178,7 +223,9 @@ const App = () => {
     }
   };
 
-  // Render landing page
+  // ========== 渲染逻辑 ==========
+
+  // 渲染着陆页
   if (appState.viewType === 'landing') {
     return (
       <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
@@ -187,7 +234,7 @@ const App = () => {
     );
   }
 
-  // Render AI generation page
+  // 渲染 AI 生成页
   if (appState.viewType === 'ai-generate') {
     return (
       <div className={appState.themeConfig.rootClass} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
@@ -203,7 +250,7 @@ const App = () => {
           showSettings={showSettings}
           setShowSettings={setShowSettings}
         />
-        {/* Settings Modal */}
+        {/* 设置弹窗 */}
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
@@ -215,10 +262,11 @@ const App = () => {
     );
   }
 
+  // 渲染主编辑器/预览界面
   return (
     <div className={`h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
       <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
-        {/* Left Sidebar: Slide Thumbnails */}
+        {/* 左侧边栏：幻灯片缩略图 */}
         <Panel
           defaultSize="20%"
           minSize="10%"
@@ -241,12 +289,13 @@ const App = () => {
           />
         </Panel>
 
+        {/* 面板调整手柄 */}
         <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
-        {/* Main Content Area */}
+        {/* 主内容区域 */}
         <Panel defaultSize="80%" minSize="60%" className="overflow-hidden">
           <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
-            {/* Header Bar */}
+            {/* 顶部导航栏 */}
             <AppHeader
               activeTab={appState.activeTab}
               setActiveTab={appState.setActiveTab}
@@ -264,9 +313,9 @@ const App = () => {
               onNavigateToAi={() => appState.setViewType('ai-generate')}
             />
 
-            {/* Workspace Container */}
+            {/* 工作区容器 */}
             <main className="flex-grow relative overflow-hidden">
-              {/* View: Editor */}
+              {/* 视图：代码编辑器 */}
               <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'code' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
                 <CodeEditor
                   code={slidesHook.slides[slidesHook.currentSlideIndex]?.code || ''}
@@ -275,7 +324,7 @@ const App = () => {
                 />
               </div>
 
-              {/* View: Preview */}
+              {/* 视图：预览 */}
               <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
                 <SlidePreview
                   canvasConfig={appState.canvasConfig}
@@ -293,7 +342,7 @@ const App = () => {
         </Panel>
       </PanelGroup>
 
-      {/* Settings Modal */}
+      {/* 设置弹窗 */}
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
@@ -302,7 +351,7 @@ const App = () => {
         onUpdatePromptSettings={aiGen.updatePromptSettings}
       />
 
-      {/* Export Modal */}
+      {/* 导出弹窗 */}
       <ExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}

@@ -1,7 +1,15 @@
+// React 核心库
 import React from 'react';
+// 图标组件
 import { Activity, CheckCircle, Cpu, ShieldCheck } from 'lucide-react';
+// 画布配置类型和配置对象
 import { CanvasRatio, CANVAS_CONFIGS } from './lib/canvas-config';
 
+/**
+ * 默认幻灯片代码模板
+ * 这是一个完整的 React 组件示例，展示了一个学术研究汇报幻灯片
+ * 包含标题栏、三栏布局（背景挑战、技术架构、工作进展）和底部装饰
+ */
 export const DEFAULT_CODE = `
 
 import React from 'react';
@@ -170,11 +178,15 @@ export default App;
 `;
 
 /**
- * Get default slide code template based on canvas ratio.
- * Dynamically replaces width/height in the template to match the selected ratio.
+ * 根据画布比例获取默认幻灯片代码模板
+ * 动态替换模板中的宽度/高度以匹配选定的比例
+ * @param canvasRatio 画布比例（如 '16:9' 或 '4:3'）
+ * @returns 替换尺寸后的完整代码字符串
  */
 export const getDefaultCode = (canvasRatio: CanvasRatio): string => {
+  // 获取对应比例的画布配置，如果不存在则使用默认的 16:9
   const config = CANVAS_CONFIGS[canvasRatio] || CANVAS_CONFIGS['16:9'];
+  // 替换画布尺寸注释和样式类
   return DEFAULT_CODE
     .replace('w-[1280px] h-[720px]', `w-[${config.width}px] h-[${config.height}px]`)
     .replace('{/* 16:9 画布: 1280x720 */}', `{/* ${config.ratio} 画布: ${config.width}x${config.height} */}`);

@@ -1,20 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react';
+// 导入图标：Sparkles(闪光)、Send(发送)、MessageCircle(对话)、Edit3(编辑)、Layout(布局)
 import { Sparkles, Send, MessageCircle, Edit3, Layout } from 'lucide-react';
+// 导入 motion 动画库
 import { motion } from 'motion/react';
+// 导入生成模式和上下文类型
 import { GenerationContext, GenerationMode } from './AiGeneratePage';
+// 导入风格模板常量
 import { STYLE_TEMPLATES } from '../../prompts/templates/index';
+// 导入画布比例类型
 import { CanvasRatio } from '../../lib/canvas-config';
+// 导入风格模板卡片组件
 import TemplateCard from './TemplateCard';
 
+/** 入口阶段组件属性接口 */
 interface EntryPhaseProps {
-  context: GenerationContext;
-  onContextUpdate: (updates: Partial<GenerationContext>) => void;
-  onStartGenerate: () => void;
-  onEnterWorkspace: () => void;
-  isGenerating: boolean;
-  canvasRatio: CanvasRatio;
+  context: GenerationContext;                          // 生成上下文
+  onContextUpdate: (updates: Partial<GenerationContext>) => void;  // 更新上下文回调
+  onStartGenerate: () => void;                         // 开始生成回调
+  onEnterWorkspace: () => void;                        // 进入工作区回调
+  isGenerating: boolean;                               // 是否正在生成
+  canvasRatio: CanvasRatio;                            // 画布比例
 }
 
+/**
+ * 入口阶段组件
+ * 功能：
+ * - 显示欢迎标题和功能说明
+ * - 提供快捷 prompt 卡片（产品发布、技术分享等）
+ * - 玻璃拟态聊天输入框，支持直接输入和引导模式
+ * - 画布比例选择器（16:9 / 4:3）
+ * - 风格模板卡片选择
+ */
 const EntryPhase: React.FC<EntryPhaseProps> = ({
   context,
   onContextUpdate,
@@ -23,10 +39,14 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   isGenerating,
   canvasRatio,
 }) => {
+  // 输入模式：direct(直接输入) 或 guided(引导模式)
   const [mode, setMode] = useState<GenerationMode>('direct');
+  // 输入框内容
   const [inputValue, setInputValue] = useState('');
+  // 文本域引用：用于自动调整高度
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // 根据输入内容自动调整文本域高度（最大 200px）
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -34,6 +54,11 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
     }
   }, [inputValue]);
 
+  /**
+   * 处理提交：根据当前模式构建 prompt 并触发开始生成
+   * - direct 模式：使用输入框内容
+   * - guided 模式：使用引导式字段拼接
+   */
   const handleSubmit = () => {
     const prompt = mode === 'direct'
       ? inputValue.trim()
@@ -44,6 +69,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
     onStartGenerate();
   };
 
+  /** 将引导模式的各个字段拼接为 prompt 字符串 */
   const buildGuidedPrompt = (): string => {
     const parts: string[] = [];
     if (context.purpose) parts.push(`目的：${context.purpose}`);
@@ -54,6 +80,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
     return parts.join('\n');
   };
 
+  /** 处理键盘事件：Enter 发送，Shift+Enter 换行 */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -61,6 +88,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
     }
   };
 
+  // 快捷 prompt 卡片：点击后填入预设的 prompt 内容
   const quickPrompts = [
     { label: '产品发布', icon: '🚀', prompt: '帮我做一份产品发布演示文稿，包含产品介绍、核心功能、市场分析和未来规划' },
     { label: '技术分享', icon: '💻', prompt: '帮我做一份技术分享PPT，主题是微服务架构的最佳实践' },
@@ -71,7 +99,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   return (
     <div className="flex flex-col h-full overflow-auto">
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        {/* Title */}
+        {/* 标题区域：使用 motion 实现入场动画 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -92,7 +120,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           </p>
         </motion.div>
 
-        {/* Quick prompt cards */}
+        {/* 快捷 prompt 卡片网格：2x2 布局 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -124,7 +152,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           </div>
         </motion.div>
 
-        {/* Glassmorphism Chat Box */}
+        {/* 玻璃拟态聊天输入框 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -137,7 +165,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
             boxShadow: 'var(--glass-shadow)',
           }}
         >
-          {/* Mode switcher */}
+          {/* 模式切换器：直接输入 / 引导模式 */}
           <div className="flex gap-1 p-2 border-b" style={{ borderColor: 'var(--glass-border)' }}>
             <button
               onClick={() => setMode('direct')}
@@ -167,9 +195,10 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
             </button>
           </div>
 
-          {/* Input area */}
+          {/* 输入区域：根据模式显示不同的输入组件 */}
           <div className="p-4">
             {mode === 'direct' ? (
+              /* 直接输入模式：多行文本域 */
               <textarea
                 ref={textareaRef}
                 value={inputValue}
@@ -184,16 +213,18 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                 }}
               />
             ) : (
+              /* 引导模式：多字段引导输入组件 */
               <GuidedInput context={context} onContextUpdate={onContextUpdate} />
             )}
           </div>
 
-          {/* Action bar */}
+          {/* 底部操作栏：画布比例选择 + 按钮 */}
           <div
             className="flex items-center justify-between px-4 py-3 border-t"
             style={{ borderColor: 'var(--glass-border)' }}
           >
             <div className="flex items-center gap-2">
+              {/* 画布比例选择按钮 */}
               <div className="flex gap-1">
                 {(['16:9', '4:3'] as const).map((ratio) => (
                   <button
@@ -213,6 +244,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* 直接编辑按钮：跳过 AI 生成，直接进入代码编辑器 */}
               <button
                 onClick={onEnterWorkspace}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer hover:opacity-80"
@@ -226,6 +258,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                 <Layout className="w-4 h-4" />
                 直接编辑
               </button>
+              {/* 生成按钮 */}
               <button
                 onClick={handleSubmit}
                 disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
@@ -236,6 +269,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                 }}
               >
                 {isGenerating ? (
+                  /* 生成中：显示旋转加载动画 */
                   <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
@@ -246,7 +280,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           </div>
         </motion.div>
 
-        {/* Style Template Cards */}
+        {/* 风格模板卡片区域 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,6 +293,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               选择风格模板
             </span>
           </div>
+          {/* 模板卡片横向滚动列表 */}
           <div className="flex justify-center">
             <div className="flex gap-3 overflow-x-auto pb-4 px-2">
               {STYLE_TEMPLATES.map((template) => (
@@ -277,6 +312,10 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   );
 };
 
+/**
+ * 引导输入子组件
+ * 提供三个字段：目的、场景、风格，帮助用户结构化输入需求
+ */
 const GuidedInput: React.FC<{
   context: GenerationContext;
   onContextUpdate: (updates: Partial<GenerationContext>) => void;

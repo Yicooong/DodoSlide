@@ -17,16 +17,18 @@ interface SlideThumbnailProps {
 ```
 
 **功能特性:**
-- 动态缩放：使用 ResizeObserver 根据容器大小自动调整缩放比例
-- 画布适配：支持 16:9 和 4:3 两种画布比例
-- 错误处理：代码解析错误时显示友好的错误提示
-- 性能优化：使用 `useEffect` 和 `useRef` 避免不必要的重渲染
+- **动态缩放**：使用 ResizeObserver 根据容器大小自动调整缩放比例
+- **画布适配**：支持 16:9 和 4:3 两种画布比例
+- **错误处理**：代码解析错误时显示友好的错误提示
+- **性能优化**：使用 `useEffect` 和 `useRef` 避免不必要的重渲染
+- **Babel 转译**：在浏览器端使用 Babel 转译 JSX 代码
 
 **实现细节:**
 - 使用 Babel 浏览器端转译 JSX 代码
 - 创建临时 DOM 环境渲染组件
-- 根据画布配置动态设置 CSS 变量
+- 根据画布配置动态设置 CSS 变量（`--vh`, `--vw`）
 - 使用 CSS transform 进行缩放以保持清晰度
+- 错误边界捕获渲染错误
 
 ### SlideSidebar.tsx
 可折叠的侧边栏，显示幻灯片列表并提供管理功能。
@@ -98,6 +100,15 @@ interface SlideSidebarProps {
 />
 ```
 
+### SlideThumbnail 独立使用
+```typescript
+<SlideThumbnail
+  code={slides[index]?.code || ''}
+  isActive={index === currentSlideIndex}
+  canvasRatio={canvasRatio}
+/>
+```
+
 ## 性能优化
 
 1. **SlideThumbnail**:
@@ -136,3 +147,4 @@ const thumbnailStyles = {
 2. **错误处理**: 幻灯片代码可能有语法错误，需要友好的错误提示
 3. **性能**: 大量幻灯片时考虑虚拟滚动优化
 4. **可访问性**: 为所有交互元素添加适当的 ARIA 标签
+5. **主题适配**: 所有颜色使用 CSS 变量，支持深色/浅色主题切换

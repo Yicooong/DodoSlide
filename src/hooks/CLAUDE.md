@@ -47,7 +47,7 @@ Manages app-wide UI state including view routing, theme, and canvas ratio.
 
 **View Routing:**
 - `landing` → LandingPage with hero section
-- `ai-generate` → AI generation with phase-based UI
+- `ai-generate` → AI generation with phase-based UI and conversation system
 - `code` / `preview` → Monaco editor + live preview
 
 ## use-slide-renderer.tsx
@@ -69,6 +69,56 @@ Handles JSX code transpilation via Babel and safe component rendering.
 - `ErrorBoundary` — Catches rendering errors
 - `ErrorBoundaryWrapper` — ErrorBoundary wrapper
 
+## use-multi-generation.ts
+
+Multi-slide generation hook with context preservation.
+
+**Returns:**
+```typescript
+{
+  state: MultiSlideGenerationState;  // { isGenerating, currentSlide, totalSlides, generatedSlides, error }
+  generateSlides: (userInput, pageCount, styleId, canvasRatio, promptSettings, apiCall, callbacks) => Promise<void>;
+}
+```
+
+**MultiSlideGenerationState:**
+```typescript
+{
+  isGenerating: boolean;                     // Whether generation is in progress
+  currentSlide: number;                      // Current slide being generated
+  totalSlides: number;                       // Total slides to generate
+  generatedSlides: Array<{ index: number; code: string }>;  // Completed slides
+  error: string | null;                      // Error message if any
+}
+```
+
+**Features:**
+- Generates slides sequentially with progress tracking
+- Preserves context from previous slides for consistency
+- Supports stopping generation via AbortController
+- Calls `onSlideGenerated` callback for each completed slide
+- Calls `onGenerationComplete` when all slides are done
+
+**Usage:**
+```typescript
+const multiGen = useMultiGeneration();
+
+// Start generating multiple slides
+await multiGen.generateSlides(
+  'Create a 5-slide presentation about AI',
+  5,
+  'modern-minimalist',
+  '16:9',
+  promptSettings,
+  apiCallFunction,
+  {
+    onSlideGenerated: (index, code) => { /* update slide */ },
+    onGenerationComplete: (slides) => { /* all done */ },
+    onError: (error) => { /* handle error */ }
+  }
+);
+```
+
 ## Design Principles
 
 1. **Single Responsibility**: Each hook manages one domain
@@ -86,4 +136,7 @@ const renderer = useSlideRenderer(slidesHook.slides[slidesHook.currentSlideIndex
 
 // State updates trigger re-renders automatically
 const handleAddSlide = () => slidesHook.addNewSlide();
+
+// Multi-slide generation
+const multiGen = useMultiGeneration();
 ```
