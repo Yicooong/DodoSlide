@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Name:** Gemini Canvas
+**Name:** DodoSlide
 **Type:** Browser-based slide editor with AI generation
 **Summary:** A React app where users write JSX code in a Monaco editor, see live slide previews in multiple aspect ratios, and export the result as a `.pptx` file using `pptxgenjs`. Features AI-powered slide generation with glassmorphism UI, phase-based transitions, conversation system, and comprehensive theme support.
 
@@ -83,7 +83,7 @@ The chat system provides conversation management with tree-structured messages a
    - `ConversationSummary`: Lightweight summary for list display
 
 2. **Storage Layer** (`lib/chat/conversation-storage.ts`):
-   - localStorage persistence under `gemini_conversations` key
+   - localStorage persistence under `dodoslide_conversations` key
    - Auto-trim to 50 conversations max
    - Functions: `saveConversations()`, `loadConversations()`, `clearConversations()`
 
@@ -307,7 +307,7 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 8. **Conversation system** — Messages use tree structure with parentId/childrenIds for branching
 9. **Streaming responses** — AI responses stream token-by-token via SSE (ReadableStream)
 10. **Conversation history** — Last 10 messages sent as context for follow-up requests
-11. **localStorage persistence** — Conversations stored under `gemini_conversations` key (max 50)
+11. **localStorage persistence** — Conversations stored under `dodoslide_conversations` key (max 50)
 12. **Provider management** — Multiple API providers supported, managed via `useProviderManager()`
 
 ---

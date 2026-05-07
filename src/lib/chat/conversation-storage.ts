@@ -10,7 +10,7 @@
  * - 负责将对话数据持久化到浏览器的 localStorage
  * - 使用内存缓存（cache）减少 localStorage 的读写频率
  * - 自动管理对话数量上限（最多 50 个），超出时删除最旧的
- * - localStorage Key: 'gemini_conversations'
+ * - localStorage Key: 'dodoslide_conversations'
  *
  * 存储策略：
  * 1. 内存缓存：首次加载后缓存数据，减少解析开销
@@ -21,7 +21,7 @@
 import type { Conversation, ConversationStore } from './types';
 
 /** localStorage 存储键名 */
-const STORAGE_KEY = 'gemini_conversations';
+const STORAGE_KEY = 'dodoslide_conversations';
 
 /** 最大存储对话数量，超出时自动清理最旧的对话 */
 const MAX_STORED_CONVERSATIONS = 50;

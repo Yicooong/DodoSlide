@@ -2,7 +2,7 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Gemini Canvas — AI 幻灯片生成平台
+# DodoSlide — AI 幻灯片生成平台
 
 一款功能强大的浏览器端幻灯片编辑器，使用 JSX 代码编写幻灯片，支持 AI 生成、多种画布比例、主题切换，并可导出为 PPTX 文件。支持对话式 AI 交互、多幻灯片生成和完整的 API 提供商管理。
 
@@ -372,7 +372,7 @@ UI 使用 CSS 变量实现玻璃态效果：
 8. **对话系统**：消息使用树状结构（parentId/childrenIds）支持分支
 9. **流式响应**：AI 响应通过 SSE (ReadableStream) 逐 token 流式返回
 10. **对话上下文**：后续请求发送最近 10 条消息作为上下文
-11. **localStorage 持久化**：对话存储在 `gemini_conversations` 键下（最多 50 个）
+11. **localStorage 持久化**：对话存储在 `dodoslide_conversations` 键下（最多 50 个）
 
 ---
 

@@ -473,14 +473,14 @@ export class ConversationManager {
    *
    * 内部逻辑：
    * 1. 将完整的 store 对象序列化为 JSON
-   * 2. 写入 localStorage 的 'gemini_conversations' 键
+   * 2. 写入 localStorage 的 'dodoslide_conversations' 键
    * 3. 捕获可能的异常（如 localStorage 已满）
    */
   private persistStore(): void {
     // 持久化整个存储
     const store = this.store;
     try {
-      localStorage.setItem('gemini_conversations', JSON.stringify(store));
+      localStorage.setItem('dodoslide_conversations', JSON.stringify(store));
     } catch (e) {
       console.error('Failed to persist conversations:', e);
     }

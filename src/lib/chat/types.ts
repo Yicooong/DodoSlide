@@ -151,7 +151,7 @@ export interface ConversationSummary {
  * 持久化存储结构接口
  *
  * 定义 localStorage 中存储的数据结构。
- * localStorage Key: 'gemini_conversations'
+ * localStorage Key: 'dodoslide_conversations'
  * 最多存储：50 个对话（超出自动清理最旧的）
  *
  * 数据结构设计理由：

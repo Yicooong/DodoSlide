@@ -86,7 +86,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               color: 'var(--text-primary)',
             }}
           >
-            Gemini Canvas
+            DodoSlide
           </h1>
 
           {/* 副标题：产品定位说明 */}

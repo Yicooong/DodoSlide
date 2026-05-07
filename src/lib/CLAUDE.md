@@ -137,7 +137,7 @@ loadConversations(): ConversationSummary[]              // Load from localStorag
 clearConversations()                                   // Clear all conversations
 ```
 
-**Storage Key:** `gemini_conversations`
+**Storage Key:** `dodoslide_conversations`
 **Max Conversations:** 50 (auto-trim)
 
 ### conversation-manager.ts

@@ -4,7 +4,7 @@
 
 ## 项目速览
 
-**项目名称：** Gemini Canvas
+**项目名称：** DodoSlide
 **类型：** 浏览器端幻灯片编辑器，支持 AI 生成
 **技术栈：** React 19 + Tailwind CSS v4 + Monaco Editor + pptxgenjs
 
