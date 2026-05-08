@@ -6,7 +6,7 @@
 // React 核心 hooks
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 // UI 图标库
-import { Loader2, Crosshair, Save, X } from 'lucide-react';
+import { Loader2, Save, X } from 'lucide-react';
 // 动画库
 import { motion, AnimatePresence } from 'motion/react';
 // 可调整大小的面板组件
@@ -62,14 +62,29 @@ const InspectorWrapper: React.FC<{
   onScaleChange: (scale: number) => void;
   RenderedSlide: React.FC;
 }> = ({ canvasConfig, scale, error, containerRef, previewRef, onScaleChange, RenderedSlide }) => {
-  const { active, toggle, pendingCount, commitEdits, cancelEdits } = useInspector();
+  const { pendingCount, commitEdits, cancelEdits } = useInspector();
 
   return (
     <>
-      {/* Inspector 控制栏 */}
-      <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
+      {/* 预览区域 + 底部操作栏 */}
+      <div className="relative flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex overflow-hidden">
+          <SlidePreview
+            canvasConfig={canvasConfig}
+            scale={scale}
+            error={error}
+            containerRef={containerRef}
+            previewRef={previewRef}
+            onScaleChange={onScaleChange}
+          >
+            <RenderedSlide />
+          </SlidePreview>
+          <InspectOverlay />
+        </div>
+
+        {/* 底部操作栏 */}
         {pendingCount > 0 && (
-          <>
+          <div className="flex items-center justify-end gap-2 px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-main)' }}>
             <button
               onClick={cancelEdits}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors"
@@ -86,35 +101,8 @@ const InspectorWrapper: React.FC<{
               <Save size={13} />
               保存 ({pendingCount})
             </button>
-          </>
+          </div>
         )}
-        <button
-          onClick={toggle}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors"
-          style={{
-            background: active ? '#3b82f6' : 'var(--bg-elevated)',
-            borderColor: active ? '#3b82f6' : 'var(--border-subtle)',
-            color: active ? '#fff' : 'var(--text-secondary)',
-          }}
-        >
-          <Crosshair size={13} />
-          Inspector
-        </button>
-      </div>
-
-      {/* 预览区域 */}
-      <div className="relative flex-1 overflow-hidden">
-        <SlidePreview
-          canvasConfig={canvasConfig}
-          scale={scale}
-          error={error}
-          containerRef={containerRef}
-          previewRef={previewRef}
-          onScaleChange={onScaleChange}
-        >
-          <RenderedSlide />
-        </SlidePreview>
-        <InspectOverlay />
       </div>
     </>
   );
@@ -144,6 +132,8 @@ const App = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   // 侧边栏面板引用，用于命令式折叠/展开
   const sidebarPanelRef = usePanelRef();
+  // 设计面板面板引用，用于命令式折叠/展开
+  const designPanelRef = usePanelRef();
 
   // ========== Local State ==========
   // 画布缩放比例
@@ -162,23 +152,13 @@ const App = () => {
   const [exportSpecificPage, setExportSpecificPage] = useState(1);
   // 是否显示设置弹窗
   const [showSettings, setShowSettings] = useState(false);
+  // 设计面板是否折叠
+  const [designPanelCollapsed, setDesignPanelCollapsed] = useState(false);
 
   // 当当前幻灯片变化时更新代码（由渲染器处理）
   useEffect(() => {
     // Code is already updated by the render
   }, [slidesHook.currentSlideIndex, slidesHook.slides]);
-
-  // 监听容器大小变化，自动计算缩放比例
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setScale(entry.contentRect.width / appState.canvasConfig.width);
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, [appState.canvasRatio, appState.canvasConfig]);
 
   // ========== 事件处理函数 ==========
   
@@ -303,7 +283,7 @@ const App = () => {
   const handleNavigate = (view: 'landing' | 'ai-generate' | 'code' | 'preview') => {
     appState.setViewType(view);
     if (view === 'code' || view === 'preview') {
-      appState.setActiveTab(view);
+      appState.setActiveTab('preview');
     }
   };
 
@@ -370,13 +350,13 @@ const App = () => {
             <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
             {/* 左侧边栏：幻灯片缩略图 */}
             <Panel
-              ref={sidebarPanelRef}
+              panelRef={sidebarPanelRef}
               id="sidebar"
               defaultSize={18}
               minSize={12}
               maxSize="30%"
               collapsible
-              collapsedSize={3}
+              collapsedSize={48}
               className="overflow-hidden"
             >
               <SlideSidebar
@@ -401,8 +381,8 @@ const App = () => {
               />
             </Panel>
 
-            {/* 面板调整手柄 */}
-            <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+            {/* 面板调整手柄（左侧） */}
+            <PanelResizeHandle disabled={appState.sidebarCollapsed} className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
             {/* 中栏：预览/编辑器 */}
             <Panel defaultSize={57} minSize={40} className="overflow-hidden">
@@ -453,12 +433,32 @@ const App = () => {
               </div>
             </Panel>
 
-            {/* 面板调整手柄 */}
-            <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+            {/* 面板调整手柄（右侧） */}
+            <PanelResizeHandle disabled={designPanelCollapsed} className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
             {/* 右栏：设计面板 */}
-            <Panel defaultSize={25} minSize={15} maxSize="35%" collapsible collapsedSize={3} className="overflow-hidden">
-              <DesignPanel />
+            <Panel
+              panelRef={designPanelRef}
+              id="design"
+              defaultSize={18}
+              minSize={12}
+              maxSize="25%"
+              collapsible
+              collapsedSize={48}
+              className="overflow-hidden"
+            >
+              <DesignPanel
+                collapsed={designPanelCollapsed}
+                onToggleCollapse={() => {
+                  if (designPanelCollapsed) {
+                    designPanelRef.current?.expand();
+                    setDesignPanelCollapsed(false);
+                  } else {
+                    designPanelRef.current?.collapse();
+                    setDesignPanelCollapsed(true);
+                  }
+                }}
+              />
             </Panel>
           </PanelGroup>
         </InspectorProvider>

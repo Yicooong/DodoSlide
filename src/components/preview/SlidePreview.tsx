@@ -60,15 +60,13 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
   }, [canvasConfig, containerRef, onScaleChange]);
 
   return (
-    <div className="flex-grow flex items-center justify-center p-12 overflow-hidden">
+    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden">
       {/* 幻灯片外层容器：自适应宽度，保持画布比例 */}
       <div
         ref={containerRef}
         className="bg-white rounded-sm overflow-hidden relative"
         style={{
           width: '100%',
-          // 根据画布比例设置最大宽度
-          maxWidth: canvasConfig.ratio === '16:9' ? '1100px' : '900px',
           // 使用 aspect-ratio 保持固定宽高比
           aspectRatio: canvasConfig.ratio === '16:9' ? '16/9' : '4/3',
           boxShadow: 'var(--shadow-preview)'

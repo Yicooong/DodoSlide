@@ -17,6 +17,12 @@ export type SelectedTarget = {
   anchor: HTMLElement;
 };
 
+function findElementByLineCol(line: number, column: number): HTMLElement | null {
+  const root = document.querySelector<HTMLElement>('[data-inspector-root]');
+  if (!root) return null;
+  return root.querySelector<HTMLElement>(`[data-slide-loc="${line}:${column}"]`);
+}
+
 type AssetAttrOp = { assetPath: string; previewUrl: string };
 
 type Bucket = {
@@ -66,7 +72,7 @@ type InspectorProviderProps = {
 };
 
 export function InspectorProvider({ children, currentCode, onCodeChange }: InspectorProviderProps) {
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState(true);
   const [selected, setSelected] = useState<SelectedTarget | null>(null);
   const history = useHistory();
 
