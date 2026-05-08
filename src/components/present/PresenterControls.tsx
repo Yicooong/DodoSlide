@@ -44,12 +44,12 @@ export function PresenterControls({ currentIndex, total, onPrev, onNext, onExit,
           onMouseEnter={() => { setVisible(true); clearTimeout(hideTimerRef.current); }}
           onMouseLeave={() => { hideTimerRef.current = window.setTimeout(() => setVisible(false), 2000); }}
         >
-          <button onClick={onPrev} disabled={currentIndex === 0} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30 transition-colors">
+          <button onClick={onPrev} disabled={currentIndex === 0} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30 transition-all active:scale-90">
             <ChevronLeft size={20} />
           </button>
 
           {/* Progress bar */}
-          <div className="flex-1 max-w-lg h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group" onClick={(e) => {
+          <div className="flex-1 max-w-lg h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group hover:h-2 transition-all duration-200" onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const pct = (e.clientX - rect.left) / rect.width;
             onGoto(Math.round(pct * (total - 1)));
@@ -64,11 +64,11 @@ export function PresenterControls({ currentIndex, total, onPrev, onNext, onExit,
             {currentIndex + 1} / {total}
           </span>
 
-          <button onClick={onNext} disabled={currentIndex === total - 1} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30 transition-colors">
+          <button onClick={onNext} disabled={currentIndex === total - 1} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30 transition-all active:scale-90">
             <ChevronRight size={20} />
           </button>
 
-          <button onClick={onExit} className="p-2 rounded-full text-white hover:bg-red-500/60 transition-colors ml-2">
+          <button onClick={onExit} className="p-2 rounded-full text-white hover:bg-red-500/60 transition-all active:scale-90 ml-2">
             <X size={18} />
           </button>
         </motion.div>

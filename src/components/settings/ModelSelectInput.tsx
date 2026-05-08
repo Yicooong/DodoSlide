@@ -108,7 +108,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
           {availableModels.length > 0 && (
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-all active:scale-90"
               style={{ color: 'var(--text-muted)' }}
             >
               <ChevronDown size={16} />
@@ -129,7 +129,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
                 <button
                   key={model}
                   onClick={() => handleSelectModel(model)}
-                  className="w-full text-left px-4 py-2 text-sm transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm transition-all active:scale-[0.98]"
                   style={{
                     color: value === model ? 'var(--accent)' : 'var(--text-primary)',
                     background: value === model ? 'var(--accent-bg)' : 'transparent',
@@ -152,7 +152,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
         <button
           onClick={onRefresh}
           disabled={isTesting}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           style={{ background: 'var(--bg-button)' }}
         >
           {isTesting ? (
@@ -174,7 +174,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
               <button
                 key={model}
                 onClick={() => handleSelectModel(model)}
-                className="px-2 py-1 rounded text-xs transition-colors"
+                className="px-2 py-1 rounded text-xs transition-all active:scale-90"
                 style={{
                   background: value === model ? 'var(--accent)' : 'var(--bg-input)',
                   color: value === model ? 'var(--text-inverse)' : 'var(--text-secondary)',

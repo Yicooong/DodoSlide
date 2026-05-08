@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { findSlideSource, type SlideSourceHit } from '../../lib/inspector/find-source';
 import { useInspector } from './InspectorProvider';
 

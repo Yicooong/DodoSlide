@@ -85,22 +85,22 @@ const InspectorWrapper: React.FC<{
         {/* 底部操作栏 */}
         {pendingCount > 0 && (
           <div className="flex items-center justify-end gap-2 px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-main)' }}>
-            <button
-              onClick={cancelEdits}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors"
-              style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
-            >
-              <X size={13} />
-              取消
-            </button>
-            <button
-              onClick={commitEdits}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors"
-              style={{ background: '#3b82f6' }}
-            >
-              <Save size={13} />
-              保存 ({pendingCount})
-            </button>
+          <button
+            onClick={cancelEdits}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all active:scale-95"
+            style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
+          >
+            <X size={13} />
+            取消
+          </button>
+          <button
+            onClick={commitEdits}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-all active:scale-95"
+            style={{ background: 'var(--accent)' }}
+          >
+            <Save size={13} />
+            保存 ({pendingCount})
+          </button>
           </div>
         )}
       </div>

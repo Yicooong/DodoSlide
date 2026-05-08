@@ -150,7 +150,7 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
         </h3>
         <button
           onClick={onCancel}
-          className="p-1.5 rounded-lg transition-colors"
+          className="p-1.5 rounded-lg transition-all active:scale-90"
           style={{ color: 'var(--text-muted)' }}
         >
           <X size={16} />
@@ -330,14 +330,14 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
       <div className="flex gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 py-2.5 rounded-xl transition-colors text-sm"
+          className="flex-1 py-2.5 rounded-xl transition-all text-sm active:scale-[0.98]"
           style={{ background: 'var(--bg-button)', color: 'var(--text-secondary)' }}
         >
           取消
         </button>
         <button
           onClick={handleSave}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-colors text-white text-sm"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all text-white text-sm active:scale-[0.98] hover:brightness-110"
           style={{ background: 'var(--accent)' }}
         >
           <Save size={14} />

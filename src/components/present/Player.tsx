@@ -284,7 +284,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        <button onClick={onClose} className="mt-6 w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm transition-colors">
+        <button onClick={onClose} className="mt-6 w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm transition-all active:scale-[0.98]">
           关闭 (H / Esc)
         </button>
       </div>

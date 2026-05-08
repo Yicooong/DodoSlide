@@ -80,7 +80,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="transition-colors"
+            className="transition-all active:scale-90"
             style={{ color: 'var(--text-muted)' }}
           >
             {/* 关闭图标：X 形 SVG */}
@@ -99,7 +99,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             {/* 选项 1：全部导出 */}
             <label className={cn(
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-              exportMode === 'all' ? "" : ""
+              exportMode === 'all' ? "" : "hover:opacity-80"
             )}
             style={{
               background: exportMode === 'all' ? 'var(--accent-bg)' : 'var(--bg-card)',
@@ -123,7 +123,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             {/* 选项 2：导出当前幻灯片 */}
             <label className={cn(
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-              exportMode === 'current' ? "" : ""
+              exportMode === 'current' ? "" : "hover:opacity-80"
             )}
             style={{
               background: exportMode === 'current' ? 'var(--accent-bg)' : 'var(--bg-card)',
@@ -147,7 +147,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             {/* 选项 3：导出指定范围 */}
             <label className={cn(
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-              exportMode === 'range' ? "" : ""
+              exportMode === 'range' ? "" : "hover:opacity-80"
             )}
             style={{
               background: exportMode === 'range' ? 'var(--accent-bg)' : 'var(--bg-card)',
@@ -183,7 +183,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       const val = parseInt(e.target.value) || 1;
                       setExportRangeStart(Math.max(1, Math.min(val, totalSlides)));
                     }}
-                    className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
+                    className="w-16 px-2 py-1.5 rounded-lg text-sm text-center"
                     style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                   />
                 </div>
@@ -195,11 +195,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     max={totalSlides}
                     value={exportRangeEnd}
                     onChange={(e) => {
-                      // 解析输入值并限制在有效范围内
                       const val = parseInt(e.target.value) || 1;
                       setExportRangeEnd(Math.max(1, Math.min(val, totalSlides)));
                     }}
-                    className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
+                    className="w-16 px-2 py-1.5 rounded-lg text-sm text-center"
                     style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                   />
                 </div>
@@ -221,10 +220,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     const val = parseInt(e.target.value) || 1;
                     setExportSpecificPage(Math.max(1, Math.min(val, totalSlides)));
                   }}
-                  className="w-16 px-2 py-1.5 rounded text-sm text-center focus:outline-none"
-                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
-                />
-                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>/ {totalSlides}</span>
+                    className="w-16 px-2 py-1.5 rounded-lg text-sm text-center"
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                  />
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>/ {totalSlides}</span>
               </div>
             )}
           </div>
@@ -235,7 +234,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* 取消按钮 */}
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95"
             style={{ color: 'var(--text-secondary)', background: 'var(--bg-button)' }}
           >
             取消
@@ -244,7 +243,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           <button
             onClick={onExport}
             disabled={isExporting || (exportMode === 'range' && exportRangeStart > exportRangeEnd)}
-            className="px-6 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 hover:brightness-110"
             style={{ background: 'var(--accent)' }}
           >
             {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}

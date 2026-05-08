@@ -62,7 +62,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
         {/* 显示/隐藏切换按钮：绝对定位在输入框右侧 */}
         <button
           onClick={() => setShowKey(!showKey)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 transition-all active:scale-90"
           style={{ color: 'var(--text-muted)' }}
         >
           {showKey ? <EyeOff size={18} /> : <Eye size={18} />}

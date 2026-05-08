@@ -114,7 +114,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
       {/* 可折叠头部：显示标题和数量徽章 */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-xs transition-colors w-full"
+        className="flex items-center gap-2 text-xs transition-all w-full active:scale-[0.98]"
         style={{ color: 'var(--text-muted)' }}
       >
         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -151,14 +151,14 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
               {/* 操作按钮：悬停时显示 */}
               <button
                 onClick={() => handleEdit(key)}
-                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all active:scale-90"
                 style={{ color: 'var(--text-muted)' }}
               >
                 <Pencil size={12} />
               </button>
               <button
                 onClick={() => handleDelete(key)}
-                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all active:scale-90"
                 style={{ color: 'var(--text-muted)' }}
               >
                 <Trash2 size={12} />
@@ -213,10 +213,18 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
                 {/* 取消按钮 */}
                 <button
                   onClick={resetForm}
-                  className="p-1.5 rounded-lg"
+                  className="p-1.5 rounded-lg transition-all active:scale-90"
                   style={{ color: 'var(--text-muted)' }}
                 >
                   <X size={14} />
+                </button>
+                <button
+                  onClick={editingKey ? handleUpdate : handleAdd}
+                  disabled={!formName.trim() || !formUrl.trim()}
+                  className="p-1.5 rounded-lg transition-all active:scale-90 disabled:opacity-50"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  <Check size={14} />
                 </button>
                 {/* 确认按钮：根据模式调用添加或更新 */}
                 <button
@@ -235,7 +243,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
           {!isAdding && !editingKey && (
             <button
               onClick={() => { setIsAdding(true); resetForm(); setFormName(''); setFormUrl(''); setFormDescription(''); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all active:scale-95"
               style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px dashed var(--border-default)' }}
             >
               <Plus size={12} />

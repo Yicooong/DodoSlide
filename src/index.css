@@ -104,3 +104,70 @@
   --glass-border: rgba(148, 163, 184, 0.2);  /* 玻璃边框（灰透明） */
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);  /* 玻璃阴影（较淡） */
 }
+
+/* ========== 全局表单控件精致化样式 ========== */
+
+/* 自定义 range 滑块 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-subtle);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+/* 自定义 select 箭头 */
+select.form-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%2394a3b8'%3E%3Cpath d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+/* 统一 focus ring */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+  border-color: var(--accent);
+}
+
+/* 数字输入框箭头隐藏 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.5;
+}
+input[type="number"]:focus::-webkit-inner-spin-button,
+input[type="number"]:focus::-webkit-outer-spin-button {
+  opacity: 1;
+}

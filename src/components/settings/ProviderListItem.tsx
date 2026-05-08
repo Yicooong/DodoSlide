@@ -80,7 +80,7 @@ export const ProviderListItem: React.FC<ProviderListItemProps> = ({
       <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(provider.id); }}
-          className="p-1.5 rounded-lg transition-colors"
+          className="p-1.5 rounded-lg transition-all active:scale-90"
           style={{ color: 'var(--text-muted)' }}
           title="编辑"
         >
@@ -88,7 +88,7 @@ export const ProviderListItem: React.FC<ProviderListItemProps> = ({
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(provider.id); }}
-          className="p-1.5 rounded-lg transition-colors"
+          className="p-1.5 rounded-lg transition-all active:scale-90"
           style={{ color: 'var(--text-muted)' }}
           title="删除"
         >

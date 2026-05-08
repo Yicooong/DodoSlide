@@ -70,7 +70,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
         {!collapsed && (
           <button
             onClick={onToggleCollapse}
-            className="p-1.5 rounded-lg transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg transition-all flex-shrink-0 active:scale-90"
             style={{ color: 'var(--text-muted)' }}
             title="收缩侧边栏"
           >
@@ -83,7 +83,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       {collapsed && (
         <button
           onClick={onToggleCollapse}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors z-10"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg transition-all z-10 active:scale-90"
           style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}
           title="展开侧边栏"
         >
@@ -161,7 +161,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
                         e.stopPropagation();
                         onDuplicateSlide(index);
                       }}
-                      className="p-0.5 rounded transition-colors"
+                      className="p-0.5 rounded transition-all active:scale-90"
                       style={{ color: 'var(--text-muted)' }}
                       title="复制"
                     >
@@ -176,7 +176,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
                         e.stopPropagation();
                         onDeleteSlide(index);
                       }}
-                      className="p-0.5 rounded transition-colors hover:text-red-400"
+                      className="p-0.5 rounded transition-all active:scale-90 hover:text-red-400"
                       title="删除"
                       disabled={slides.length <= 1}
                     >
@@ -197,7 +197,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       <div className={`${collapsed ? 'hidden' : 'p-3 border-t'}`} style={{ borderColor: 'var(--border-subtle)' }}>
         <button
           onClick={onAddSlide}
-          className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium"
+          className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium active:scale-95 hover:shadow-md"
           style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

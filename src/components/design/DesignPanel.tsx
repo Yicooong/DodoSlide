@@ -187,7 +187,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
       {collapsed ? (
         <button
           onClick={onToggleCollapse}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors z-10"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg transition-all z-10 active:scale-90"
           style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}
           title="展开设计面板"
         >
@@ -202,18 +202,18 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
             </span>
             <div className="flex items-center gap-1.5">
               {active && (
-                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#3b82f6', color: '#fff' }}>
+                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent)', color: '#fff' }}>
                   <Crosshair size={10} />
                   Inspector
                 </span>
               )}
               <button
-                onClick={onToggleCollapse}
-                className="p-1.5 rounded-lg transition-colors flex-shrink-0"
-                style={{ color: 'var(--text-muted)' }}
-                title="收缩设计面板"
-              >
-                <ChevronRight size={16} />
+                  onClick={onToggleCollapse}
+                  className="p-1.5 rounded-lg transition-all flex-shrink-0 active:scale-90"
+                  style={{ color: 'var(--text-muted)' }}
+                  title="收缩设计面板"
+                >
+                  <ChevronRight size={16} />
               </button>
             </div>
           </div>
@@ -226,23 +226,23 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
                 <span className="font-mono text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-button)', color: 'var(--text-muted)' }}>
                   &lt;{selectedElement ? selectedElement.tagName.toLowerCase() : '?'}&gt;
                 </span>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="p-1 rounded transition-colors"
-                  style={{ color: 'var(--text-muted)' }}
-                  title="取消选择"
-                >
-                  <X size={14} />
-                </button>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-1 rounded transition-all active:scale-90"
+                style={{ color: 'var(--text-muted)' }}
+                title="取消选择"
+              >
+                <X size={14} />
+              </button>
               </div>
 
               {snapshot.text !== null && (
                 <ElementSection title="Content">
-                  <textarea
+                    <textarea
                     value={snapshot.text}
                     onChange={(e) => applyElementEdit([{ kind: 'set-text', value: e.target.value }])}
                     rows={2}
-                    className="w-full px-2 py-1.5 text-xs border rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-xs border rounded-lg resize-none"
                     style={{ background: 'var(--bg-input)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
                     placeholder="Element text..."
                   />
@@ -272,7 +272,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
                       const n = Number(e.target.value);
                       applyElementEdit([{ kind: 'set-style', key: 'fontWeight', value: n === 400 ? null : e.target.value }]);
                     }}
-                    className="flex-1 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="form-select flex-1 px-2 py-1 text-xs border rounded"
                     style={{ background: 'var(--bg-input)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
                   >
                     <option value="300">Light</option>
@@ -290,7 +290,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
                       onClick={() =>
                         applyElementEdit([{ kind: 'set-style', key: 'fontWeight', value: snapshot.fontWeight >= 600 ? null : '700' }])
                       }
-                      className="p-1.5 rounded border"
+                      className="p-1.5 rounded border active:scale-90 transition-all"
                       style={{
                         background: snapshot.fontWeight >= 600 ? 'var(--accent-bg)' : 'transparent',
                         borderColor: snapshot.fontWeight >= 600 ? 'var(--border-active)' : 'var(--border-subtle)',
@@ -303,7 +303,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
                       onClick={() =>
                         applyElementEdit([{ kind: 'set-style', key: 'fontStyle', value: snapshot.fontStyle === 'italic' ? null : 'italic' }])
                       }
-                      className="p-1.5 rounded border"
+                      className="p-1.5 rounded border active:scale-90 transition-all"
                       style={{
                         background: snapshot.fontStyle === 'italic' ? 'var(--accent-bg)' : 'transparent',
                         borderColor: snapshot.fontStyle === 'italic' ? 'var(--border-active)' : 'var(--border-subtle)',
@@ -353,7 +353,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
                       <button
                         key={v}
                         onClick={() => applyElementEdit([{ kind: 'set-style', key: 'textAlign', value: v === 'left' ? null : v }])}
-                        className="p-1.5 rounded border"
+                        className="p-1.5 rounded border active:scale-90 transition-all"
                         style={{
                           background: snapshot.textAlign === v ? 'var(--accent-bg)' : 'transparent',
                           borderColor: snapshot.textAlign === v ? 'var(--border-active)' : 'var(--border-subtle)',
@@ -476,7 +476,7 @@ function ElementColorField({
       {onClear && (
         <button
           onClick={onClear}
-          className="p-1 rounded transition-colors"
+          className="p-1 rounded transition-all active:scale-90"
           style={{ color: 'var(--text-muted)' }}
         >
           <X size={12} />
