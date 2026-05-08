@@ -115,7 +115,7 @@ interface DesignPanelProps {
 }
 
 export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
-  const { active, selected, setSelected, bufferOps, pendingCount } = useInspector();
+  const { active, selected, setSelected, bufferOps } = useInspector();
   const [snapshot, setSnapshot] = useState<ElementSnapshot | null>(null);
 
   // Auto-expand when element is selected
@@ -127,7 +127,6 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
 
   // Read element snapshot when selection changes
   useEffect(() => {
-    void pendingCount;
     if (!selected) {
       setSnapshot(null);
       return;
@@ -142,7 +141,7 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
     } catch {
       setSnapshot(null);
     }
-  }, [selected, setSelected, pendingCount]);
+  }, [selected, setSelected]);
 
   // Inject editing freeze CSS when Inspector is active
   useEffect(() => {

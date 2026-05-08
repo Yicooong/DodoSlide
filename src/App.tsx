@@ -5,8 +5,6 @@
 
 // React 核心 hooks
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-// UI 图标库
-import { Loader2, Save, X } from 'lucide-react';
 // 动画库
 import { motion, AnimatePresence } from 'motion/react';
 // 可调整大小的面板组件
@@ -39,7 +37,7 @@ import { exportSingleSlide, exportSlideByCode } from './lib/pptx-exporter';
 import { cn } from './lib/utils';
 
 // Inspector - 预览到代码编辑系统
-import { HistoryProvider, InspectorProvider, InspectOverlay, useInspector } from './components/inspector';
+import { InspectorProvider, InspectOverlay, useInspector } from './components/inspector';
 
 // Present - 演示模式
 import { Player } from './components/present/Player';
@@ -62,49 +60,24 @@ const InspectorWrapper: React.FC<{
   onScaleChange: (scale: number) => void;
   RenderedSlide: React.FC;
 }> = ({ canvasConfig, scale, error, containerRef, previewRef, onScaleChange, RenderedSlide }) => {
-  const { pendingCount, commitEdits, cancelEdits } = useInspector();
+  useInspector();
 
   return (
-    <>
-      {/* 预览区域 + 底部操作栏 */}
-      <div className="relative flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex overflow-hidden">
-          <SlidePreview
-            canvasConfig={canvasConfig}
-            scale={scale}
-            error={error}
-            containerRef={containerRef}
-            previewRef={previewRef}
-            onScaleChange={onScaleChange}
-          >
-            <RenderedSlide />
-          </SlidePreview>
-          <InspectOverlay />
-        </div>
-
-        {/* 底部操作栏 */}
-        {pendingCount > 0 && (
-          <div className="flex items-center justify-end gap-2 px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-main)' }}>
-          <button
-            onClick={cancelEdits}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all active:scale-95"
-            style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
-          >
-            <X size={13} />
-            取消
-          </button>
-          <button
-            onClick={commitEdits}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-all active:scale-95"
-            style={{ background: 'var(--accent)' }}
-          >
-            <Save size={13} />
-            保存 ({pendingCount})
-          </button>
-          </div>
-        )}
+    <div className="relative flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        <SlidePreview
+          canvasConfig={canvasConfig}
+          scale={scale}
+          error={error}
+          containerRef={containerRef}
+          previewRef={previewRef}
+          onScaleChange={onScaleChange}
+        >
+          <RenderedSlide />
+        </SlidePreview>
+        <InspectOverlay />
       </div>
-    </>
+    </div>
   );
 };
 
@@ -342,7 +315,6 @@ const App = () => {
   return (
     <div className={`h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
       <DesignProvider>
-        <HistoryProvider>
           <InspectorProvider
             currentCode={currentCode}
             onCodeChange={slidesHook.updateCurrentSlideCode}
@@ -462,7 +434,6 @@ const App = () => {
             </Panel>
           </PanelGroup>
         </InspectorProvider>
-        </HistoryProvider>
       </DesignProvider>
 
       {/* 设置弹窗 */}
