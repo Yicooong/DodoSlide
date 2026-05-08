@@ -36,6 +36,7 @@ npm run build        # Build extension to dist/
 | UI framework | React 19 + Tailwind CSS v4 |
 | Code editor | `@monaco-editor/react` |
 | JSX transpiler | `@babel/standalone` (browser-side) |
+| AST parsing | `@babel/parser` + `@babel/types` (Inspector edit system) |
 | PPTX generation | `pptxgenjs` |
 | Animations | `motion` (Framer Motion) |
 | Icons | `lucide-react` |
@@ -110,6 +111,43 @@ The chat system provides conversation management with tree-structured messages a
 - **Preview independence**: `--bg-preview-canvas` is always white regardless of theme
 - **Glassmorphism**: `--glass-bg`, `--glass-border`, `--glass-shadow` for translucent effects
 
+### Inspector System (Preview-to-Code Editing)
+Allows users to click elements in the preview and edit styles/text that auto-syncs to JSX code. Inspector mode is **always active** when viewing the preview (no toggle button).
+
+**Architecture:**
+- `injectLocTags()` — Babel AST transform that injects `data-slide-loc="line:column"` on host JSX elements before transpilation
+- `findSlideSource()` — Uses `el.closest('[data-slide-loc]')` to find source location from DOM elements
+- `applyEdit()` — Pure function: JSX string + line/col + ops → modified JSX string. Handles `set-style`, `set-text`, `set-attr-asset`, `replace-placeholder-with-image`
+- `InspectorProvider` — Edit buffering with optimistic DOM updates, commits to source on save
+- `HistoryProvider` — Undo/redo with 500ms coalesce window
+- `InspectOverlay` — Pointer event capture + blue highlight frame (selection + hover dual frame)
+- `DesignPanel` — Element editing controls (font, color, alignment, text content). Pure element-editing panel without global design tokens.
+
+**Right Panel Design:**
+- Shows **"请点击元素进行风格设置"** placeholder when no element is selected
+- When an element is clicked, displays element tag + editable properties (Content, Typography, Colors)
+- Content editing available for elements with direct text children (including `<h1>`-`<h3>` with icons)
+- Save/Cancel buttons rendered in the center preview area (not the design panel)
+- Panel width: default 18% of viewport (min 12%, max 25%), collapsible to 48px
+
+**Data Flow:**
+1. User clicks element → `findSlideSource()` reads `data-slide-loc` → returns `{line, column, anchor}`
+2. Anchor looked up fresh from DOM (not stored in state) via `[data-slide-loc]` query
+3. User edits in DesignPanel → `bufferOps()` applies to DOM immediately (optimistic)
+4. Edits buffered in buckets keyed by `"line:column"`
+5. User clicks Save → `commitEdits()` calls `applyEdit()` for each bucket → `onCodeChange(newCode)`
+6. Babel re-transpiles → React re-renders → fresh DOM with updated `data-slide-loc`
+
+**Key Files:**
+- `src/lib/inspector/loc-tags.ts` — `injectLocTags()`
+- `src/lib/inspector/find-source.ts` — `findSlideSource()`
+- `src/lib/inspector/apply-edit.ts` — `applyEdit()` (~700 lines)
+- `src/lib/inspector/babel-walk.ts` — AST walker helpers
+- `src/components/inspector/HistoryProvider.tsx` — Undo/redo
+- `src/components/inspector/InspectorProvider.tsx` — Edit buffering (active defaults to true)
+- `src/components/inspector/InspectOverlay.tsx` — Click capture + highlight (dual-frame)
+- `src/components/design/DesignPanel.tsx` — Element editing UI
+
 ### AI Generation Flow
 **Single Slide Generation:**
 1. User enters prompt in EntryPhase (direct or guided mode)
@@ -164,10 +202,19 @@ src/
 │   │   └── CodeEditor.tsx      — Monaco editor wrapper
 │   ├── preview/
 │   │   └── SlidePreview.tsx    — Live preview with error display
+│   ├── inspector/
+│   │   ├── HistoryProvider.tsx  — Undo/redo system with coalescing
+│   │   ├── InspectorProvider.tsx — Edit buffering and commit system
+│   │   ├── InspectOverlay.tsx   — Click capture and highlight frame
+│   │   ├── InspectorPanel.tsx   — Editing controls UI
+│   │   └── index.ts            — Barrel exports
 │   ├── header/
 │   │   └── AppHeader.tsx       — Top nav (editor/preview tabs, controls)
 │   ├── export/
 │   │   └── ExportModal.tsx     — PPTX export dialog
+│   ├── design/
+│   │   ├── DesignPanel.tsx     — Element editing panel (Inspector mode UI)
+│   │   └── DesignProvider.tsx  — Design tokens context (CSS variable injection)
 │   ├── settings/
 │   │   ├── ProviderList.tsx    — Provider list view
 │   │   ├── ProviderListItem.tsx — Single provider row
@@ -185,6 +232,12 @@ src/
 │   ├── use-ai-generation.ts    — AI generation hook with abort support
 │   ├── pptx-exporter.ts        — DOM-to-PPTX conversion pipeline
 │   ├── utils.ts                — cn() utility (clsx + tailwind-merge)
+│   ├── inspector/
+│   │   ├── loc-tags.ts         — injectLocTags() source location injection
+│   │   ├── find-source.ts      — findSlideSource() element lookup
+│   │   ├── apply-edit.ts       — applyEdit() AST-level source patching
+│   │   ├── babel-walk.ts       — AST walker helpers (walkJsx, walkAll)
+│   │   └── index.ts            — Barrel exports
 │   ├── chat/
 │   │   ├── types.ts            — ChatMessage, Conversation types
 │   │   ├── conversation-storage.ts — localStorage persistence
@@ -256,7 +309,7 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 
 ### Resizable Panel System
 - Uses `react-resizable-panels` library for drag-to-resize functionality
-- **Editor view**: SlideSidebar (10-35%, collapsible) + Main content (50-100%)
+- **Editor view**: SlideSidebar (8-35%, collapsible) + Main content + Design panel (12-25%, collapsible)
 - **AI workspace**: AI sidebar (20-45%) + Content area (55-100%)
 - Panel sizes are automatically persisted to localStorage via `id` prop
 - `Separator` component provides visual drag handle with hover effects
@@ -309,29 +362,8 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 10. **Conversation history** — Last 10 messages sent as context for follow-up requests
 11. **localStorage persistence** — Conversations stored under `dodoslide_conversations` key (max 50)
 12. **Provider management** — Multiple API providers supported, managed via `useProviderManager()`
-
----
-
-## 自动化文档更新规则
-
-每次完成重大任务（包括但不限于：新增功能、修改架构、添加新组件、
-修改构建流程、新增依赖等）后，你必须：
-
-1. 检查 README.md 是否需要更新（项目功能说明、使用方法、依赖变化等）
-2. 检查 CLAUDE.md 是否需要更新（架构变化、新组件说明、开发指南等）
-3. 检查各子目录 CLAUDE.md 是否需要更新
-4. 如果需要，直接修改对应文件，确保文档与代码保持同步
-
-## 端口清理规则
-
-每次完成任务后，必须清理可能占用的端口：
-```bash
-kill $(lsof -t -i:3000) 2>/dev/null; kill $(lsof -t -i:24678) 2>/dev/null
-```
-- 端口 3000：Vite 开发服务器
-- 端口 24678：Vite WebSocket 热更新服务
-
----
+13. **Inspector auto-expand** — Clicking an element in the preview auto-expands the design panel if it's collapsed
+14. **Design panel** — Purely element-specific editing (no global design tokens); shows placeholder when no element selected
 
 ## 自动化文档更新规则
 

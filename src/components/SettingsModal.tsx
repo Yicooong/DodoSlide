@@ -139,7 +139,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-all active:scale-90"
             style={{ color: 'var(--text-muted)' }}
           >
             <X size={20} />
@@ -150,7 +150,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <button
             onClick={() => setActiveTab('api')}
-            className="flex-1 px-6 py-3 text-sm font-medium transition-colors"
+            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95"
             style={{
               color: activeTab === 'api' ? 'var(--accent)' : 'var(--text-muted)',
               background: activeTab === 'api' ? 'var(--accent-bg)' : 'transparent',
@@ -164,7 +164,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('prompt')}
-            className="flex-1 px-6 py-3 text-sm font-medium transition-colors"
+            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95"
             style={{
               color: activeTab === 'prompt' ? 'var(--accent)' : 'var(--text-muted)',
               background: activeTab === 'prompt' ? 'var(--accent-bg)' : 'transparent',
@@ -214,10 +214,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* 开关按钮：切换 useDefaultPrompt 状态 */}
                 <button
                   onClick={() => onUpdatePromptSettings({ useDefaultPrompt: !promptSettings.useDefaultPrompt })}
-                  className="w-12 h-6 rounded-full transition-colors"
+                  className="w-12 h-6 rounded-full transition-all active:scale-90"
                   style={{ background: promptSettings.useDefaultPrompt ? 'var(--accent)' : 'var(--bg-button)' }}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
                     promptSettings.useDefaultPrompt ? 'translate-x-6' : 'translate-x-0.5'
                   }`} />
                 </button>
@@ -249,7 +249,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <button
                   onClick={() => setShowPromptEditor(!showPromptEditor)}
-                  className="flex items-center gap-2 text-sm transition-colors"
+                  className="flex items-center gap-2 text-sm transition-all active:scale-95"
                   style={{ color: 'var(--text-muted)' }}
                 >
                   {showPromptEditor ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -291,7 +291,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-card)' }}>
           <button
             onClick={onClose}
-            className="w-full py-2.5 font-medium rounded-xl transition-colors text-white"
+            className="w-full py-2.5 font-medium rounded-xl transition-all text-white active:scale-[0.98] hover:brightness-110"
             style={{ background: 'var(--accent)' }}
           >
             完成

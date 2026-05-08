@@ -4,11 +4,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-// Babel 独立库，用于在浏览器中转译 JSX
 import * as Babel from '@babel/standalone';
-// 导入所有 Lucide 图标
 import * as LucideIcons from 'lucide-react';
 import React from 'react';
+import { injectLocTags } from '../lib/inspector';
 
 /**
  * 错误边界组件
@@ -53,11 +52,15 @@ export const useSlideRenderer = (code: string) => {
   // 转译或渲染过程中的错误信息
   const [error, setError] = useState<string | null>(null);
 
-  // 当代码变化时，使用 Babel 转译 JSX 为 JavaScript
+  // 当代码变化时，注入源码定位标签并使用 Babel 转译 JSX 为 JavaScript
   useEffect(() => {
     try {
-      // 使用 Babel 将 JSX/TSX 代码转译为 CommonJS 格式的 JavaScript
-      const result = Babel.transform(code, {
+      // 先注入 data-slide-loc 属性，使 Inspector 能定位到源码位置
+      const taggedCode = injectLocTags(code);
+      const codeToTransform = taggedCode ?? code;
+
+      const result = Babel.transform(codeToTransform, {
+
         presets: ['react', ['env', { modules: 'commonjs' }]],
         filename: 'slide.tsx'
       }).code;
