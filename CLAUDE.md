@@ -36,6 +36,7 @@ npm run build        # Build extension to dist/
 | UI framework | React 19 + Tailwind CSS v4 |
 | Code editor | `@monaco-editor/react` |
 | JSX transpiler | `@babel/standalone` (browser-side) |
+| AST parsing | `@babel/parser` + `@babel/types` (Inspector edit system) |
 | PPTX generation | `pptxgenjs` |
 | Animations | `motion` (Framer Motion) |
 | Icons | `lucide-react` |
@@ -110,6 +111,35 @@ The chat system provides conversation management with tree-structured messages a
 - **Preview independence**: `--bg-preview-canvas` is always white regardless of theme
 - **Glassmorphism**: `--glass-bg`, `--glass-border`, `--glass-shadow` for translucent effects
 
+### Inspector System (Preview-to-Code Editing)
+Allows users to click elements in the preview and edit styles/text that auto-syncs to JSX code.
+
+**Architecture:**
+- `injectLocTags()` — Babel AST transform that injects `data-slide-loc="line:column"` on host JSX elements before transpilation
+- `findSlideSource()` — Uses `el.closest('[data-slide-loc]')` to find source location from DOM elements
+- `applyEdit()` — Pure function: JSX string + line/col + ops → modified JSX string. Handles `set-style`, `set-text`, `set-attr-asset`, `replace-placeholder-with-image`
+- `InspectorProvider` — Edit buffering with optimistic DOM updates, commits to source on save
+- `HistoryProvider` — Undo/redo with 500ms coalesce window
+- `InspectOverlay` — Pointer event capture + blue highlight frame
+- `InspectorPanel` — Editing controls UI (font, color, alignment, text content)
+
+**Data Flow:**
+1. User clicks element → `findSlideSource()` reads `data-slide-loc` → returns `{line, column, anchor}`
+2. User edits in InspectorPanel → `bufferOps()` applies to DOM immediately (optimistic)
+3. Edits buffered in buckets keyed by `"line:column"`
+4. User clicks Save → `commitEdits()` calls `applyEdit()` for each bucket → `onCodeChange(newCode)`
+5. Babel re-transpiles → React re-renders → fresh DOM with updated `data-slide-loc`
+
+**Key Files:**
+- `src/lib/inspector/loc-tags.ts` — `injectLocTags()`
+- `src/lib/inspector/find-source.ts` — `findSlideSource()`
+- `src/lib/inspector/apply-edit.ts` — `applyEdit()` (~700 lines)
+- `src/lib/inspector/babel-walk.ts` — AST walker helpers
+- `src/components/inspector/HistoryProvider.tsx` — Undo/redo
+- `src/components/inspector/InspectorProvider.tsx` — Edit buffering
+- `src/components/inspector/InspectOverlay.tsx` — Click capture + highlight
+- `src/components/inspector/InspectorPanel.tsx` — Editing UI
+
 ### AI Generation Flow
 **Single Slide Generation:**
 1. User enters prompt in EntryPhase (direct or guided mode)
@@ -164,6 +194,12 @@ src/
 │   │   └── CodeEditor.tsx      — Monaco editor wrapper
 │   ├── preview/
 │   │   └── SlidePreview.tsx    — Live preview with error display
+│   ├── inspector/
+│   │   ├── HistoryProvider.tsx  — Undo/redo system with coalescing
+│   │   ├── InspectorProvider.tsx — Edit buffering and commit system
+│   │   ├── InspectOverlay.tsx   — Click capture and highlight frame
+│   │   ├── InspectorPanel.tsx   — Editing controls UI
+│   │   └── index.ts            — Barrel exports
 │   ├── header/
 │   │   └── AppHeader.tsx       — Top nav (editor/preview tabs, controls)
 │   ├── export/
@@ -185,6 +221,12 @@ src/
 │   ├── use-ai-generation.ts    — AI generation hook with abort support
 │   ├── pptx-exporter.ts        — DOM-to-PPTX conversion pipeline
 │   ├── utils.ts                — cn() utility (clsx + tailwind-merge)
+│   ├── inspector/
+│   │   ├── loc-tags.ts         — injectLocTags() source location injection
+│   │   ├── find-source.ts      — findSlideSource() element lookup
+│   │   ├── apply-edit.ts       — applyEdit() AST-level source patching
+│   │   ├── babel-walk.ts       — AST walker helpers (walkJsx, walkAll)
+│   │   └── index.ts            — Barrel exports
 │   ├── chat/
 │   │   ├── types.ts            — ChatMessage, Conversation types
 │   │   ├── conversation-storage.ts — localStorage persistence

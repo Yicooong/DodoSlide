@@ -11,6 +11,7 @@ import {
   Upload,
   Download,
   Monitor,
+  Play,
 } from 'lucide-react';
 // 导入 cn 工具函数：合并 Tailwind 类名
 import { cn } from '../../lib/utils';
@@ -35,6 +36,7 @@ interface AppHeaderProps {
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;  // 上传文件回调
   onExport: () => void;                       // 导出回调
   onNavigateToAi?: () => void;                // 导航到 AI 生成页（可选）
+  onPresent?: () => void;                     // 演示模式回调（可选）
 }
 
 /**
@@ -64,6 +66,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onUpload,
   onExport,
   onNavigateToAi,
+  onPresent,
 }) => {
   return (
     <header className="h-16 border-b px-6 flex items-center justify-between" style={{ background: 'var(--bg-header)', borderColor: 'var(--border-subtle)', backdropFilter: 'blur(20px)' }}>
@@ -165,6 +168,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             上传 JSX
             <input type="file" accept=".jsx,.tsx,.js,.ts" className="hidden" onChange={onUpload} />
          </label>
+         {/* 演示按钮：进入全屏演示模式 */}
+         {onPresent && (
+           <button
+              onClick={onPresent}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:opacity-90"
+              style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
+           >
+              <Play size={16} />
+              演示
+           </button>
+         )}
          {/* 导出 PPTX 按钮 */}
          <button
             onClick={onExport}

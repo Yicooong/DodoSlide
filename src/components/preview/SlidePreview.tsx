@@ -86,6 +86,7 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
         >
           {/* 幻灯片根容器：提供 CSS 变量和 Tailwind 覆盖 */}
           <div
+            data-inspector-root
             className="logical-slide-root relative overflow-hidden"
             style={{
               width: `${canvasConfig.width}px`,

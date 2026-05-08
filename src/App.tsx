@@ -6,11 +6,11 @@
 // React 核心 hooks
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 // UI 图标库
-import { Loader2 } from 'lucide-react';
+import { Loader2, Crosshair, Save, X } from 'lucide-react';
 // 动画库
 import { motion, AnimatePresence } from 'motion/react';
 // 可调整大小的面板组件
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle, usePanelRef } from 'react-resizable-panels';
 // PPTX 生成库
 import pptxgen from 'pptxgenjs';
 
@@ -38,6 +38,88 @@ import { exportSingleSlide, exportSlideByCode } from './lib/pptx-exporter';
 // Utils - 工具函数
 import { cn } from './lib/utils';
 
+// Inspector - 预览到代码编辑系统
+import { HistoryProvider, InspectorProvider, InspectOverlay, useInspector } from './components/inspector';
+
+// Present - 演示模式
+import { Player } from './components/present/Player';
+
+// Design - 设计系统
+import { DesignProvider } from './components/design/DesignProvider';
+import { DesignPanel } from './components/design/DesignPanel';
+
+/**
+ * Inspector 包装组件
+ * 连接 SlidePreview、InspectOverlay 和 Inspector 切换按钮
+ * 必须在 InspectorProvider 内部使用
+ */
+const InspectorWrapper: React.FC<{
+  canvasConfig: CanvasConfig;
+  scale: number;
+  error: string | null;
+  containerRef: React.RefObject<HTMLDivElement>;
+  previewRef: React.RefObject<HTMLDivElement>;
+  onScaleChange: (scale: number) => void;
+  RenderedSlide: React.FC;
+}> = ({ canvasConfig, scale, error, containerRef, previewRef, onScaleChange, RenderedSlide }) => {
+  const { active, toggle, pendingCount, commitEdits, cancelEdits } = useInspector();
+
+  return (
+    <>
+      {/* Inspector 控制栏 */}
+      <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
+        {pendingCount > 0 && (
+          <>
+            <button
+              onClick={cancelEdits}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors"
+              style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
+            >
+              <X size={13} />
+              取消
+            </button>
+            <button
+              onClick={commitEdits}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors"
+              style={{ background: '#3b82f6' }}
+            >
+              <Save size={13} />
+              保存 ({pendingCount})
+            </button>
+          </>
+        )}
+        <button
+          onClick={toggle}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors"
+          style={{
+            background: active ? '#3b82f6' : 'var(--bg-elevated)',
+            borderColor: active ? '#3b82f6' : 'var(--border-subtle)',
+            color: active ? '#fff' : 'var(--text-secondary)',
+          }}
+        >
+          <Crosshair size={13} />
+          Inspector
+        </button>
+      </div>
+
+      {/* 预览区域 */}
+      <div className="relative flex-1 overflow-hidden">
+        <SlidePreview
+          canvasConfig={canvasConfig}
+          scale={scale}
+          error={error}
+          containerRef={containerRef}
+          previewRef={previewRef}
+          onScaleChange={onScaleChange}
+        >
+          <RenderedSlide />
+        </SlidePreview>
+        <InspectOverlay />
+      </div>
+    </>
+  );
+};
+
 /**
  * 主应用组件
  * 负责管理应用状态、视图切换、幻灯片编辑/预览、导出等功能
@@ -60,6 +142,8 @@ const App = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   // 预览区域引用，用于导出时获取 DOM
   const previewRef = useRef<HTMLDivElement>(null);
+  // 侧边栏面板引用，用于命令式折叠/展开
+  const sidebarPanelRef = usePanelRef();
 
   // ========== Local State ==========
   // 画布缩放比例
@@ -225,6 +309,18 @@ const App = () => {
 
   // ========== 渲染逻辑 ==========
 
+  // 渲染演示模式
+  if (appState.presenting) {
+    return (
+      <Player
+        slides={slidesHook.slides}
+        initialIndex={slidesHook.currentSlideIndex}
+        canvasConfig={appState.canvasConfig}
+        onExit={() => appState.setPresenting(false)}
+      />
+    );
+  }
+
   // 渲染着陆页
   if (appState.viewType === 'landing') {
     return (
@@ -265,82 +361,109 @@ const App = () => {
   // 渲染主编辑器/预览界面
   return (
     <div className={`h-screen overflow-hidden font-sans ${appState.themeConfig.rootClass}`} style={{ background: 'var(--bg-root)', color: 'var(--text-primary)' }}>
-      <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
-        {/* 左侧边栏：幻灯片缩略图 */}
-        <Panel
-          defaultSize="20%"
-          minSize="10%"
-          maxSize="40%"
-          collapsible
-          collapsedSize="4%"
-          className="overflow-hidden"
-        >
-          <SlideSidebar
-            slides={slidesHook.slides}
-            currentSlideIndex={slidesHook.currentSlideIndex}
-            canvasRatio={appState.canvasRatio}
-            collapsed={appState.sidebarCollapsed}
-            onToggleCollapse={() => appState.setSidebarCollapsed(!appState.sidebarCollapsed)}
-            onSelectSlide={slidesHook.setCurrentSlideIndex}
-            onAddSlide={slidesHook.addNewSlide}
-            onDeleteSlide={slidesHook.deleteSlide}
-            onRenameSlide={slidesHook.renameSlide}
-            onDuplicateSlide={slidesHook.duplicateSlide}
-          />
-        </Panel>
+      <DesignProvider>
+        <HistoryProvider>
+          <InspectorProvider
+            currentCode={currentCode}
+            onCodeChange={slidesHook.updateCurrentSlideCode}
+          >
+            <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
+            {/* 左侧边栏：幻灯片缩略图 */}
+            <Panel
+              ref={sidebarPanelRef}
+              id="sidebar"
+              defaultSize={18}
+              minSize={12}
+              maxSize="30%"
+              collapsible
+              collapsedSize={3}
+              className="overflow-hidden"
+            >
+              <SlideSidebar
+                slides={slidesHook.slides}
+                currentSlideIndex={slidesHook.currentSlideIndex}
+                canvasRatio={appState.canvasRatio}
+                collapsed={appState.sidebarCollapsed}
+                onToggleCollapse={() => {
+                  if (appState.sidebarCollapsed) {
+                    sidebarPanelRef.current?.expand();
+                    appState.setSidebarCollapsed(false);
+                  } else {
+                    sidebarPanelRef.current?.collapse();
+                    appState.setSidebarCollapsed(true);
+                  }
+                }}
+                onSelectSlide={slidesHook.setCurrentSlideIndex}
+                onAddSlide={slidesHook.addNewSlide}
+                onDeleteSlide={slidesHook.deleteSlide}
+                onRenameSlide={slidesHook.renameSlide}
+                onDuplicateSlide={slidesHook.duplicateSlide}
+              />
+            </Panel>
 
-        {/* 面板调整手柄 */}
-        <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+            {/* 面板调整手柄 */}
+            <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
 
-        {/* 主内容区域 */}
-        <Panel defaultSize="80%" minSize="60%" className="overflow-hidden">
-          <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
-            {/* 顶部导航栏 */}
-            <AppHeader
-              activeTab={appState.activeTab}
-              setActiveTab={appState.setActiveTab}
-              canvasRatio={appState.canvasRatio}
-              setCanvasRatio={handleCanvasRatioChange}
-              canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
-              appTheme={appState.appTheme}
-              setAppTheme={handleThemeChange}
-              themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
-              isGenerating={aiGen.isGenerating}
-              showSettings={showSettings}
-              setShowSettings={setShowSettings}
-              onUpload={handleFileUpload}
-              onExport={handleExportClick}
-              onNavigateToAi={() => appState.setViewType('ai-generate')}
-            />
-
-            {/* 工作区容器 */}
-            <main className="flex-grow relative overflow-hidden">
-              {/* 视图：代码编辑器 */}
-              <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'code' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
-                <CodeEditor
-                  code={slidesHook.slides[slidesHook.currentSlideIndex]?.code || ''}
-                  onChange={slidesHook.updateCurrentSlideCode}
-                  monacoTheme={appState.themeConfig.monacoTheme}
+            {/* 中栏：预览/编辑器 */}
+            <Panel defaultSize={57} minSize={40} className="overflow-hidden">
+              <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-main)' }}>
+                {/* 顶部导航栏 */}
+                <AppHeader
+                  activeTab={appState.activeTab}
+                  setActiveTab={appState.setActiveTab}
+                  canvasRatio={appState.canvasRatio}
+                  setCanvasRatio={handleCanvasRatioChange}
+                  canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
+                  appTheme={appState.appTheme}
+                  setAppTheme={handleThemeChange}
+                  themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
+                  isGenerating={aiGen.isGenerating}
+                  showSettings={showSettings}
+                  setShowSettings={setShowSettings}
+                  onUpload={handleFileUpload}
+                  onExport={handleExportClick}
+                  onNavigateToAi={() => appState.setViewType('ai-generate')}
+                  onPresent={() => appState.setPresenting(true)}
                 />
-              </div>
 
-              {/* 视图：预览 */}
-              <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
-                <SlidePreview
-                  canvasConfig={appState.canvasConfig}
-                  scale={scale}
-                  error={error}
-                  containerRef={containerRef}
-                  previewRef={previewRef}
-                  onScaleChange={setScale}
-                >
-                  {RenderedSlide()}
-                </SlidePreview>
+                {/* 工作区容器 */}
+                <main className="flex-grow relative overflow-hidden">
+                  {/* 视图：代码编辑器 */}
+                  <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'code' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")}>
+                    <CodeEditor
+                      code={slidesHook.slides[slidesHook.currentSlideIndex]?.code || ''}
+                      onChange={slidesHook.updateCurrentSlideCode}
+                      monacoTheme={appState.themeConfig.monacoTheme}
+                    />
+                  </div>
+
+                  {/* 视图：预览 */}
+                  <div className={cn("absolute inset-0 flex flex-col transition-opacity duration-300", appState.activeTab === 'preview' ? "opacity-100 z-10" : "opacity-0 -z-10 pointer-events-none")} style={{ background: 'var(--bg-preview-canvas)' }}>
+                    <InspectorWrapper
+                      canvasConfig={appState.canvasConfig}
+                      scale={scale}
+                      error={error}
+                      containerRef={containerRef}
+                      previewRef={previewRef}
+                      onScaleChange={setScale}
+                      RenderedSlide={RenderedSlide}
+                    />
+                  </div>
+                </main>
               </div>
-            </main>
-          </div>
-        </Panel>
-      </PanelGroup>
+            </Panel>
+
+            {/* 面板调整手柄 */}
+            <PanelResizeHandle className="w-[3px] hover:w-[5px] transition-all cursor-col-resize" style={{ background: 'var(--border-subtle)' }} />
+
+            {/* 右栏：设计面板 */}
+            <Panel defaultSize={25} minSize={15} maxSize="35%" collapsible collapsedSize={3} className="overflow-hidden">
+              <DesignPanel />
+            </Panel>
+          </PanelGroup>
+        </InspectorProvider>
+        </HistoryProvider>
+      </DesignProvider>
 
       {/* 设置弹窗 */}
       <SettingsModal
