@@ -1,0 +1,170 @@
+## 蓝图工程 (Blueprint Engineering)
+
+灵感来自建筑蓝图、工程制图、系统架构文档。深蓝底+白色线条网格，JetBrains Mono 全局，虚线边框，零阴影，技术制图风格。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 深蓝底（主背景） | `#0B3A6F` | `bg-[#0B3A6F]` |
+| 浅蓝底（区块底） | `rgba(255,255,255,0.04)` | `bg-white/[0.04]` |
+| 主文字 | `#E8F3FF` | `text-[#E8F3FF]` |
+| 辅助文字 | `#B8D4F0` | `text-[#B8D4F0]` |
+| 弱化文字 | `#7DA8CF` | `text-[#7DA8CF]` |
+| 白色（主强调） | `#FFFFFF` | `text-white` / `border-white` |
+| 浅蓝（辅强调） | `#AEE1FF` | `text-[#AEE1FF]` / `border-[#AEE1FF]` |
+| 金色（点缀） | `#FFD27A` | `text-[#FFD27A]` |
+| 网格线 | `rgba(255,255,255,0.06)` | — |
+| 虚线边框 | `rgba(190,220,255,0.3)` | `border-[rgba(190,220,255,0.3)]` |
+
+**网格背景**（inline style）：
+```css
+background:
+  linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px) 0 0 / 40px 40px,
+  linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px) 0 0 / 40px 40px,
+  #0B3A6F;
+```
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | mono | 700 (Bold) | ~6vw | `font-mono font-bold text-[6vw] text-[#E8F3FF]` |
+| 章节标题 | mono | 700 (Bold) | ~4vw | `font-mono font-bold text-[4vw] text-[#E8F3FF]` |
+| 正文标题 | mono | 600 (SemiBold) | ~2.2vw | `font-mono font-semibold text-[2.2vw] text-[#E8F3FF]` |
+| 引导段 | mono | 400 (Regular) | ~1.4vw | `font-mono text-[1.4vw] leading-relaxed text-[#B8D4F0]` |
+| 正文 | mono | 400 (Regular) | max(12px, 1vw) | `font-mono text-[max(12px,1vw)] leading-relaxed text-[#B8D4F0]` |
+| Kicker | mono | 500 (Medium) | 11px | `font-mono text-[11px] font-medium tracking-[0.18em] uppercase text-[#AEE1FF]` |
+| 数据数字 | mono | 700 (Bold) | ~10vw | `font-mono font-bold text-[10vw] text-white` |
+| 标注文字 | mono | 400 (Regular) | 10px | `font-mono text-[10px] text-[#7DA8CF]` |
+
+---
+
+### 布局模式
+
+**1. Blueprint Cover（蓝图封面）**
+- 用途：演示文稿第一页
+- 结构：深蓝网格底 + mono 巨型标题 + 白色装饰线 + 项目信息
+- Tailwind：`bg-[#0B3A6F] flex flex-col justify-center p-20`（加网格 inline style）
+
+**2. Architecture Layers（架构分层）**
+- 用途：系统架构、技术栈分层
+- 结构：从上到下堆叠的层级，每层不同透明度的白色背景
+- 层级：`bg-white/[0.04]` → `bg-white/[0.06]` → `bg-white/[0.08]`
+- 层间连接：虚线箭头
+- Tailwind：`flex flex-col gap-2`
+
+**3. Spec Table（规格表格）**
+- 用途：技术参数、API 文档
+- 结构：标题 + 表格（表头白色底线，行交替透明度）
+- 表头：`border-b border-white text-white`
+- Tailwind：`w-full`
+
+**4. System Diagram（系统图）**
+- 用途：组件关系、数据流
+- 结构：网格布局的方框+虚线连接
+- 方框：`border border-dashed border-[rgba(190,220,255,0.3)] bg-white/[0.04] p-4`
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**5. API Endpoint（API 端点）**
+- 用途：接口文档、代码示例
+- 结构：mono 标题（GET/POST）+ 路径 + 参数表格
+- 方法标签：`bg-white/10 text-white px-2 py-0.5 text-xs font-bold`
+- Tailwind：`flex flex-col gap-3`
+
+**6. Data Grid（数据网格）**
+- 用途：多指标展示
+- 结构：2×2 或 3×2 网格，每格虚线边框+数字+描述
+- Tailwind：`grid grid-cols-3 gap-3`
+
+**7. Comparison Table（对比表格）**
+- 用途：方案对比
+- 结构：表格形式，列标题=方案名，行=特性
+- Tailwind：`w-full border-collapse`
+
+**8. Blueprint Closing（蓝图收尾）**
+- 用途：演示文稿最后一页
+- 结构：深蓝网格底 + 居中白色 mono 标题 + 项目信息
+- Tailwind：`bg-[#0B3A6F] flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Blueprint Card（蓝图卡片）**
+```jsx
+<div className="border border-dashed border-[rgba(190,220,255,0.3)] bg-white/[0.04] p-5">
+  {/* 卡片内容 */}
+</div>
+```
+
+**Layer Block（层级块）**
+```jsx
+<div className="bg-white/[0.06] border border-[rgba(190,220,255,0.2)] p-4">
+  <p className="font-mono text-xs uppercase tracking-wider text-[#AEE1FF] mb-2">Layer Name</p>
+  <p className="font-mono text-sm text-[#E8F3FF]">Component details</p>
+</div>
+```
+
+**Method Badge（方法标签）**
+```jsx
+<span className="inline-block px-2 py-0.5 bg-white/10 text-white font-mono text-xs font-bold rounded-sm">
+  GET
+</span>
+```
+
+**Grid Background（网格背景）**
+```jsx
+<div className="absolute inset-0 pointer-events-none opacity-30"
+  style={{
+    backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
+    backgroundSize: '40px 40px'
+  }} />
+```
+
+---
+
+### 装饰元素
+
+- **网格背景**：40px 间距的白色半透明网格线
+- **虚线边框**：`border border-dashed border-[rgba(190,220,255,0.3)]`
+- **连接线**：虚线 `border-dashed` 用于层间连接
+- **角标**：小方块 `w-2 h-2 bg-white/20` 在角落
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用白色或浅色背景
+- 禁止使用实心边框（只用虚线 `border-dashed`）
+- 禁止使用阴影（`shadow-none`）
+- 禁止使用圆角（`rounded-none` 或最大 `rounded-sm`）
+- 禁止使用衬线字体
+- 禁止自定义 hex 值
+- 禁止使用渐变色文字
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 背景为深蓝色 `#0B3A6F` + 网格
+- 全局使用 mono 字体
+- 使用 lucide-react 图标，不使用 emoji
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 网格背景在所有页面可见
+
+**P2（视觉打磨）**
+- 虚线边框粗细一致
+- 层级块透明度递增
+- 数据数字使用白色
+- 标注文字使用弱化色

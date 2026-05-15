@@ -1,5 +1,5 @@
-/* 导入 Google Fonts：Inter（无衬线字体）和 JetBrains Mono（等宽字体） */
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+/* 导入 Google Fonts：Inter、JetBrains Mono + 衬线/展示/标题字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,600&family=Space+Grotesk:wght@300;400;500;600;700&family=Archivo+Black&family=Noto+Serif+SC:wght@300;400;600;700&family=Oswald:wght@400;600;700&display=swap');
 
 /* 导入 Tailwind CSS v4 */
 @import "tailwindcss";
@@ -8,6 +8,9 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;     /* 无衬线字体族 */
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;  /* 等宽字体族（用于代码） */
+  --font-serif: "Playfair Display", "Noto Serif SC", Georgia, serif;  /* 衬线字体族 */
+  --font-display: "Archivo Black", "Space Grotesk", sans-serif;   /* 展示字体族 */
+  --font-heading: "Oswald", "Inter", sans-serif;                  /* 标题字体族 */
 }
 
 /* 基础样式层：设置 body 默认字体 */

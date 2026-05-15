@@ -1,0 +1,163 @@
+## 和风极简 (Japanese Minimal)
+
+灵感来自日本平面设计、侘寂美学、無印良品。Noto Serif SC 衬线标题，朱红强调，极端留白，直角无阴影，克制到极致。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 象牙底（主背景） | `#FAFAF5` | `bg-[#FAFAF5]` |
+| 暖灰底（区块底） | `#F2F0E6` | `bg-[#F2F0E6]` |
+| 白底（卡片） | `#FFFFFF` | `bg-white` |
+| 主文字（墨色） | `#1A1A18` | `text-[#1A1A18]` |
+| 辅助文字 | `#5C564C` | `text-[#5C564C]` |
+| 弱化文字 | `#9C958A` | `text-[#9C958A]` |
+| 朱红（主强调） | `#D93A2A` | `bg-[#D93A2A]` / `text-[#D93A2A]` |
+| 墨色（辅强调） | `#1A1A18` | `bg-[#1A1A18]` / `text-[#1A1A18]` |
+| 金色（点缀） | `#C9A961` | `text-[#C9A961]` |
+| 分割线 | `rgba(40,30,20,0.1)` | `border-[rgba(40,30,20,0.1)]` |
+
+---
+
+### 排版系统
+
+**核心规则：极端留白是灵魂。标题字号大，字重轻。**
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | serif (Noto Serif SC) | 500 (Medium) | ~8vw | `font-serif font-medium text-[8vw] text-[#1A1A18] tracking-[0.04em]` |
+| 章节标题 | serif (Noto Serif SC) | 500 (Medium) | ~5vw | `font-serif font-medium text-[5vw] text-[#1A1A18] tracking-[0.04em]` |
+| 正文标题 | serif (Noto Serif SC) | 500 (Medium) | ~2.6vw | `font-serif font-medium text-[2.6vw] text-[#1A1A18]` |
+| 引导段 | sans | 300 (Light) | ~1.6vw | `font-light text-[1.6vw] leading-relaxed text-[#5C564C]` |
+| 正文 | sans | 400 (Regular) | max(14px, 1.1vw) | `font-normal text-[max(14px,1.1vw)] leading-relaxed text-[#5C564C]` |
+| Kicker | sans | 400 (Regular) | 11px | `font-normal text-[11px] tracking-[0.2em] uppercase text-[#D93A2A]` |
+| 数据数字 | serif (Noto Serif SC) | 700 (Bold) | ~12vw | `font-serif font-bold text-[12vw] text-[#1A1A18]` |
+| 元数据 | mono | 400 (Regular) | 10px | `font-mono text-[10px] tracking-[0.16em] uppercase text-[#9C958A]` |
+
+**中文标题字号降级**：
+- 1 行 ≤ 6 字：可用全尺寸
+- 2 行每行 ≤ 6 字：降 1 档
+- 3 行或更长：优先改写标题
+
+---
+
+### 布局模式
+
+**1. Zen Cover（禅意封面）**
+- 用途：演示文稿第一页
+- 结构：象牙底 + 朱红 kicker + serif 超大标题 + 一行引导段 + 朱红装饰线
+- 装饰线：`w-12 h-0.5 bg-[#D93A2A]`
+- Tailwind：`bg-[#FAFAF5] flex flex-col justify-center p-24`
+
+**2. Single Concept（单一概念）**
+- 用途：核心观点、单一焦点
+- 结构：象牙底 + 居中大标题 + 极简描述，大量留白
+- Tailwind：`bg-[#FAFAF5] flex flex-col items-center justify-center text-center p-28`
+
+**3. Two Column Minimal（双栏极简）**
+- 用途：图文混排
+- 结构：7:5 分栏，左=文字区，右=图片（直角，无装饰）
+- Tailwind：`grid grid-cols-12 gap-10` + `col-span-7` + `col-span-5`
+
+**4. Data Minimal（极简数据）**
+- 用途：关键指标展示
+- 结构：2×2 网格，每格：kicker + serif 大数字 + 一行描述
+- Tailwind：`grid grid-cols-2 gap-10`
+
+**5. Vertical List（纵向列表）**
+- 用途：要点、步骤
+- 结构：标题 + 1px hairline 分隔线 + 编号列表
+- 分隔线：`border-t border-[rgba(40,30,20,0.1)]`
+- Tailwind：`flex flex-col gap-6`
+
+**6. Image Focus（图片聚焦）**
+- 用途：单张大图展示
+- 结构：图片占满大半页面 + 底部极简标题
+- 图片：直角，无圆角无阴影
+- Tailwind：`flex flex-col gap-4`
+
+**7. Quote Simplicity（极简引用）**
+- 用途：金句
+- 结构：serif 大字号 + 出处，大量留白
+- Tailwind：`flex flex-col items-center justify-center text-center p-24`
+
+**8. Ink Closing（墨色收尾）**
+- 用途：演示文稿最后一页
+- 结构：墨色底 + 象牙色标题 + 朱红装饰线
+- Tailwind：`bg-[#1A1A18] text-[#FAFAF5] flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Zen Kicker（禅意引导句）**
+```jsx
+<span className="font-normal text-[11px] tracking-[0.2em] uppercase text-[#D93A2A]">
+  壱
+</span>
+```
+
+**Hairline Divider（发丝分割线）**
+```jsx
+<div className="w-full border-t border-[rgba(40,30,20,0.1)]" />
+```
+
+**Accent Bar（朱红装饰条）**
+```jsx
+<div className="w-12 h-0.5 bg-[#D93A2A]" />
+```
+
+**Data Number Minimal（极简数据字）**
+```jsx
+<div className="flex flex-col gap-3">
+  <span className="font-normal text-[11px] tracking-[0.2em] uppercase text-[#D93A2A]">Label</span>
+  <span className="font-serif font-bold text-[12vw] text-[#1A1A18] leading-none">64</span>
+  <span className="text-sm text-[#5C564C]">描述文字</span>
+</div>
+```
+
+---
+
+### 装饰元素
+
+- **朱红线**：`w-12 h-0.5 bg-[#D93A2A]` 极短装饰线
+- **发丝分割线**：`border-t border-[rgba(40,30,20,0.1)]` 1px 分隔
+- **直角容器**：所有元素 `rounded-none`
+- **极端留白**：页面 padding `p-24` 或 `p-28`
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用圆角（`rounded-none` 是唯一选择）
+- 禁止使用阴影（`shadow-none`）
+- 禁止使用渐变色背景或文字
+- 禁止使用粗边框（最大 `border` 即 1px）
+- 禁止正文标题居中（标题默认左对齐，封面/引用除外）
+- 禁止自定义 hex 值（只用预设配色方案）
+- 禁止使用鲜艳的霓虹色
+- 禁止使用粗字重标题（Hero 用 Medium 500，不用 Bold 700）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 配色一致：象牙底+朱红强调+墨色文字
+- 使用 lucide-react 图标，不使用 emoji
+- 所有元素 `rounded-none`、`shadow-none`
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 封面和收尾页有明显视觉区分（墨色收尾）
+
+**P2（视觉打磨）**
+- 留白充足（至少 `p-20`）
+- 标题字重为 Medium（500），不用 Bold
+- 装饰线极短（`w-12` 或 `w-8`）
+- Kicker 使用朱红色 + 0.2em 字间距

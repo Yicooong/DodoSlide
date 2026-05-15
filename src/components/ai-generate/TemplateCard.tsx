@@ -1,8 +1,8 @@
 import React from 'react';
 // 导入 Check 图标：用于标记选中状态
 import { Check } from 'lucide-react';
-// 导入风格模板类型
-import { StyleTemplate } from '../../prompts/templates/index';
+// 导入风格模板类型和分类标签
+import { StyleTemplate, CATEGORY_LABELS } from '../../prompts/templates/index';
 
 /** 风格模板卡片组件属性接口 */
 interface TemplateCardProps {
@@ -10,6 +10,34 @@ interface TemplateCardProps {
   isSelected: boolean;       // 是否被选中
   onSelect: (id: string) => void;  // 选中回调
 }
+
+/** 分类对应的背景色 */
+const CATEGORY_COLORS: Record<string, string> = {
+  business: '#3B82F6',
+  creative: '#F43F5E',
+  tech: '#06B6D4',
+  editorial: '#F59E0B',
+  general: '#8B5CF6',
+};
+
+/** 各模板的展示字体名 */
+const TEMPLATE_FONTS: Record<string, string> = {
+  modern: 'Inter',
+  tech: 'JetBrains Mono',
+  creative: 'Inter',
+  professional: 'Inter',
+  elegant: 'Playfair Display',
+  magazine: 'Playfair Display',
+  swiss: 'Inter',
+  corporate: 'Inter',
+  pitch: 'Inter',
+  brutal: 'Archivo Black',
+  editorial: 'Playfair Display',
+  japanese: 'Noto Serif SC',
+  cyberpunk: 'JetBrains Mono',
+  blueprint: 'JetBrains Mono',
+  news: 'Oswald',
+};
 
 /**
  * 风格模板卡片组件
@@ -27,7 +55,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   return (
     <button
       onClick={() => onSelect(template.id)}
-      className="relative flex-shrink-0 w-40 rounded-xl overflow-hidden text-left transition-all duration-200 cursor-pointer group"
+      className="relative flex-shrink-0 w-44 rounded-xl overflow-hidden text-left transition-all duration-200 cursor-pointer group"
       style={{
         // 选中状态使用绿色边框和发光效果
         border: isSelected
@@ -40,9 +68,21 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           : 'var(--glass-shadow)',
       }}
     >
+      {/* 分类标签：左上角小药丸 */}
+      <div
+        className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider uppercase"
+        style={{
+          background: `${CATEGORY_COLORS[template.category] || '#8B5CF6'}20`,
+          color: CATEGORY_COLORS[template.category] || '#8B5CF6',
+          border: `1px solid ${CATEGORY_COLORS[template.category] || '#8B5CF6'}40`,
+        }}
+      >
+        {CATEGORY_LABELS[template.category] || template.category}
+      </div>
+
       {/* 缩略图区域：模拟幻灯片预览 */}
       <div
-        className="h-24 w-full flex items-center justify-center relative overflow-hidden"
+        className="h-28 w-full flex items-center justify-center relative overflow-hidden"
         style={{
           // 使用模板配色的渐变背景
           background: `linear-gradient(135deg, ${template.colors[0]}22, ${template.colors[1]}22)`,
@@ -104,6 +144,14 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         )}
       </div>
 
+      {/* 色彩条带：渐变展示模板主色调 */}
+      <div
+        className="h-1 w-full"
+        style={{
+          background: `linear-gradient(90deg, ${template.colors.join(', ')})`,
+        }}
+      />
+
       {/* 卡片信息区域 */}
       <div className="px-3 py-2.5">
         <p
@@ -118,18 +166,26 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         >
           {template.description}
         </p>
-        {/* 配色方案色块展示 */}
-        <div className="flex gap-1 mt-2">
-          {template.colors.map((color, idx) => (
-            <div
-              key={idx}
-              className="w-3 h-3 rounded-full border"
-              style={{
-                background: color,
-                borderColor: 'var(--glass-border)',
-              }}
-            />
-          ))}
+        {/* 底部：配色圆点 + 字体名 */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex gap-1">
+            {template.colors.map((color, idx) => (
+              <div
+                key={idx}
+                className="w-3 h-3 rounded-full border"
+                style={{
+                  background: color,
+                  borderColor: 'var(--glass-border)',
+                }}
+              />
+            ))}
+          </div>
+          <span
+            className="text-[9px] tracking-wide opacity-50"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {TEMPLATE_FONTS[template.id] || 'Inter'}
+          </span>
         </div>
       </div>
     </button>

@@ -1,0 +1,165 @@
+## 赛博朋克 (Cyberpunk Neon)
+
+灵感来自 Cyberpunk 2077、Blade Runner、Tron。纯黑背景，霓虹粉+青色双色光晕，JetBrains Mono 标题，发光效果，极致科幻。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 纯黑底（主背景） | `#000000` | `bg-black` |
+| 暗紫底（卡片） | `#0F0F1A` | `bg-[#0F0F1A]` |
+| 主文字 | `#F5F7FF` | `text-[#F5F7FF]` |
+| 辅助文字 | `#B4B8D4` | `text-[#B4B8D4]` |
+| 弱化文字 | `#6B6E8A` | `text-[#6B6E8A]` |
+| 霓虹粉（主强调） | `#FF2BD6` | `bg-[#FF2BD6]` / `text-[#FF2BD6]` |
+| 霓虹青（辅强调） | `#00F0FF` | `bg-[#00F0FF]` / `text-[#00F0FF]` |
+| 霓虹黄（点缀） | `#F9F871` | `text-[#F9F871]` |
+| 渐变强调 | `linear-gradient(135deg,#FF2BD6,#7A00FF 50%,#00F0FF)` | — |
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | mono (JetBrains Mono) | 700 (Bold) | ~7vw | `font-mono font-bold text-[7vw] text-[#F5F7FF]` |
+| 章节标题 | mono (JetBrains Mono) | 700 (Bold) | ~4.5vw | `font-mono font-bold text-[4.5vw] text-[#F5F7FF]` |
+| 正文标题 | sans | 600 (SemiBold) | ~2.4vw | `font-semibold text-[2.4vw] text-[#F5F7FF]` |
+| 引导段 | sans | 400 (Regular) | ~1.5vw | `font-normal text-[1.5vw] leading-relaxed text-[#B4B8D4]` |
+| 正文 | sans | 400 (Regular) | max(13px, 1.05vw) | `font-normal text-[max(13px,1.05vw)] leading-relaxed text-[#B4B8D4]` |
+| Kicker | mono | 500 (Medium) | 12px | `font-mono text-xs font-medium tracking-[0.18em] uppercase text-[#00F0FF]` |
+| 数据数字 | mono | 700 (Bold) | ~12vw | `font-mono font-bold text-[12vw] text-[#FF2BD6]` |
+| 代码 | mono | 400 (Regular) | ~1.1vw | `font-mono text-[1.1vw] text-[#00F0FF]` |
+| 元数据 | mono | 400 (Regular) | 10px | `font-mono text-[10px] tracking-[0.16em] uppercase text-[#6B6E8A]` |
+
+**标题光晕效果**（所有 Hero/章节标题）：
+```
+text-shadow: 0 0 12px rgba(255,43,214,0.6), 0 0 30px rgba(0,240,255,0.35)
+```
+
+---
+
+### 布局模式
+
+**1. Neon Cover（霓虹封面）**
+- 用途：演示文稿第一页
+- 结构：纯黑底 + mono 巨型标题（带光晕）+ 霓虹青 kicker
+- Tailwind：`bg-black flex flex-col items-center justify-center text-center p-20`
+
+**2. Data Dashboard（数据仪表盘）**
+- 用途：展示关键指标
+- 结构：2×2 或 3×2 网格，每张卡片暗紫底+霓虹边框发光
+- 卡片发光：`box-shadow: 0 0 0 1px rgba(255,43,214,0.35), 0 0 24px rgba(255,43,214,0.2)`
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**3. Terminal Split（终端对半）**
+- 用途：代码+说明、数据+分析
+- 结构：1:1 分栏，左=终端窗口风格，右=正文
+- 终端：`bg-[#0F0F1A] border border-[rgba(255,43,214,0.25)] rounded-md`
+- Tailwind：`grid grid-cols-2 gap-6`
+
+**4. Glow Grid（发光网格）**
+- 用途：多特性展示
+- 结构：3 列卡片，每张带不同颜色的发光边框
+- 颜色循环：粉→青→黄
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**5. Neon Timeline（霓虹时间线）**
+- 用途：步骤/流程
+- 结构：水平时间线，发光圆点+霓虹连接线
+- 圆点：`w-3 h-3 rounded-full bg-[#FF2BD6]` + `box-shadow: 0 0 8px rgba(255,43,214,0.6)`
+- Tailwind：`flex items-center gap-0`
+
+**6. Matrix Code（矩阵代码）**
+- 用途：代码展示、技术细节
+- 结构：终端窗口 + 代码内容（青色文字）
+- 终端标题栏：三个圆点（红/黄/绿）
+- Tailwind：`bg-[#0F0F1A] border border-[rgba(0,240,255,0.3)] rounded-md overflow-hidden`
+
+**7. Hologram Card（全息卡片）**
+- 用途：特性/优势展示
+- 结构：暗紫底卡片 + 渐变顶部边框 + 发光阴影
+- 渐变边框：`bg-gradient-to-r from-[#FF2BD6] to-[#00F0FF] h-0.5`
+- Tailwind：`bg-[#0F0F1A] rounded-md p-6`
+
+**8. Blackout Closing（黑幕收尾）**
+- 用途：演示文稿最后一页
+- 结构：纯黑底 + 霓虹粉巨型标题（强光晕）+ 霓虹青 CTA
+- Tailwind：`bg-black flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Neon Card（霓虹卡片）**
+```jsx
+<div className="bg-[#0F0F1A] border border-[rgba(255,43,214,0.25)] rounded-md p-6"
+  style={{ boxShadow: '0 0 0 1px rgba(255,43,214,0.35), 0 0 24px rgba(255,43,214,0.2)' }}>
+  {/* 卡片内容 */}
+</div>
+```
+
+**Glow Badge（发光标签）**
+```jsx
+<span className="inline-block px-3 py-1 rounded text-xs font-mono font-medium tracking-wider uppercase bg-[#FF2BD6]/10 text-[#FF2BD6] border border-[#FF2BD6]/30">
+  Label
+</span>
+```
+
+**Neon Divider（霓虹分割线）**
+```jsx
+<div className="h-px bg-gradient-to-r from-transparent via-[#FF2BD6] to-transparent opacity-40" />
+```
+
+**Terminal Header（终端标题栏）**
+```jsx
+<div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0F0F1A] border-b border-[rgba(0,240,255,0.1)]">
+  <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+  <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+  <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+</div>
+```
+
+---
+
+### 装饰元素
+
+- **发光边框**：`box-shadow: 0 0 0 1px rgba(255,43,214,0.35), 0 0 24px rgba(255,43,214,0.2)`
+- **霓虹分割线**：渐变透明→粉→透明的 1px 线
+- **标题光晕**：`text-shadow: 0 0 12px rgba(255,43,214,0.6), 0 0 30px rgba(0,240,255,0.35)`
+- **网格背景**：`linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px)` + `bg-[length:40px_40px]`
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用白色或浅色背景（`bg-white`、`bg-gray-50`）
+- 禁止使用柔和的暖色调
+- 禁止使用衬线字体
+- 禁止使用 `rounded-2xl` 以上的大圆角
+- 禁止自定义 hex 值
+- 禁止使用 `shadow-sm` 等柔和阴影（只用发光阴影）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 背景为纯黑或暗紫，无白色背景
+- 使用 lucide-react 图标，不使用 emoji
+- Hero/章节标题有发光效果
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 发光效果适度，不滥用
+
+**P2（视觉打磨）**
+- 标题使用 mono 字体
+- 数据数字使用霓虹粉色
+- Kicker 使用霓虹青色
+- 卡片边框使用半透明霓虹色

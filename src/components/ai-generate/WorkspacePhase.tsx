@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 // 导入图标：Code(代码)、Eye(预览)、RotateCcw(重新生成)、Download(导出)、ArrowLeft(返回)、PanelLeft(面板切换)、Plus(新建)
-import { Code, Eye, RotateCcw, Download, ArrowLeft, PanelLeft, Plus } from 'lucide-react';
+import { Code, Eye, RotateCcw, Download, ArrowLeft, PanelLeft, Plus, ExternalLink } from 'lucide-react';
 // 导入可拖拽调整大小的面板组件
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 // 导入画布比例类型和配置获取函数
@@ -48,6 +48,7 @@ interface WorkspacePhaseProps {
   onSwitchConversation: (id: string) => void;  // 切换对话回调
   onExportPPTX: (mode: 'all' | 'current' | 'range', startPage?: number, endPage?: number) => Promise<void>;  // 导出 PPTX
   onStopGenerate: () => void;                  // 停止生成回调
+  onNavigate: (view: 'landing' | 'ai-generate' | 'code' | 'preview') => void;  // 页面导航回调
 }
 
 /**
@@ -76,6 +77,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
   onSwitchConversation,
   onExportPPTX,
   onStopGenerate,
+  onNavigate,
 }) => {
   // 当前激活的标签页：preview(预览) 或 code(代码)
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
@@ -142,17 +144,27 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
     return conversation.currentChain.filter(m => m.role !== 'system');
   }, [conversation.currentChain]);
 
-  // 使用 ResizeObserver 自动计算预览缩放比例，使幻灯片适配容器
+  // 使用 ResizeObserver 监听可用空间，主动计算缩放比例和容器尺寸
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setScale(entry.contentRect.width / canvasConfig.width);
+        const { width, height } = entry.contentRect;
+        if (width === 0 || height === 0) return;
+        const scaleX = width / canvasConfig.width;
+        const scaleY = height / canvasConfig.height;
+        const s = Math.min(scaleX, scaleY);
+        setScale(s);
+        setContainerSize({
+          width: Math.floor(canvasConfig.width * s),
+          height: Math.floor(canvasConfig.height * s),
+        });
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [canvasConfig.width]);
+  }, [canvasConfig.width, canvasConfig.height]);
 
   return (
     <div className="h-full">
@@ -278,6 +290,22 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* 跳转到完整代码工作区按钮 */}
+            {!isGenerating && (
+              <button
+                onClick={() => onNavigate('code')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
+                style={{
+                  background: 'var(--bg-button)',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-default)',
+                }}
+                title="跳转到完整代码工作区"
+              >
+                <ExternalLink className="w-3 h-3" />
+                代码工作区
+              </button>
+            )}
             {/* 重新生成按钮（生成完成后显示） */}
             {!isGenerating && (
               <button
@@ -336,40 +364,43 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             }`}
             style={{ background: 'var(--bg-preview-canvas)' }}
           >
-            <div
-              ref={containerRef}
-              className="relative overflow-hidden rounded-lg"
-              style={{
-                width: canvasConfig.width * scale,
-                height: canvasConfig.height * scale,
-                boxShadow: 'var(--shadow-preview)',
-              }}
-            >
+            {/* 外层包裹：撑满可用空间，ResizeObserver 监听此元素获取可用宽高 */}
+            <div ref={containerRef} className="w-full h-full flex items-center justify-center">
+              {/* 画布容器：固定尺寸，由 JS 计算得出，确保拖拽边栏时稳定不漂移 */}
               <div
-                ref={previewRef}
+                className="relative overflow-hidden rounded-lg"
                 style={{
-                  width: canvasConfig.width,
-                  height: canvasConfig.height,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'top left',
+                  width: containerSize.width,
+                  height: containerSize.height,
+                  boxShadow: 'var(--shadow-preview)',
                 }}
               >
-                {renderError ? (
-                  /* 渲染错误显示 */
-                  <div className="w-full h-full flex items-center justify-center p-8" style={{ background: 'var(--bg-card)' }}>
-                    <div className="text-center">
-                      <p className="text-sm font-medium mb-2" style={{ color: '#EF4444' }}>
-                        渲染错误
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {renderError}
-                      </p>
+                <div
+                  ref={previewRef}
+                  style={{
+                    width: canvasConfig.width,
+                    height: canvasConfig.height,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  {renderError ? (
+                    /* 渲染错误显示 */
+                    <div className="w-full h-full flex items-center justify-center p-8" style={{ background: 'var(--bg-card)' }}>
+                      <div className="text-center">
+                        <p className="text-sm font-medium mb-2" style={{ color: '#EF4444' }}>
+                          渲染错误
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {renderError}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  /* 正常渲染幻灯片 */
-                  <RenderedSlide />
-                )}
+                  ) : (
+                    /* 正常渲染幻灯片 */
+                    <RenderedSlide />
+                  )}
+                </div>
               </div>
             </div>
           </div>

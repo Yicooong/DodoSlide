@@ -1,24 +1,168 @@
-## 科技感风格 (Tech / Cyberpunk)
+## 科技暗黑 (Tech Dark)
 
-### 视觉规范
-- 背景：深蓝黑 (#0F172A) 或渐变深色 (#0F172A → #1E293B)
-- 主文字：亮白 (#F1F5F9)
-- 次要文字：浅蓝灰 (#94A3B8)
-- 强调色：电光蓝 (#3B82F6) 或霓虹青 (#06B6D4)
-- 辅助色：紫色 (#8B5CF6)
+灵感来自 Cyberpunk 2077、Tron、科幻电影 UI。深蓝黑背景，霓虹蓝绿强调，光晕效果，等宽字体点缀。
 
-### 排版
-- 标题：font-bold, text-3xl~5xl, tracking-wide
-- 正文：text-base~lg, leading-relaxed
-- 可使用等宽字体 JetBrains Mono 作为装饰
+---
 
-### 布局原则
-- 使用网格布局和卡片式结构
-- 添加微妙的光晕效果 (box-shadow with accent color)
-- 使用边框发光效果 (border with glow)
-- 图标使用 lucide-react，可添加旋转/脉动动画
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 深空底（主背景） | `#0F172A` | `bg-[#0F172A]` |
+| 暗灰底（卡片/区块） | `#1E293B` | `bg-[#1E293B]` |
+| 主文字 | `#F1F5F9` | `text-[#F1F5F9]` |
+| 辅助文字 | `#94A3B8` | `text-[#94A3B8]` |
+| 弱化文字 | `#64748B` | `text-[#64748B]` |
+| 电光蓝（强调） | `#3B82F6` | `bg-[#3B82F6]` / `text-[#3B82F6]` |
+| 霓虹青（辅助） | `#06B6D4` | `bg-[#06B6D4]` / `text-[#06B6D4]` |
+| 紫光（点缀） | `#8B5CF6` | `text-[#8B5CF6]` |
+| 分割线 | `rgba(148,163,184,0.15)` | `border-[rgba(148,163,184,0.15)]` |
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | sans | 700 (Bold) | ~8vw | `font-bold text-[8vw]` |
+| 章节标题 | sans | 700 (Bold) | ~5vw | `font-bold text-[5vw]` |
+| 正文标题 | sans | 600 (SemiBold) | ~2.6vw | `font-semibold text-[2.6vw]` |
+| 引导段 | sans | 400 (Regular) | ~1.55vw | `font-normal text-[1.55vw] leading-relaxed` |
+| 正文 | sans | 400 (Regular) | max(13px, 1.05vw) | `font-normal text-[max(13px,1.05vw)] leading-relaxed` |
+| Kicker | mono | 500 (Medium) | 12px | `font-mono text-xs font-medium tracking-[0.18em] uppercase text-[#06B6D4]` |
+| 代码/数据 | mono | 400 (Regular) | ~1.1vw | `font-mono text-[1.1vw]` |
+| 元数据 | mono | 400 (Regular) | 11px | `font-mono text-[11px] tracking-[0.16em] uppercase text-[#64748B]` |
+
+---
+
+### 布局模式
+
+**1. Neon Cover（霓虹封面）**
+- 用途：演示文稿第一页
+- 结构：深空底 + kicker + 超大标题（带光晕）+ 一行描述
+- 标题光晕：`text-shadow: 0 0 20px rgba(59,130,246,0.5), 0 0 40px rgba(6,182,212,0.3)`
+- Tailwind：`bg-[#0F172A] text-[#F1F5F9] flex flex-col items-center justify-center text-center`
+
+**2. Data Dashboard（数据仪表盘）**
+- 用途：展示关键指标
+- 结构：mono kicker + 标题 + 2×2 或 3×2 网格的数据卡片
+- 卡片：`bg-[#1E293B] border border-[rgba(148,163,184,0.15)] rounded-lg p-6`
+- Tailwind：`grid grid-cols-3 gap-4` 或 `grid grid-cols-2 gap-4`
+
+**3. Glow Split（光晕对半）**
+- 用途：核心观点对半展示
+- 结构：1:1 分栏，左=深色底+发光边框，右=暗灰底正文
+- Tailwind：`grid grid-cols-2 gap-6`
+
+**4. Terminal Block（终端代码块）**
+- 用途：展示代码、命令、技术细节
+- 结构：标题 + 终端窗口（带圆点装饰的标题栏 + 代码内容）
+- 终端标题栏：`flex gap-1.5` 三个圆点 `w-3 h-3 rounded-full`（红/黄/绿）
+- Tailwind：`bg-[#0F172A] border border-[rgba(148,163,184,0.2)] rounded-lg overflow-hidden`
+
+**5. Tech Grid（科技网格）**
+- 用途：多个并列技术特性/模块
+- 结构：mono 标签 + 标题 + 3 列卡片网格，每张卡片带发光边框
+- 发光边框：`box-shadow: 0 0 15px rgba(59,130,246,0.2), inset 0 0 15px rgba(59,130,246,0.05)`
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**6. Architecture Layer（架构分层）**
+- 用途：系统架构、技术栈分层
+- 结构：从上到下堆叠的层级，每层不同深度的背景色
+- 层级色：`#0F172A` → `#1E293B` → `#334155`
+- Tailwind：`flex flex-col gap-2`
+
+**7. Comparison Radar（对比分析）**
+- 用途：A vs B 技术对比
+- 结构：1:1 分栏，中间竖线分隔，各侧带指标列表
+- Tailwind：`grid grid-cols-2 divide-x divide-[rgba(148,163,184,0.15)]`
+
+**8. Closing CTA（收尾号召）**
+- 用途：演示文稿最后一页
+- 结构：深空底 + 居中标题 + 发光按钮 + 一行元数据
+- Tailwind：`bg-[#0F172A] flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Glow Card（发光卡片）**
+```jsx
+<div className="bg-[#1E293B] border border-[rgba(148,163,184,0.15)] rounded-lg p-6 relative overflow-hidden"
+  style={{ boxShadow: '0 0 15px rgba(59,130,246,0.15), inset 0 0 15px rgba(59,130,246,0.05)' }}>
+  {/* 卡片内容 */}
+</div>
+```
+
+**Neon Badge（霓虹标签）**
+```jsx
+<span className="inline-block px-3 py-1 rounded-full text-xs font-mono font-medium tracking-wider uppercase bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/30">
+  Label
+</span>
+```
+
+**Terminal Window（终端窗口）**
+```jsx
+<div className="bg-[#0F172A] border border-[rgba(148,163,184,0.2)] rounded-lg overflow-hidden">
+  <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#1E293B] border-b border-[rgba(148,163,184,0.1)]">
+    <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+    <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+    <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+  </div>
+  <div className="p-4 font-mono text-sm text-[#F1F5F9] leading-relaxed">
+    {/* 代码内容 */}
+  </div>
+</div>
+```
+
+**Stat Number（数据大字）**
+```jsx
+<div className="flex flex-col gap-1">
+  <span className="font-mono text-xs tracking-widest uppercase text-[#06B6D4]">Label</span>
+  <span className="text-5xl font-bold text-[#F1F5F9]" style={{ textShadow: '0 0 20px rgba(59,130,246,0.4)' }}>64</span>
+  <span className="text-sm text-[#94A3B8]">描述文字</span>
+</div>
+```
+
+---
 
 ### 装饰元素
-- 使用虚线边框或点阵背景
-- 角落装饰 (corner accents)
-- 渐变线条分隔
+
+- **发光分割线**：`h-px bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-30`
+- **网格背景**：CSS `linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px)` + `bg-[length:40px_40px]`
+- **光晕圆点**：`w-2 h-2 rounded-full bg-[#3B82F6]` + `box-shadow: 0 0 8px rgba(59,130,246,0.6)`
+- **角标装饰**：45° 渐变线条放在卡片角落
+
+---
+
+### 禁止项
+
+- 禁止使用白色或浅色背景（`bg-white`、`bg-gray-50` 等）
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用柔和的暖色调（橙色、粉色、棕色）
+- 禁止使用衬线字体
+- 禁止使用 `rounded-3xl` 等大圆角（最大 `rounded-lg`）
+- 禁止自定义 hex 值（只用预设配色方案）
+- 禁止混搭多套强调色（一份 deck 主色=电光蓝，辅色=霓虹青，不混用）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 背景为深色系（`#0F172A` 或 `#1E293B`），无白色背景
+- 文字与背景对比度足够（浅色文字+深色背景）
+- 使用 lucide-react 图标，不使用 emoji
+- 强调色一致：主=电光蓝 `#3B82F6`，辅=霓虹青 `#06B6D4`
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 发光效果适度，不滥用（每页最多 2-3 个发光元素）
+
+**P2（视觉打磨）**
+- 数据数字使用 mono 字体
+- Kicker 使用霓虹青色 + mono + uppercase
+- 卡片边框使用半透明色而非实色
+- 代码块使用终端窗口样式

@@ -14,7 +14,7 @@
 - **AI 智能生成** — 通过自然语言描述，AI 自动生成专业幻灯片
 - **对话式交互** — 基于树状结构的对话系统，支持多轮对话和分支
 - **多幻灯片生成** — 支持一次性生成多页幻灯片，保持风格一致
-- **5 种设计风格** — 现代简约、科技感、创意活泼、专业严谨、优雅典雅
+- **15 种设计风格** — 覆盖商务、创意、科技、编辑、通用五大分类，支持分类筛选
 - **实时预览** — 边写边看，代码即所得
 - **Inspector 点选编辑** — 点击预览元素直接修改样式和文本，实时同步到代码
 - **多画布比例** — 支持 16:9 (1280×720) 和 4:3 (1024×768)
@@ -66,7 +66,7 @@ npm run build        # 构建扩展（输出到 dist/）
 
 ### AI 生成页面 (Phase-Based UI)
 **入口阶段 (EntryPhase):**
-1. 选择设计风格模板（5 种预设）
+1. 选择设计风格模板（15 种预设，支持按商务/创意/科技/编辑分类筛选）
 2. 选择画布比例（16:9 或 4:3）
 3. 输入幻灯片描述（自由输入或引导模式）
 4. 点击生成，AI 自动创建幻灯片
@@ -161,7 +161,7 @@ src/
 │       └── use-provider-manager.ts — React Hook 桥接
 └── prompts/
     └── templates/              — 提示词模板
-        ├── index.ts            — 模板注册表（5 种风格）+ 包访问器
+        ├── index.ts            — 模板注册表（15 种风格）+ 分类系统 + 包访问器
         └── {style}/
             ├── style.txt       — 视觉风格提示词（必需）
             ├── workflow.md      — 设计方法论 SOP（可选）
@@ -213,13 +213,23 @@ chrome-extension/
 
 ### 设计风格预设
 
-| 风格 ID | 说明 |
-|---------|------|
-| modern-minimalist | 现代简约：简洁现代的设计风格，适合商务演示 |
-| tech | 科技感：蓝色科技风格，适合技术主题 |
-| creative-playful | 创意活泼：鲜艳色彩，适合创意主题 |
-| professional-rigorous | 专业严谨：简洁专业，适合学术和商务 |
-| elegant | 优雅典雅：柔和色调，适合艺术和文化 |
+| 风格 ID | 名称 | 分类 | 说明 |
+|---------|------|------|------|
+| modern | 现代简约 | 通用 | 白色背景，深色文字，简洁留白 |
+| tech | 科技暗黑 | 科技 | 深蓝黑背景，霓虹蓝绿，科技感 |
+| creative | 创意活力 | 创意 | 多彩撞色，不规则布局，活泼动感 |
+| professional | 专业商务 | 商务 | 海军蓝白，严谨网格，清晰层次 |
+| elegant | 优雅典雅 | 通用 | 米白暖棕，精致排版，高级质感 |
+| magazine | 杂志风 | 编辑 | 衬线主导，暖色调，杂志质感 |
+| swiss | 瑞士风 | 通用 | 纯无衬线，网格严格，克莱因蓝 |
+| corporate | 企业商务 | 商务 | 海军蓝白，严谨保守，咨询风格 |
+| pitch | 融资路演 | 商务 | 蓝紫渐变，大留白，YC 风格 |
+| brutal | 新粗野主义 | 创意 | 米白底，黑边框硬阴影，明黄强调 |
+| editorial | 编辑衬线 | 编辑 | 奶油底，Playfair 衬线，铁锈红强调 |
+| japanese | 日式极简 | 编辑 | 象牙白底，朱红点缀，极致留白 |
+| cyberpunk | 赛博朋克 | 科技 | 黑底霓虹，粉青撞色，辉光效果 |
+| blueprint | 蓝图 | 科技 | 深蓝底色，白色线条，网格虚线 |
+| news | 新闻播报 | 编辑 | 白底红色点缀，Oswald 大写，硬阴影 |
 
 ### 提示词系统
 - **StylePromptBundle**：组合 style.txt（视觉规则）、workflow.md（设计方法）、reference_*.jsx（示例）
@@ -341,14 +351,14 @@ UI 使用 CSS 变量实现玻璃态效果：
 
 ### 添加新的 AI 风格
 1. 创建 `src/prompts/templates/{name}/` 目录
-2. 创建 `style.txt`（必需）：视觉风格提示词
-3. 可选创建 `workflow.md`：设计方法论 SOP
+2. 创建 `style.txt`（必需）：采用标准化 7 章节格式（配色方案、排版系统、布局模式、组件模式、装饰元素、禁止项、质量自检）
+3. 可选创建 `workflow.md`：设计方法论 SOP（6 阶段流程 + 质量自检）
 4. 可选添加 `reference_*.jsx`：参考示例（自动发现，无需 import）
 5. 在 `src/prompts/templates/index.ts` 中注册：
    - 导入 style.txt（?raw）
    - 如有 workflow.md 也导入（?raw）
-   - 添加到 `STYLE_TEMPLATES` 数组
-6. 风格自动出现在 EntryPhase 的模板卡片中
+   - 添加到 `STYLE_TEMPLATES` 数组（含 `category` 分类字段）
+6. 风格自动出现在 EntryPhase 的模板卡片中，按分类筛选
 
 ### 自定义主题
 1. 在 `src/index.css` 中修改 CSS 变量
@@ -377,6 +387,20 @@ UI 使用 CSS 变量实现玻璃态效果：
 9. **流式响应**：AI 响应通过 SSE (ReadableStream) 逐 token 流式返回
 10. **对话上下文**：后续请求发送最近 10 条消息作为上下文
 11. **localStorage 持久化**：对话存储在 `dodoslide_conversations` 键下（最多 50 个）
+
+---
+
+## 致谢与参考
+
+本项目的 AI 风格模板系统参考了以下开源项目，在此表示感谢：
+
+| 项目 | 说明 |
+|------|------|
+| [html-ppt-skill](https://github.com/lewislulu/html-ppt-skill) | HTML PPT Studio — 36 个 CSS 主题 + 设计 token 体系 + 31 种布局模式，本项目模板标准化格式的主要灵感来源 |
+| [guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) | 杂志风 × 瑞士风横向翻页网页 PPT，本项目 magazine 和 swiss 模板的参考 |
+| [open-slide](https://github.com/1weiho/open-slide) | 开源幻灯片生成工具，提供了 AI 幻灯片生成流程的参考 |
+| [awesome-claude-design](https://github.com/rohitg00/awesome-claude-design) | Claude 设计类 Skill 合集，提供了技能系统设计的参考 |
+| [garden-skills](https://github.com/ConardLi/garden-skills) | Claude Skills 花园，提供了 Skill 生态和模板组织方式的参考 |
 
 ---
 

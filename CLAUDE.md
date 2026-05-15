@@ -61,7 +61,7 @@ The AI generation page uses internal phase state (`'entry' | 'workspace'`) withi
 1. **Entry Phase** (`EntryPhase.tsx`):
    - Centered glassmorphism chat box
    - Quick prompt cards (产品发布, 技术分享, 商业路演, 季度汇报)
-   - Style template selection (5 presets with thumbnails)
+   - Style template selection (15 presets with category filtering: business/creative/tech/editorial/general)
    - Canvas ratio selector (16:9 / 4:3)
 
 2. **Workspace Phase** (`WorkspacePhase.tsx`):
@@ -255,7 +255,7 @@ src/
 │       └── use-provider-manager.ts — React hook bridge
 └── prompts/
     └── templates/
-        ├── index.ts            — Template registry (5 styles) + bundle accessors
+        ├── index.ts            — Template registry (15 styles) + category system + bundle accessors
         └── {style}/
             ├── style.txt       — Visual style prompt (required, ?raw import)
             ├── workflow.md      — Design methodology SOP (optional, ?raw import)
@@ -325,11 +325,11 @@ pxToIn = (px / currentScale) * canvasConfig.pptxWidthIn / canvasConfig.width
 3. Test thumbnail rendering and export
 
 ### Adding New AI Styles
-1. Create `src/prompts/templates/{name}/style.txt` with style instructions (required)
-2. Optionally add `workflow.md` (design methodology) and `reference_*.jsx` (example slides)
-3. Register in `src/prompts/templates/index.ts`: add style.txt import, workflow.md import if present, and template entry
+1. Create `src/prompts/templates/{name}/style.txt` with standardized 7-section format (required): color scheme table, typography system, layout patterns (6+), component patterns, decorative elements, prohibitions, quality checklist (P0/P1/P2)
+2. Optionally add `workflow.md` (design methodology SOP with 6 phases) and `reference_*.jsx` (example slides)
+3. Register in `src/prompts/templates/index.ts`: add style.txt import, workflow.md import if present, and template entry with `category` field (`business | creative | tech | editorial | general`)
 4. Reference JSX files are auto-discovered via `import.meta.glob` — no import needed
-5. Style is automatically available in EntryPhase template cards
+5. Style is automatically available in EntryPhase template cards with category filtering
 
 ### Theme Extensions
 1. Add CSS variables to both `.dark` and `.light` in `index.css`

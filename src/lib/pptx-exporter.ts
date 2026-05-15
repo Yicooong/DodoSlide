@@ -9,6 +9,31 @@ import * as LucideIcons from 'lucide-react';
 import React from 'react';
 import { ErrorBoundaryWrapper } from '../hooks/use-slide-renderer';
 
+/** CSS 通用字体族到 PPTX 字体的 fallback 映射 */
+const GENERIC_FONT_MAP: Record<string, string> = {
+  'serif': 'Georgia',
+  'sans-serif': 'Microsoft YaHei',
+  'monospace': 'Consolas',
+  'cursive': 'Comic Sans MS',
+  'fantasy': 'Impact',
+};
+
+/**
+ * 从 CSS fontFamily 字符串中解析出第一个可用字体名
+ * "Inter, sans-serif" → "Inter"
+ * "JetBrains Mono, monospace" → "JetBrains Mono"
+ * "sans-serif" → "Microsoft YaHei" (fallback)
+ */
+function resolveFontFamily(fontFamily: string | undefined): string {
+  if (!fontFamily) return 'Microsoft YaHei';
+  // 取第一个字体族名，去除引号和空格
+  const first = fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+  if (!first) return 'Microsoft YaHei';
+  // 如果是通用字体族，使用 fallback 映射
+  const lower = first.toLowerCase();
+  return GENERIC_FONT_MAP[lower] || first;
+}
+
 /**
  * 导出单个幻灯片到 PPTX
  *
@@ -346,7 +371,7 @@ export const exportSingleSlide = async (
                  fontSize: rawFontSize * 0.75, // 将 px 转换为 pt（1px ≈ 0.75pt）
                  bold: parseInt(style.fontWeight || '400') >= 600,
                  italic: style.fontStyle === 'italic',
-                 fontFace: 'Microsoft YaHei' // 使用微软雅黑字体保证中文兼容性
+                 fontFace: resolveFontFamily(style.fontFamily),
              }
          });
      });

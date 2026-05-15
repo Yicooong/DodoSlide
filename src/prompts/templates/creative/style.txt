@@ -1,27 +1,159 @@
-## 创意活泼风格 (Creative / Vibrant)
+## 创意活力 (Creative Vibrant)
 
-### 视觉规范
-- 背景：白色或浅色渐变
-- 主文字：深色 (#1E293B)
-- 强调色：珊瑚红 (#F43F5E)
-- 辅助色1：青绿 (#14B8A6)
-- 辅助色2：琥珀 (#F59E0B)
-- 辅助色3：紫色 (#A855F7)
+灵感来自 Memphis Design、Bauhaus、当代品牌视觉。多彩撞色，不规则布局，几何装饰，打破网格的活泼动感。
 
-### 排版
-- 标题：font-extrabold, text-4xl~6xl
-- 正文：text-lg~xl, leading-relaxed
-- 可混用不同字重创造节奏感
+---
 
-### 布局原则
-- 不对称布局，打破网格
-- 使用大色块和圆形元素
-- 允许元素重叠和倾斜 (rotate-3, -rotate-2)
-- 使用圆角 (rounded-2xl, rounded-3xl)
-- 图标使用 lucide-react，可添加背景色块
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 白底（主背景） | `#FFFFFF` | `bg-white` |
+| 浅灰底（区块底） | `#F8FAFC` | `bg-slate-50` |
+| 主文字 | `#1E293B` | `text-slate-800` |
+| 辅助文字 | `#64748B` | `text-slate-500` |
+| 珊瑚红（主强调） | `#F43F5E` | `bg-rose-500` / `text-rose-500` |
+| 青绿（辅强调） | `#14B8A6` | `bg-teal-500` / `text-teal-500` |
+| 琥珀（辅强调） | `#F59E0B` | `bg-amber-500` / `text-amber-500` |
+| 紫色（点缀） | `#A855F7` | `bg-purple-500` / `text-purple-500` |
+| 分割线 | `#E2E8F0` | `border-slate-200` |
+
+备选主题（整套替换主强调色）：
+- 热带：主 `#F43F5E`（珊瑚），辅 `#14B8A6`（青绿），点 `#F59E0B`（琥珀）
+- 霓虹：主 `#8B5CF6`（紫），辅 `#06B6D4`（青），点 `#F43F5E`（粉）
+- 阳光：主 `#F59E0B`（琥珀），辅 `#10B981`（翠绿），点 `#6366F1`（靛蓝）
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | sans | 800 (ExtraBold) | ~9vw | `font-extrabold text-[9vw]` |
+| 章节标题 | sans | 700 (Bold) | ~5.5vw | `font-bold text-[5.5vw]` |
+| 正文标题 | sans | 600 (SemiBold) | ~2.8vw | `font-semibold text-[2.8vw]` |
+| 引导段 | sans | 400 (Regular) | ~1.6vw | `font-normal text-[1.6vw] leading-relaxed` |
+| 正文 | sans | 400 (Regular) | max(14px, 1.1vw) | `font-normal text-[max(14px,1.1vw)] leading-relaxed` |
+| Kicker | sans | 700 (Bold) | 12px | `font-bold text-xs tracking-[0.12em] uppercase text-rose-500` |
+| 数据数字 | sans | 800 (ExtraBold) | ~10vw | `font-extrabold text-[10vw]` |
+| 元数据 | mono | 400 (Regular) | 11px | `font-mono text-[11px] tracking-[0.14em] uppercase text-slate-400` |
+
+---
+
+### 布局模式
+
+**1. Bold Cover（大胆封面）**
+- 用途：演示文稿第一页
+- 结构：白色底 + 超大标题（可带渐变色）+ 几何装饰元素
+- 装饰：大色块圆角矩形、倾斜的几何条纹
+- Tailwind：`bg-white flex flex-col items-start justify-center p-20`
+
+**2. Color Block Grid（色块网格）**
+- 用途：展示多个并列特性/优势
+- 结构：2×2 或 3×2 网格，每张卡片不同背景色
+- 卡片色循环：rose-50 / teal-50 / amber-50 / purple-50
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**3. Split Statement（对半声明）**
+- 用途：核心观点展示
+- 结构：1:1 分栏，左=色块背景（带旋转装饰），右=白底正文
+- Tailwind：`grid grid-cols-2 gap-0`，左列 `bg-rose-500 text-white`
+
+**4. Big Number Feature（大数字特性）**
+- 用途：展示关键数据
+- 结构：左侧超大数字（带色块背景），右侧描述文字
+- Tailwind：`flex items-center gap-8`
+
+**5. Staggered Cards（错落卡片）**
+- 用途：时间线、步骤流程
+- 结构：卡片纵向排列，每张卡片略微偏移（translateY）
+- Tailwind：`flex flex-col gap-4`，偶数卡片 `ml-8`
+
+**6. Image + Text Overlap（图文叠放）**
+- 用途：产品展示、人物介绍
+- 结构：图片占满一侧，文字卡片叠在图片上方（带偏移）
+- Tailwind：`relative`，文字卡片 `absolute bottom-4 right-4`
+
+**7. Quote Pop（引用弹出）**
+- 用途：金句、用户评价
+- 结构：大号引号装饰 + 斜体引用 + 出处
+- 引号：`text-[15vw] text-rose-500/20 font-serif absolute -top-8 -left-4`
+- Tailwind：`relative pl-12`
+
+**8. Closing Wave（收尾波浪）**
+- 用途：演示文稿最后一页
+- 结构：渐变色块背景 + 居中标题 + CTA 按钮
+- Tailwind：`bg-gradient-to-br from-rose-500 to-teal-500 text-white flex flex-col items-center justify-center`
+
+---
+
+### 组件模式
+
+**Color Tag（彩色标签）**
+```jsx
+<span className="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-rose-500 text-white">
+  Label
+</span>
+```
+
+**Accent Card（强调色卡片）**
+```jsx
+<div className="bg-rose-50 rounded-2xl p-6 relative overflow-hidden">
+  <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-rose-500/10" />
+  {/* 卡片内容 */}
+</div>
+```
+
+**Gradient Button（渐变按钮）**
+```jsx
+<button className="px-6 py-3 rounded-full bg-gradient-to-r from-rose-500 to-teal-500 text-white font-bold text-sm tracking-wide">
+  开始使用
+</button>
+```
+
+**Decorative Blob（装饰色块）**
+```jsx
+<div className="absolute w-32 h-32 rounded-full bg-amber-500/20 -top-8 -right-8 blur-sm" />
+```
+
+---
 
 ### 装饰元素
-- 波浪形分隔线
-- 彩色圆点和几何图形
-- 渐变色背景卡片
-- 微妙的浮动动画
+
+- **几何色块**：`rounded-2xl` 或 `rounded-3xl` 的纯色矩形，带旋转 `rotate-3` 或 `-rotate-2`
+- **圆点阵列**：`grid grid-cols-6 gap-2` 的小圆点 `w-2 h-2 rounded-full`
+- **波浪分隔线**：SVG path 波浪或 `rounded-t-full` 的半圆排列
+- **渐变条纹**：`bg-gradient-to-r from-rose-500 via-amber-500 to-teal-500 h-1`
+- **浮动装饰**：`absolute` 定位的半透明圆形/方形
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止全页使用单一颜色（必须有 2 种以上强调色交替）
+- 禁止使用纯黑背景（`bg-black`）
+- 禁止使用 `shadow-none`（所有卡片必须有阴影或边框）
+- 禁止正文标题居中（标题默认左对齐，封面/收尾页除外）
+- 禁止自定义 hex 值（只用预设配色方案中的颜色）
+- 禁止使用 monospace 字体作为正文（只用于元数据）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 使用了 2 种以上强调色（珊瑚红 + 青绿 + 琥珀）
+- 使用 lucide-react 图标，不使用 emoji
+- 圆角至少 `rounded-xl`，卡片建议 `rounded-2xl` 或 `rounded-3xl`
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 至少有 1 页使用了色块背景（非白色）
+
+**P2（视觉打磨）**
+- 装饰元素适度（每页 1-2 个，不遮挡正文）
+- 大标题使用 ExtraBold 字重
+- 卡片有柔和阴影或半透明背景色块

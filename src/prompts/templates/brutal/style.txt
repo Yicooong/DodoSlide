@@ -1,0 +1,161 @@
+## 新粗野主义 (Neo-Brutalism)
+
+灵感来自 Memphis Design、当代网页新粗野主义潮流。厚描边、硬阴影、明黄 accent，Space Grotesk + Archivo Black，拒绝柔和。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 米白底（主背景） | `#FFFef0` | `bg-[#FFFef0]` |
+| 白底（卡片） | `#FFFFFF` | `bg-white` |
+| 浅黄底（区块底） | `#FFFBD0` | `bg-[#FFFBD0]` |
+| 主文字 | `#000000` | `text-black` |
+| 辅助文字 | `#222222` | `text-[#222222]` |
+| 明黄（主强调） | `#FFD400` | `bg-[#FFD400]` / `text-[#FFD400]` |
+| 粉色（辅强调） | `#FF5CA8` | `bg-[#FF5CA8]` / `text-[#FF5CA8]` |
+| 蓝色（辅强调） | `#3A7CFF` | `bg-[#3A7CFF]` / `text-[#3A7CFF]` |
+| 黑色边框 | `#000000` | `border-black` |
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | display (Archivo Black) | 400 | ~9vw | `font-display text-[9vw] text-black uppercase` |
+| 章节标题 | display (Archivo Black) | 400 | ~6vw | `font-display text-[6vw] text-black uppercase` |
+| 正文标题 | sans (Space Grotesk) | 700 (Bold) | ~2.8vw | `font-sans font-bold text-[2.8vw] text-black` |
+| 引导段 | sans (Space Grotesk) | 400 (Regular) | ~1.6vw | `font-sans font-normal text-[1.6vw] leading-relaxed text-[#222222]` |
+| 正文 | sans (Space Grotesk) | 400 (Regular) | max(14px, 1.1vw) | `font-sans font-normal text-[max(14px,1.1vw)] leading-relaxed text-[#222222]` |
+| Kicker | sans (Space Grotesk) | 700 (Bold) | 12px | `font-sans font-bold text-xs tracking-[0.1em] uppercase text-black` |
+| 数据数字 | display (Archivo Black) | 400 | ~14vw | `font-display text-[14vw] text-black` |
+| 标签 | sans (Space Grotesk) | 600 (SemiBold) | 11px | `font-sans font-semibold text-[11px] tracking-[0.12em] uppercase` |
+
+---
+
+### 布局模式
+
+**1. Manifesto Cover（宣言封面）**
+- 用途：演示文稿第一页
+- 结构：米白底 + 巨型大写标题 + 黄色 pill 标签 + 黑色装饰线
+- Tailwind：`bg-[#FFFef0] flex flex-col justify-center p-20`
+
+**2. Bold Grid（粗野网格）**
+- 用途：多特性/多概念并列
+- 结构：2×2 或 3×2 网格，每张卡片厚边框+硬阴影
+- 卡片：`bg-white border-[3px] border-black rounded-none p-6 shadow-[6px_6px_0_#000]`
+- Tailwind：`grid grid-cols-3 gap-5`
+
+**3. Number Feature（数字特性）**
+- 用途：核心数据展示
+- 结构：左侧巨型数字（Archivo Black），右侧描述
+- Tailwind：`flex items-center gap-8`
+
+**4. Split Statement（对半声明）**
+- 用途：对比/对立观点
+- 结构：1:1 分栏，左=黄底黑字，右=白底黑字
+- 中间：`border-r-[3px] border-black`
+- Tailwind：`grid grid-cols-2`
+
+**5. Checklist（清单）**
+- 用途：优势/特性列表
+- 结构：标题 + 带勾选标记的列表，每项带黄色背景
+- 勾选：`w-6 h-6 bg-[#FFD400] border-[3px] border-black flex items-center justify-center`
+- Tailwind：`flex flex-col gap-4`
+
+**6. Comparison Versus（对比 PK）**
+- 用途：A vs B 对比
+- 结构：左卡片（旧/差）+ 中间 VS 标签 + 右卡片（新/好）
+- VS 标签：`bg-[#FFD400] border-[3px] border-black px-4 py-2 font-display text-2xl`
+- Tailwind：`flex items-center gap-6`
+
+**7. Quote Block（引用块）**
+- 用途：金句、评价
+- 结构：黑色背景 + 白色大字 + 黄色引号装饰
+- Tailwind：`bg-black text-white p-10 border-[3px] border-black`
+
+**8. CTA Closing（号召收尾）**
+- 用途：演示文稿最后一页
+- 结构：黄色全底 + 黑色大标题 + 黑色按钮（白底+黑边框+硬阴影）
+- Tailwind：`bg-[#FFD400] flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Brutal Card（粗野卡片）**
+```jsx
+<div className="bg-white border-[3px] border-black rounded-none p-6 shadow-[6px_6px_0_#000]">
+  {/* 卡片内容 */}
+</div>
+```
+
+**Pill Tag（药丸标签）**
+```jsx
+<span className="inline-block px-4 py-1.5 bg-[#FFD400] border-[2px] border-black text-black font-bold text-xs tracking-wider uppercase">
+  Label
+</span>
+```
+
+**Brutal Button（粗野按钮）**
+```jsx
+<button className="px-6 py-3 bg-white border-[3px] border-black rounded-none shadow-[4px_4px_0_#000] font-bold text-sm uppercase tracking-wider hover:shadow-[2px_2px_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">
+  Click Me
+</button>
+```
+
+**Check Item（勾选项）**
+```jsx
+<div className="flex items-center gap-3">
+  <div className="w-6 h-6 bg-[#FFD400] border-[3px] border-black flex items-center justify-center flex-shrink-0">
+    <span className="text-black text-xs font-bold">✓</span>
+  </div>
+  <span className="font-bold text-black">Feature description</span>
+</div>
+```
+
+---
+
+### 装饰元素
+
+- **厚边框**：`border-[3px] border-black` 所有卡片和按钮
+- **硬阴影**：`shadow-[6px_6px_0_#000]` 或 `shadow-[4px_4px_0_#000]`
+- **黄色色块**：`bg-[#FFD400]` 用于强调区域
+- **大写字母**：标题全部 `uppercase`
+- **无圆角**：所有元素 `rounded-none`
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用柔和阴影（`shadow-sm`、`shadow-lg`、`shadow-xl`）
+- 禁止使用圆角（`rounded-none` 是唯一选择）
+- 禁止使用渐变色背景或文字
+- 禁止使用半透明或 `opacity` 效果
+- 禁止使用衬线字体
+- 禁止自定义 hex 值（只用预设配色方案）
+- 禁止使用 `border-[1px]`（边框至少 `border-[2px]`，推荐 `border-[3px]`）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 所有卡片有 `border-[3px] border-black` + `shadow-[6px_6px_0_#000]`
+- 使用 lucide-react 图标，不使用 emoji
+- 所有元素 `rounded-none`
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 黄色/粉色/蓝色 accent 交替使用
+
+**P2（视觉打磨）**
+- 标题使用 Archivo Black（`font-display`）
+- 正文使用 Space Grotesk（`font-sans`）
+- 阴影偏移量一致（`6px_6px_0` 或 `4px_4px_0`）
+- 边框粗细一致（`border-[3px]`）

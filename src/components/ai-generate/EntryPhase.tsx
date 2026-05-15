@@ -5,8 +5,8 @@ import { Sparkles, Send, MessageCircle, Edit3, Layout } from 'lucide-react';
 import { motion } from 'motion/react';
 // 导入生成模式和上下文类型
 import { GenerationContext, GenerationMode } from './AiGeneratePage';
-// 导入风格模板常量
-import { STYLE_TEMPLATES } from '../../prompts/templates/index';
+// 导入风格模板常量和分类系统
+import { STYLE_TEMPLATES, CATEGORY_LABELS, getCategories, getTemplatesByCategory, type TemplateCategory } from '../../prompts/templates/index';
 // 导入画布比例类型
 import { CanvasRatio } from '../../lib/canvas-config';
 // 导入风格模板卡片组件
@@ -45,6 +45,8 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
   const [inputValue, setInputValue] = useState('');
   // 文本域引用：用于自动调整高度
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // 分类筛选状态：null 表示"全部"
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | null>(null);
 
   // 根据输入内容自动调整文本域高度（最大 200px）
   useEffect(() => {
@@ -285,7 +287,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-3xl"
+          className="w-full max-w-4xl"
         >
           <div className="flex items-center justify-center gap-1 mb-4">
             <Sparkles className="w-4 h-4" style={{ color: 'var(--accent)' }} />
@@ -293,10 +295,40 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               选择风格模板
             </span>
           </div>
-          {/* 模板卡片横向滚动列表 */}
+
+          {/* 分类筛选标签栏 */}
+          <div className="flex items-center justify-center gap-2 mb-5">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
+              style={{
+                background: selectedCategory === null ? 'var(--accent)' : 'var(--glass-bg)',
+                color: selectedCategory === null ? 'var(--text-inverse)' : 'var(--text-muted)',
+                border: `1px solid ${selectedCategory === null ? 'var(--accent)' : 'var(--glass-border)'}`,
+              }}
+            >
+              全部
+            </button>
+            {getCategories().map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className="px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
+                style={{
+                  background: selectedCategory === cat ? 'var(--accent)' : 'var(--glass-bg)',
+                  color: selectedCategory === cat ? 'var(--text-inverse)' : 'var(--text-muted)',
+                  border: `1px solid ${selectedCategory === cat ? 'var(--accent)' : 'var(--glass-border)'}`,
+                }}
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+
+          {/* 模板卡片网格 */}
           <div className="flex justify-center">
-            <div className="flex gap-3 overflow-x-auto pb-4 px-2">
-              {STYLE_TEMPLATES.map((template) => (
+            <div className="flex flex-wrap justify-center gap-3 pb-4 px-2">
+              {(selectedCategory ? getTemplatesByCategory(selectedCategory) : STYLE_TEMPLATES).map((template) => (
                 <TemplateCard
                   key={template.id}
                   template={template}

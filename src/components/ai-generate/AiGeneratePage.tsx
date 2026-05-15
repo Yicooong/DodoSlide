@@ -192,12 +192,8 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
 
     const config = getProviderConfig();
     if (!config) {
-      // 若未配置提供商，回退到旧版生成方式
-      const selectedRatio = context.canvasRatio || canvasRatio;
-      const result = await aiGen.generate(prompt, selectedRatio);
-      if (result.success && result.code) {
-        slidesHook.updateCurrentSlideCode(result.code);
-      }
+      alert('请先配置 API 提供商\n\n请点击右上角齿轮图标进入设置，添加 API Key、端点和模型后再试。');
+      setShowSettings(true);
       return;
     }
 
@@ -284,8 +280,8 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
 
     const config = getProviderConfig();
     if (!config) {
-      // 回退到旧版生成方式
-      await aiGen.generate(message, canvasRatio);
+      alert('请先配置 API 提供商');
+      setShowSettings(true);
       return;
     }
 
@@ -458,6 +454,7 @@ const AiGeneratePage: React.FC<AiGeneratePageProps> = ({
                 onSwitchConversation={handleSwitchConversation}
                 onExportPPTX={onExportPPTX}
                 onStopGenerate={handleStop}
+                onNavigate={onNavigate}
               />
             </motion.div>
           )}

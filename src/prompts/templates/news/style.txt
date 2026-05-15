@@ -1,0 +1,159 @@
+## 新闻播报 (News Broadcast)
+
+灵感来自 CNN、BBC 新闻台、Bloomberg 终端。Oswald 大写标题，新闻红 accent，硬阴影，左侧红色竖条，紧迫感。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 白底（主背景） | `#FFFFFF` | `bg-white` |
+| 浅灰底（区块底） | `#F4F4F4` | `bg-[#F4F4F4]` |
+| 主文字 | `#0A0A0A` | `text-[#0A0A0A]` |
+| 辅助文字 | `#3A3A3A` | `text-[#3A3A3A]` |
+| 弱化文字 | `#7A7A7A` | `text-[#7A7A7A]` |
+| 新闻红（主强调） | `#E11D2D` | `bg-[#E11D2D]` / `text-[#E11D2D]` |
+| 黑色（辅强调） | `#0A0A0A` | `bg-[#0A0A0A]` / `text-[#0A0A0A]` |
+| 黄色（点缀） | `#FFD100` | `bg-[#FFD100]` / `text-[#FFD100]` |
+| 分割线 | `rgba(0,0,0,0.14)` | `border-[rgba(0,0,0,0.14)]` |
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | heading (Oswald) | 700 (Bold) | ~8vw | `font-heading font-bold text-[8vw] text-[#0A0A0A] uppercase tracking-tight` |
+| 章节标题 | heading (Oswald) | 700 (Bold) | ~5vw | `font-heading font-bold text-[5vw] text-[#0A0A0A] uppercase tracking-tight` |
+| 正文标题 | heading (Oswald) | 600 (SemiBold) | ~2.8vw | `font-heading font-semibold text-[2.8vw] text-[#0A0A0A] uppercase` |
+| 引导段 | sans | 400 (Regular) | ~1.5vw | `font-normal text-[1.5vw] leading-relaxed text-[#3A3A3A]` |
+| 正文 | sans | 400 (Regular) | max(13px, 1.05vw) | `font-normal text-[max(13px,1.05vw)] leading-relaxed text-[#3A3A3A]` |
+| Kicker | sans | 600 (SemiBold) | 12px | `inline-block px-3 py-1 bg-[#E11D2D] text-white font-semibold text-xs tracking-[0.15em] uppercase` |
+| 数据数字 | heading (Oswald) | 700 (Bold) | ~12vw | `font-heading font-bold text-[12vw] text-[#0A0A0A]` |
+| 元数据 | mono | 400 (Regular) | 10px | `font-mono text-[10px] tracking-[0.14em] uppercase text-[#7A7A7A]` |
+
+---
+
+### 布局模式
+
+**1. Breaking News Cover（突发新闻封面）**
+- 用途：演示文稿第一页
+- 结构：白底 + 左侧 8px 红色竖条 + Oswald 大写标题 + 红色 kicker + 时间戳
+- 左侧条：`absolute left-0 top-0 bottom-0 w-2 bg-[#E11D2D]`
+- Tailwind：`bg-white relative flex flex-col justify-center p-20`
+
+**2. Headline Grid（头条网格）**
+- 用途：多条新闻/要点并列
+- 结构：3×1 或 2×2 网格，每张卡片带红色顶部条+硬阴影
+- 卡片：`border-t-4 border-[#E11D2D] bg-white shadow-[6px_6px_0_#E11D2D]`
+- Tailwind：`grid grid-cols-3 gap-5`
+
+**3. Data Report（数据报告）**
+- 用途：关键指标展示
+- 结构：kicker + 标题 + 3×1 KPI 卡片（大数字+红色 accent 线）
+- Tailwind：`grid grid-cols-3 gap-5`
+
+**4. Alert Banner（警报横幅）**
+- 用途：重要声明、警告
+- 结构：红色底 + 白色大字 + 黄色标签
+- Tailwind：`bg-[#E11D2D] text-white p-6`
+
+**5. Two Column Report（双栏报告）**
+- 用途：数据+分析
+- 结构：1:1 分栏，左=数据区，右=分析区（带左侧红色竖线）
+- Tailwind：`grid grid-cols-2 gap-8`
+
+**6. Timeline Update（时间线更新）**
+- 用途：事件进展、时间线
+- 结构：垂直时间线，红色圆点+连接线+右侧描述
+- 圆点：`w-3 h-3 rounded-full bg-[#E11D2D]`
+- Tailwind：`flex flex-col gap-0`
+
+**7. Stat Ticker（数据跑马灯）**
+- 用途：多个指标横向展示
+- 结构：横向排列的指标块，每个带红色底线
+- 底线：`border-b-2 border-[#E11D2D]`
+- Tailwind：`flex gap-6`
+
+**8. Final Bulletin（最终简报）**
+- 用途：演示文稿最后一页
+- 结构：黑色底 + 白色 Oswald 标题 + 红色 accent 线
+- Tailwind：`bg-[#0A0A0A] text-white flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**Kicker Badge（新闻标签）**
+```jsx
+<span className="inline-block px-3 py-1 bg-[#E11D2D] text-white font-semibold text-xs tracking-[0.15em] uppercase">
+  Breaking
+</span>
+```
+
+**News Card（新闻卡片）**
+```jsx
+<div className="relative bg-white border-2 border-[#0A0A0a] p-5"
+  style={{ boxShadow: '6px 6px 0 #E11D2D' }}>
+  {/* 卡片内容 */}
+</div>
+```
+
+**Red Bar Slide（红色竖条页面）**
+```jsx
+<div className="relative bg-white p-20">
+  <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#E11D2D]" />
+  {/* 页面内容 */}
+</div>
+```
+
+**Stat Block（数据块）**
+```jsx
+<div className="border-b-2 border-[#E11D2D] pb-3">
+  <p className="font-heading font-bold text-5xl text-[#0A0A0A] uppercase">64%</p>
+  <p className="text-xs text-[#7A7A7A] mt-1">描述文字</p>
+</div>
+```
+
+---
+
+### 装饰元素
+
+- **左侧红色竖条**：`absolute left-0 top-0 bottom-0 w-2 bg-[#E11D2D]`
+- **硬阴影**：`box-shadow: 6px 6px 0 #E11D2D`
+- **红色底线**：`border-b-2 border-[#E11D2D]` 或 `border-t-4 border-[#E11D2D]`
+- **新闻标签**：红底白字 kicker badge
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用圆角（`rounded-none` 是唯一选择）
+- 禁止使用渐变色背景或文字
+- 禁止使用柔和阴影（只用硬阴影 `shadow-[6px_6px_0_#E11D2D]`）
+- 禁止使用衬线字体
+- 禁止自定义 hex 值
+- 禁止标题使用小写（Oswald 标题必须 `uppercase`）
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 配色一致：新闻红 `#E11D2D` + 黑 `#0A0A0A`
+- 使用 lucide-react 图标，不使用 emoji
+- 标题使用 Oswald + uppercase
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 红色竖条在封面/关键页面出现
+
+**P2（视觉打磨）**
+- 硬阴影偏移量一致（`6px_6px_0`）
+- 数据数字使用 Oswald 大写
+- Kicker 使用红底白字
+- 所有元素 `rounded-none`

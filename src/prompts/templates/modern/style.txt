@@ -35,8 +35,121 @@
 # 布局原则
 
 - 让画布内容有「浮现感」，留出视觉缓冲
-- 每个模块不要争夺视野，这样会导致整体显得很满，读者找不到视觉起始点
+- 每个模块不要争夺视野，这样会导致整体显得满，读者找不到视觉起始点
 - 标题栏与内容区有明显的「虚实结合」
 - 利用简单的横线区分 Meta 信息与主体内容
 - 在禁忌症部分使用简洁的 ul 列表，每行宽度足够，阅读路径是线性的
 - 多项内容排列在单个纯色的卡片里，视觉压力稍大。可以尝试将这些内容归纳，分为 2-3 个子列 (`grid-cols-x`)
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | sans | 800 (ExtraBold) | ~8vw | `font-extrabold text-[8vw] text-slate-800` |
+| 章节标题 | sans | 700 (Bold) | ~5vw | `font-bold text-[5vw] text-slate-800` |
+| 正文标题 | sans | 700 (Bold) | ~3vw | `font-bold text-[3vw] text-slate-800` |
+| 引导段 | sans | 300 (Light) | ~1.5vw | `font-light text-[1.5vw] leading-relaxed text-slate-500` |
+| 正文 | sans | 400 (Regular) | max(13px, 1.05vw) | `font-normal text-[max(13px,1.05vw)] leading-relaxed text-slate-600` |
+| Kicker | mono | 500 (Medium) | 12px | `font-mono text-xs font-medium tracking-[0.16em] uppercase text-indigo-600` |
+| 数据数字 | sans | 800 (ExtraBold) | ~10vw | `font-extrabold text-[10vw] text-slate-800` |
+| 代码/公式 | mono | 400 (Regular) | ~1.1vw | `font-mono text-[1.1vw]` |
+| 元数据 | mono | 400 (Regular) | 10px | `font-mono text-[10px] tracking-[0.14em] uppercase text-slate-400` |
+
+---
+
+### 布局模式
+
+**1. Clean Cover（简洁封面）**
+- 用途：演示文稿第一页
+- 结构：白底 + 左对齐标题 + indigo accent 线 + 引导段
+- Accent 线：`w-16 h-1 bg-indigo-600 rounded-full`
+- Tailwind：`bg-white flex flex-col justify-center p-16`
+
+**2. Workflow Stream（流程流）**
+- 用途：步骤/流程展示
+- 结构：水平步进器，卡片间用箭头连接
+- 箭头：lucide-react `ArrowRight` 图标
+- Tailwind：`flex flex-row items-center justify-between`
+
+**3. Hero Section（英雄区）**
+- 用途：核心声明/关键结论
+- 结构：深色卡片（`bg-slate-900`）+ 居中大字 + 底部装饰
+- Tailwind：`bg-slate-900 text-white p-12 text-center rounded-2xl`
+
+**4. Grid Explorer / Bento Box（网格探索）**
+- 用途：多维并列内容
+- 结构：不等宽栅格，核心结论占大格，次要占小格
+- Tailwind：`grid grid-cols-12 gap-6`，重要 `col-span-8`，次要 `col-span-4`
+
+**5. Split Comparison（分栏对比）**
+- 用途：A vs B 对比
+- 结构：1:1 分栏，中间竖线，左=中性底，右=品牌色底
+- Tailwind：`grid grid-cols-2 divide-x divide-slate-200`
+
+**6. Data Cards（数据卡片）**
+- 用途：展示关键指标
+- 结构：2×2 或 3×1 网格的 KPI 卡片
+- 卡片：左侧 accent 竖线 + 数字 + 描述
+- Tailwind：`grid grid-cols-3 gap-5`
+
+**7. Three Narrative Sections（三幕叙事）**
+- 用途：深度解析
+- 结构：纵向三段式：页眉（深色）→ 主体（白底架构图）→ 底部（指标卡片）
+- Tailwind：`flex flex-col space-y-10`
+
+**8. Summary Closing（总结收尾）**
+- 用途：演示文稿最后一页
+- 结构：深色底 + 居中标题 + 关键要点 + CTA
+- Tailwind：`bg-slate-900 text-white flex flex-col items-center justify-center text-center`
+
+---
+
+### 组件模式
+
+**KPI Card（KPI 卡片）**
+```jsx
+<div className="bg-white border border-slate-200 rounded-2xl p-5 border-l-4 border-l-indigo-600">
+  <p className="font-semibold text-xs uppercase tracking-wider text-slate-400 mb-2">Label</p>
+  <p className="text-4xl font-extrabold text-slate-800">64%</p>
+  <p className="text-sm text-slate-500 mt-1">描述文字</p>
+</div>
+```
+
+**Accent Block（强调区块）**
+```jsx
+<div className="bg-slate-900 rounded-2xl p-6 text-white">
+  <h3 className="text-xl font-bold mb-2">标题</h3>
+  <p className="text-slate-300 text-sm leading-relaxed">内容</p>
+</div>
+```
+
+**Callout Card（标注卡片）**
+```jsx
+<div className="bg-white border border-slate-100 shadow-sm p-4 rounded-xl border-l-4 border-indigo-600">
+  <h4 className="text-sm font-bold text-slate-800 mb-1">标题</h4>
+  <p className="text-[11px] text-slate-500 leading-snug">描述文字</p>
+</div>
+```
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 配色一致：主色=靛蓝 `#4F46E5`，中性底 `#F8FAFC`
+- 使用 lucide-react 图标，不使用 emoji
+- 标题左对齐（封面/收尾页除外）
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 深浅背景交替
+
+**P2（视觉打磨）**
+- 数据数字字号足够大（至少 `text-5xl`）
+- 卡片圆角统一（`rounded-2xl`）
+- 分割线使用 `border-slate-100` 或 `border-slate-200`
+- 技术术语使用 `font-mono`

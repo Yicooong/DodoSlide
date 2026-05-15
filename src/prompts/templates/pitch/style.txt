@@ -1,0 +1,166 @@
+## 融资路演 (Pitch Deck)
+
+灵感来自 YC、Sequoia 等 VC 投资机构的 pitch deck 风格。蓝紫渐变强调，Inter 字体，大留白，渐变文字，面向投资人。
+
+---
+
+### 配色方案
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 白底（主背景） | `#FFFFFF` | `bg-white` |
+| 浅灰底（区块底） | `#FAFBFC` | `bg-[#FAFBFC]` |
+| 主文字 | `#0B0D12` | `text-[#0B0D12]` |
+| 辅助文字 | `#4A5270` | `text-[#4A5270]` |
+| 弱化文字 | `#8B93A8` | `text-[#8B93A8]` |
+| 蓝色（主强调） | `#0070F3` | `bg-[#0070F3]` / `text-[#0070F3]` |
+| 紫色（辅强调） | `#7928CA` | `bg-[#7928CA]` / `text-[#7928CA]` |
+| 粉色（点缀） | `#FF4ECB` | `text-[#FF4ECB]` |
+| 渐变强调 | `linear-gradient(135deg,#0070F3,#7928CA)` | `bg-gradient-to-r from-[#0070F3] to-[#7928CA]` |
+| 分割线 | `rgba(20,30,50,0.1)` | `border-[rgba(20,30,50,0.1)]` |
+
+---
+
+### 排版系统
+
+| 角色 | 字体 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|------|---------------|
+| Hero 标题 | sans | 800 (ExtraBold) | ~8vw | `font-extrabold text-[8vw] text-[#0B0D12]` |
+| 渐变标题 | sans | 800 (ExtraBold) | ~8vw | `font-extrabold text-[8vw] bg-gradient-to-r from-[#0070F3] to-[#7928CA] bg-clip-text text-transparent` |
+| 章节标题 | sans | 700 (Bold) | ~5vw | `font-bold text-[5vw] text-[#0B0D12]` |
+| 正文标题 | sans | 600 (SemiBold) | ~2.4vw | `font-semibold text-[2.4vw] text-[#0B0D12]` |
+| 引导段 | sans | 400 (Regular) | ~1.6vw | `font-normal text-[1.6vw] leading-relaxed text-[#4A5270]` |
+| 正文 | sans | 400 (Regular) | max(14px, 1.1vw) | `font-normal text-[max(14px,1.1vw)] leading-relaxed text-[#4A5270]` |
+| Kicker | sans | 600 (SemiBold) | 12px | `font-semibold text-xs tracking-[0.12em] uppercase bg-gradient-to-r from-[#0070F3] to-[#7928CA] bg-clip-text text-transparent` |
+| 数据数字 | sans | 800 (ExtraBold) | ~12vw | `font-extrabold text-[12vw] bg-gradient-to-r from-[#0070F3] to-[#7928CA] bg-clip-text text-transparent` |
+| 元数据 | mono | 400 (Regular) | 10px | `font-mono text-[10px] tracking-[0.14em] uppercase text-[#8B93A8]` |
+
+---
+
+### 布局模式
+
+**1. Hero Cover（英雄封面）**
+- 用途：演示文稿第一页
+- 结构：白底 + 渐变超大标题 + 引导段 + CTA 按钮
+- CTA：渐变背景按钮
+- Tailwind：`bg-white flex flex-col items-center justify-center text-center p-24`
+
+**2. Big Number Impact（大数字冲击）**
+- 用途：展示核心数据（TAM、收入、用户数）
+- 结构：kicker + 渐变巨型数字 + 一行描述
+- Tailwind：`flex flex-col items-center justify-center text-center`
+
+**3. Problem-Solution（问题-方案）**
+- 用途：痛点与解决方案对比
+- 结构：1:1 分栏，左=问题（灰色调），右=方案（渐变 accent）
+- Tailwind：`grid grid-cols-2 gap-10`
+
+**4. Traction Metrics（增长指标）**
+- 用途：展示增长数据
+- 结构：3×1 或 2×2 网格，每格带渐变 accent 线
+- Accent 线：`h-1 bg-gradient-to-r from-[#0070F3] to-[#7928CA] rounded-full`
+- Tailwind：`grid grid-cols-3 gap-6`
+
+**5. Feature Grid（特性网格）**
+- 用途：产品特性展示
+- 结构：3 列卡片，带浅灰底和细边框
+- 卡片：`bg-[#FAFBFC] border border-[rgba(20,30,50,0.1)] rounded-2xl p-6`
+- Tailwind：`grid grid-cols-3 gap-5`
+
+**6. Team Grid（团队展示）**
+- 用途：团队成员介绍
+- 结构：3×1 或 4×1 网格，每格：头像占位 + 姓名 + 职位
+- 头像：`w-16 h-16 rounded-full bg-gradient-to-br from-[#0070F3] to-[#7928CA]`
+- Tailwind：`grid grid-cols-3 gap-6`
+
+**7. Market Size（市场规模）**
+- 用途：TAM/SAM/SOM 展示
+- 结构：同心圆或嵌套卡片，从大到小
+- Tailwind：`flex items-center justify-center`，嵌套 `rounded-full` 边框
+
+**8. Ask Closing（融资收尾）**
+- 用途：融资金额/下一步
+- 结构：渐变背景 + 白色大标题 + 联系方式
+- Tailwind：`bg-gradient-to-r from-[#0070F3] to-[#7928CA] text-white flex flex-col items-center justify-center text-center rounded-2xl`
+
+---
+
+### 组件模式
+
+**Gradient Text（渐变文字）**
+```jsx
+<span className="bg-gradient-to-r from-[#0070F3] to-[#7928CA] bg-clip-text text-transparent font-extrabold">
+  渐变文字
+</span>
+```
+
+**Metric Card（指标卡片）**
+```jsx
+<div className="bg-[#FAFBFC] border border-[rgba(20,30,50,0.1)] rounded-2xl p-6">
+  <div className="h-1 w-12 bg-gradient-to-r from-[#0070F3] to-[#7928CA] rounded-full mb-4" />
+  <p className="text-5xl font-extrabold text-[#0B0D12]">$2.4M</p>
+  <p className="text-sm text-[#4A5270] mt-2">Annual Recurring Revenue</p>
+</div>
+```
+
+**Gradient Button（渐变按钮）**
+```jsx
+<button className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0070F3] to-[#7928CA] text-white font-semibold text-sm">
+  Get Started
+</button>
+```
+
+**Team Avatar（团队头像）**
+```jsx
+<div className="flex flex-col items-center gap-3">
+  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0070F3] to-[#7928CA] flex items-center justify-center text-white font-bold text-xl">
+    JD
+  </div>
+  <div className="text-center">
+    <p className="font-semibold text-sm text-[#0B0D12]">John Doe</p>
+    <p className="text-xs text-[#8B93A8]">CEO & Co-founder</p>
+  </div>
+</div>
+```
+
+---
+
+### 装饰元素
+
+- **渐变分割线**：`h-1 w-16 bg-gradient-to-r from-[#0070F3] to-[#7928CA] rounded-full`
+- **渐变文字**：`bg-gradient-to-r from-[#0070F3] to-[#7928CA] bg-clip-text text-transparent`
+- **卡片边框**：`border border-[rgba(20,30,50,0.1)]` 极细边框
+- **大留白**：页面 padding `p-24` 或 `p-20`
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止使用纯黑背景（`bg-black`）
+- 禁止使用 `rounded-none`（至少 `rounded-lg`）
+- 禁止使用硬阴影（`shadow-[6px_6px_0_#000]`）
+- 禁止正文标题居中（标题默认左对齐，封面/收尾页除外）
+- 禁止自定义 hex 值（只用预设配色方案）
+- 禁止使用 monospace 字体作为正文
+
+---
+
+### 质量自检
+
+**P0（必须通过）**
+- 画布尺寸正确：`w-[1280px] h-[720px]`
+- 配色一致：蓝 `#0070F3` + 紫 `#7928CA` 渐变
+- 使用 lucide-react 图标，不使用 emoji
+- 圆角至少 `rounded-lg`，建议 `rounded-2xl`
+
+**P1（布局节奏）**
+- 使用了至少 3 种不同的布局模式
+- 不连续 3 页使用同一布局
+- 渐变效果适度（渐变文字+渐变按钮，不滥用）
+
+**P2（视觉打磨）**
+- 大数字使用渐变色（`bg-clip-text text-transparent`）
+- 页面留白充足（至少 `p-16`）
+- 卡片间距统一（`gap-5` 或 `gap-6`）
+- 团队头像使用渐变背景
