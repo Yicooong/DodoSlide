@@ -69,8 +69,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onPresent,
 }) => {
   return (
-    <header className="h-16 border-b px-6 flex items-center justify-between" style={{ background: 'var(--bg-header)', borderColor: 'var(--border-subtle)', backdropFilter: 'blur(20px)' }}>
-      <div className="flex items-center gap-6">
+    <header className="h-16 border-b px-6 flex items-center justify-between gap-4 overflow-hidden" style={{ background: 'var(--bg-header)', borderColor: 'var(--border-subtle)', backdropFilter: 'blur(20px)' }}>
+      <div className="flex items-center gap-4 min-w-0 overflow-hidden">
         {/* 应用 Logo 和名称 */}
         <h1 className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           Slide <span style={{ color: 'var(--accent)' }}>Playground</span>
@@ -80,7 +80,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <nav className="flex items-center p-1 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
        <button
             onClick={() => setActiveTab('code')}
-            className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full active:scale-95", activeTab === 'code' ? "shadow-sm" : "hover:opacity-80")}
+            className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full active:scale-95 whitespace-nowrap", activeTab === 'code' ? "shadow-sm" : "hover:opacity-80")}
             style={{
               background: activeTab === 'code' ? 'var(--bg-button)' : 'transparent',
               color: activeTab === 'code' ? 'var(--text-primary)' : 'var(--text-muted)'
@@ -90,7 +90,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
          </button>
          <button
             onClick={() => setActiveTab('preview')}
-            className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full active:scale-95", activeTab === 'preview' ? "shadow-sm" : "hover:opacity-80")}
+            className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all h-full active:scale-95 whitespace-nowrap", activeTab === 'preview' ? "shadow-sm" : "hover:opacity-80")}
             style={{
               background: activeTab === 'preview' ? 'var(--bg-button)' : 'transparent',
               color: activeTab === 'preview' ? 'var(--text-primary)' : 'var(--text-muted)'
@@ -136,13 +136,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       {/* 右侧操作按钮区 */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 shrink-0">
          {/* AI 生成按钮：导航到 AI 生成页 */}
          {onNavigateToAi && (
            <button
               onClick={onNavigateToAi}
               disabled={isGenerating}
-              className="px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95 hover:shadow-xl hover:brightness-110"
+              className="px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95 hover:shadow-xl hover:brightness-110 whitespace-nowrap"
               style={{
                 background: 'linear-gradient(135deg, var(--ai-gradient-from), var(--ai-gradient-to))',
                 color: 'white',
@@ -156,15 +156,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
          {/* 设置按钮：切换设置弹窗显隐 */}
           <button
              onClick={() => setShowSettings(!showSettings)}
-             className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md"
+             className="px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap"
              style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
           >
-             <Settings size={16} />
+             <Settings size={15} />
              设置
           </button>
           {/* 上传 JSX 文件按钮：隐藏的 file input 触发文件选择 */}
-          <label className="cursor-pointer px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md" style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}>
-             <Upload size={16} />
+          <label className="cursor-pointer px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap" style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}>
+             <Upload size={15} />
              上传 JSX
              <input type="file" accept=".jsx,.tsx,.js,.ts" className="hidden" onChange={onUpload} />
           </label>
@@ -172,24 +172,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {onPresent && (
             <button
                onClick={onPresent}
-               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md"
+               className="px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap"
                style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
             >
-               <Play size={16} />
+               <Play size={15} />
                演示
             </button>
           )}
          {/* 导出 PPTX 按钮 */}
           <button
              onClick={onExport}
-             className="px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 hover:brightness-110 hover:shadow-lg"
+             className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 transition-all active:scale-95 hover:brightness-110 hover:shadow-lg whitespace-nowrap"
              style={{
                background: 'var(--accent)',
                color: 'var(--text-inverse)',
                boxShadow: '0 4px 14px var(--accent-bg)'
              }}
           >
-             <Download size={16} />
+             <Download size={15} />
              导出 PPTX
           </button>
       </div>

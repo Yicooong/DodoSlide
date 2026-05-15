@@ -174,7 +174,7 @@ export const ModelSelectInput: React.FC<ModelSelectInputProps> = ({
               <button
                 key={model}
                 onClick={() => handleSelectModel(model)}
-                className="px-2 py-1 rounded text-xs transition-all active:scale-90"
+                className="px-2 py-1 rounded text-xs transition-all active:scale-90 whitespace-nowrap"
                 style={{
                   background: value === model ? 'var(--accent)' : 'var(--bg-input)',
                   color: value === model ? 'var(--text-inverse)' : 'var(--text-secondary)',

@@ -108,7 +108,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               whileHover={{ scale: 1.02 }}  // 悬停放大
               whileTap={{ scale: 0.98 }}    // 点击缩小
               onClick={() => onNavigate('ai-generate')}
-              className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all cursor-pointer"
+              className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all cursor-pointer whitespace-nowrap"
               style={{
                 background: 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)',
                 color: '#ffffff',
@@ -126,7 +126,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onNavigate('code')}
-              className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all cursor-pointer"
+              className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all cursor-pointer whitespace-nowrap"
               style={{
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',

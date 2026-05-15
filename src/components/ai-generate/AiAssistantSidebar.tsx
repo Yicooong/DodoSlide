@@ -175,7 +175,7 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
           {/* 停止按钮：中断正在进行的生成任务 */}
           <button
             onClick={onStopGenerate}
-            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-all cursor-pointer hover:opacity-80"
+            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
             style={{ background: '#EF4444', color: '#fff' }}
           >
             <Square className="w-2.5 h-2.5" />
@@ -191,7 +191,7 @@ const AiAssistantSidebar: React.FC<AiAssistantSidebarProps> = ({
             <button
               key={action}
               onClick={() => onSendMessage(action)}
-              className="px-2 py-1 rounded-full text-[10px] transition-all cursor-pointer hover:scale-105"
+              className="px-2 py-1 rounded-full text-[10px] transition-all cursor-pointer hover:scale-105 whitespace-nowrap"
               style={{
                 background: 'var(--bg-input)',
                 color: 'var(--text-muted)',

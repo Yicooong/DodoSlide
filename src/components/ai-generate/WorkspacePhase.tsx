@@ -254,7 +254,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             >
               <button
                 onClick={() => setActiveTab('preview')}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap"
                 style={{
                   background: activeTab === 'preview' ? 'var(--bg-button)' : 'transparent',
                   color: activeTab === 'preview' ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -265,7 +265,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('code')}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap"
                 style={{
                   background: activeTab === 'code' ? 'var(--bg-button)' : 'transparent',
                   color: activeTab === 'code' ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -277,7 +277,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* 重新生成按钮（生成完成后显示） */}
             {!isGenerating && (
               <button
@@ -292,7 +292,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
             {/* 导出按钮 */}
             <button
               onClick={handleExportClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
               style={{
                 background: 'var(--accent)',
                 color: 'var(--text-inverse)',
@@ -314,7 +314,7 @@ const WorkspacePhase: React.FC<WorkspacePhaseProps> = ({
               <button
                 key={slide.id}
                 onClick={() => setCurrentSlideIndex(idx)}
-                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer"
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap"
                 style={{
                   background: idx === currentSlideIndex ? 'var(--accent-bg)' : 'transparent',
                   color: idx === currentSlideIndex ? 'var(--accent)' : 'var(--text-muted)',

@@ -135,7 +135,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                   setInputValue(item.prompt);
                   setMode('direct');
                 }}
-                className="flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:scale-[1.01] cursor-pointer"
+                className="flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:scale-[1.01] cursor-pointer min-w-0"
                 style={{
                   background: 'var(--glass-bg)',
                   backdropFilter: 'blur(12px)',
@@ -169,7 +169,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
           <div className="flex gap-1 p-2 border-b" style={{ borderColor: 'var(--glass-border)' }}>
             <button
               onClick={() => setMode('direct')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
                 mode === 'direct' ? 'shadow-sm' : 'opacity-60 hover:opacity-100'
               }`}
               style={{
@@ -182,7 +182,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
             </button>
             <button
               onClick={() => setMode('guided')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
                 mode === 'guided' ? 'shadow-sm' : 'opacity-60 hover:opacity-100'
               }`}
               style={{
@@ -230,7 +230,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
                   <button
                     key={ratio}
                     onClick={() => onContextUpdate({ canvasRatio: ratio })}
-                    className="px-2 py-1 rounded text-[10px] transition-all cursor-pointer"
+                    className="px-2 py-1 rounded text-[10px] transition-all cursor-pointer whitespace-nowrap"
                     style={{
                       background: context.canvasRatio === ratio ? 'var(--accent)' : 'transparent',
                       color: context.canvasRatio === ratio ? 'var(--text-inverse)' : 'var(--text-muted)',
@@ -243,11 +243,11 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {/* 直接编辑按钮：跳过 AI 生成，直接进入代码编辑器 */}
               <button
                 onClick={onEnterWorkspace}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer hover:opacity-80"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
                 style={{
                   background: 'var(--bg-button)',
                   color: 'var(--text-secondary)',
@@ -262,7 +262,7 @@ const EntryPhase: React.FC<EntryPhaseProps> = ({
               <button
                 onClick={handleSubmit}
                 disabled={isGenerating || (!inputValue.trim() && mode === 'direct')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
                 style={{
                   background: 'var(--accent)',
                   color: 'var(--text-inverse)',

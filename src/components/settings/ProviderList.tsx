@@ -56,7 +56,7 @@ export const ProviderList: React.FC<ProviderListProps> = ({
         {/* 添加按钮 */}
         <button
           onClick={onAdd}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all text-white active:scale-[0.98] hover:brightness-110"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all text-white active:scale-[0.98] hover:brightness-110 whitespace-nowrap"
           style={{ background: 'var(--accent)' }}
         >
           <Plus size={16} />
@@ -83,7 +83,7 @@ export const ProviderList: React.FC<ProviderListProps> = ({
       {/* 底部添加按钮：虚线边框样式 */}
       <button
         onClick={onAdd}
-        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all active:scale-[0.98]"
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all active:scale-[0.98] whitespace-nowrap"
         style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px dashed var(--border-default)' }}
       >
         <Plus size={16} />

@@ -197,7 +197,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       <div className={`${collapsed ? 'hidden' : 'p-3 border-t'}`} style={{ borderColor: 'var(--border-subtle)' }}>
         <button
           onClick={onAddSlide}
-          className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium active:scale-95 hover:shadow-md"
+          className="w-full py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium active:scale-95 hover:shadow-md whitespace-nowrap"
           style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

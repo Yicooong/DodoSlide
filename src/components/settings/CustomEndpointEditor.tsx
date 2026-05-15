@@ -243,7 +243,7 @@ export const CustomEndpointEditor: React.FC<CustomEndpointEditorProps> = ({
           {!isAdding && !editingKey && (
             <button
               onClick={() => { setIsAdding(true); resetForm(); setFormName(''); setFormUrl(''); setFormDescription(''); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all active:scale-95 whitespace-nowrap"
               style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', border: '1px dashed var(--border-default)' }}
             >
               <Plus size={12} />

@@ -150,7 +150,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <button
             onClick={() => setActiveTab('api')}
-            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95"
+            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95 whitespace-nowrap"
             style={{
               color: activeTab === 'api' ? 'var(--accent)' : 'var(--text-muted)',
               background: activeTab === 'api' ? 'var(--accent-bg)' : 'transparent',
@@ -164,7 +164,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('prompt')}
-            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95"
+            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95 whitespace-nowrap"
             style={{
               color: activeTab === 'prompt' ? 'var(--accent)' : 'var(--text-muted)',
               background: activeTab === 'prompt' ? 'var(--accent-bg)' : 'transparent',
@@ -291,7 +291,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-card)' }}>
           <button
             onClick={onClose}
-            className="w-full py-2.5 font-medium rounded-xl transition-all text-white active:scale-[0.98] hover:brightness-110"
+            className="w-full py-2.5 font-medium rounded-xl transition-all text-white active:scale-[0.98] hover:brightness-110 whitespace-nowrap"
             style={{ background: 'var(--accent)' }}
           >
             完成

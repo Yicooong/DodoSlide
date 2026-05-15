@@ -234,7 +234,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* 取消按钮 */}
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 whitespace-nowrap"
             style={{ color: 'var(--text-secondary)', background: 'var(--bg-button)' }}
           >
             取消
@@ -243,7 +243,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           <button
             onClick={onExport}
             disabled={isExporting || (exportMode === 'range' && exportRangeStart > exportRangeEnd)}
-            className="px-6 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 hover:brightness-110"
+            className="px-6 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 hover:brightness-110 whitespace-nowrap"
             style={{ background: 'var(--accent)' }}
           >
             {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}

@@ -330,14 +330,14 @@ export const ProviderDetailEditor: React.FC<ProviderDetailEditorProps> = ({
       <div className="flex gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 py-2.5 rounded-xl transition-all text-sm active:scale-[0.98]"
+          className="flex-1 py-2.5 rounded-xl transition-all text-sm active:scale-[0.98] whitespace-nowrap"
           style={{ background: 'var(--bg-button)', color: 'var(--text-secondary)' }}
         >
           取消
         </button>
         <button
           onClick={handleSave}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all text-white text-sm active:scale-[0.98] hover:brightness-110"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all text-white text-sm active:scale-[0.98] hover:brightness-110 whitespace-nowrap"
           style={{ background: 'var(--accent)' }}
         >
           <Save size={14} />
