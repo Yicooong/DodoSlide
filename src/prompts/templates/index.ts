@@ -4,9 +4,13 @@ import techStyle from './tech/style.txt?raw';
 import creativeStyle from './creative/style.txt?raw';
 import professionalStyle from './professional/style.txt?raw';
 import elegantStyle from './elegant/style.txt?raw';
+import magazineStyle from './magazine/style.txt?raw';
+import swissStyle from './swiss/style.txt?raw';
 
 // 工作流提示词导入（每个样式独立配置）
 import modernWorkflow from './modern/workflow.md?raw';
+import magazineWorkflow from './magazine/workflow.md?raw';
+import swissWorkflow from './swiss/workflow.md?raw';
 
 // 参考 JSX 示例导入（使用 Vite glob 自动发现）
 // 自动扫描所有 reference_*.jsx 文件并加载为原始字符串
@@ -84,6 +88,26 @@ export const STYLE_TEMPLATES: StyleTemplate[] = [
     description: '米白暖棕，精致排版，高级质感',
     colors: ['#FEFCE8', '#9F1239', '#92400E'],
     stylePrompt: elegantStyle,
+  },
+  // 杂志风 × 电子墨水
+  {
+    id: 'magazine',
+    name: '杂志风',
+    description: '衬线主导，暖色调，杂志质感',
+    colors: ['#F1EFEA', '#0A0A0B', '#E8E5DE'],
+    stylePrompt: magazineStyle,
+    workflowPrompt: magazineWorkflow,
+    referenceExamples: getReferencesForStyle('magazine'),
+  },
+  // 瑞士国际主义
+  {
+    id: 'swiss',
+    name: '瑞士风',
+    description: '纯无衬线，网格严格，克莱因蓝',
+    colors: ['#FAFAF8', '#002FA7', '#0A0A0A'],
+    stylePrompt: swissStyle,
+    workflowPrompt: swissWorkflow,
+    referenceExamples: getReferencesForStyle('swiss'),
   },
 ];
 

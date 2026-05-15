@@ -1,0 +1,164 @@
+## 瑞士国际主义 (Swiss International Typographic Style)
+
+灵感来自 Helvetica、Massimo Vignelli、IBM Carbon Design System。纯无衬线，字重驱动层次，单一高饱和强调色，网格严格，直角纯色，拒绝渐变/阴影/圆角。
+
+---
+
+### 配色方案
+
+默认主题「克莱因蓝」(IKB)，单一强调色 + 高级灰阶：
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 纸色（主背景） | `#FAFAF8` | `bg-[#FAFAF8]` |
+| 墨色（主文字） | `#0A0A0A` | `text-[#0A0A0A]` |
+| 灰 1（区块底） | `#F0F0EE` | `bg-[#F0F0EE]` |
+| 灰 2（分割线） | `#D4D4D2` | `border-[#D4D4D2]` |
+| 灰 3（辅助文字） | `#737373` | `text-[#737373]` |
+| 强调色（IKB） | `#002FA7` | `bg-[#002FA7]` / `text-[#002FA7]` |
+| 强调色上文字 | `#FFFFFF` | `text-white` |
+
+备选主题（只换强调色，灰阶不变）：
+- 柠檬黄：accent `#FFD500`，accent-on `#0A0A0A`（黄底用黑字）
+- 柠檬绿：accent `#C5E803`，accent-on `#0A0A0A`（绿底用黑字）
+- 安全橙：accent `#FF6B35`，accent-on `#FFFFFF`
+
+---
+
+### 排版系统
+
+**核心规则：文字越大，字重越轻。这是瑞士风的灵魂。**
+
+| 角色 | 字重 | 字号 | Tailwind 写法 |
+|------|------|------|---------------|
+| Hero 宣言 | 200 (ExtraLight) | min(11.6vw, 19vh) | `font-thin text-[min(11.6vw,19vh)]` |
+| 章节标题 | 200 (ExtraLight) | min(7vw, 12vh) | `font-thin text-[min(7vw,12vh)]` |
+| 正文标题 | 300 (Light) | ~2.6vw | `font-light text-[2.6vw]` |
+| 引导段 | 400 (Regular) | ~1.55vw | `font-normal text-[1.55vw]` |
+| 正文 | 400 (Regular) | max(13px, 1.05vw) | `font-normal text-[max(13px,1.05vw)]` |
+| KPI 巨型数字 | 800 (ExtraBold) | ~22vw | `font-extrabold text-[22vw]` |
+| 分类标签 | 600 (SemiBold) | 11px, mono | `font-mono text-[11px] font-semibold tracking-[0.18em] uppercase` |
+| 元数据 | 500 (Medium) | 11px, mono | `font-mono text-[11px] font-medium tracking-[0.16em] uppercase` |
+
+**中文标题字号降级**（中文方块字视觉面积更大）：
+- 1 行 ≤ 8 字：`min(6.4vw, 11.2vh)`
+- 2 行每行 ≤ 8 字：`min(5.8vw, 10.2vh)`
+- 2 行任一行 9-12 字：`min(5.2vw, 9.2vh)`
+- 3 行或更长：优先改写标题
+
+**大字号收紧**：`tracking-[-0.04em]` + `leading-[0.9]`
+
+---
+
+### 网格系统
+
+基于 IBM Carbon 2x Grid 的 12 列模块化网格：
+
+```
+grid grid-cols-12 gap-4
+```
+
+常用分栏：
+- `col-span-12`：全宽
+- `col-span-8` + `col-span-4`：8:4（文字为主 + 辅助）
+- `col-span-7` + `col-span-5`：7:5（文字为主 + 辅助图）
+- `col-span-6` + `col-span-6`：1:1 对半分
+- `col-span-4` + `col-span-4` + `col-span-4`：三等分
+
+---
+
+### 布局模式
+
+精选 10 种核心布局：
+
+**1. Index Cover（封面）**
+- 用途：演示文稿第一页
+- 结构：mono 标签 + Hero 宣言（极轻字重）+ 一行描述 + accent 色块
+- 背景：accent 色全填充或纸色 + accent 局部色块
+
+**2. Split Statement（对半声明）**
+- 用途：核心观点对半展示
+- 结构：1:1 分栏，左=ink 黑底反转，右=纸色正文
+- Tailwind：左 `bg-[#0A0A0A] text-[#FAFAF8]`，右 `bg-[#FAFAF8]`
+
+**3. KPI Tower（数据塔）**
+- 用途：关键指标纵向堆叠
+- 结构：mono 标签 → 巨型数字（~8vw）→ 描述，3-4 个指标纵向排列
+- Tailwind：`flex flex-col gap-4`
+
+**4. H-Bar Chart（水平条形图）**
+- 用途：数据对比可视化
+- 结构：标签 + 水平填充条（宽度代表数值）
+- Tailwind：`flex items-center gap-3`，条用 `h-3 bg-[#002FA7]` + inline width
+
+**5. Duo Compare（双栏对比）**
+- 用途：A vs B 对比
+- 结构：1:1 分栏，中间竖线分隔
+- Tailwind：`grid grid-cols-2 divide-x divide-[#D4D4D2]`
+
+**6. Dot Matrix Statement（点阵声明）**
+- 用途：带装饰性的声明页
+- 结构：左侧大标题，右侧点阵装饰背景
+- 点阵：CSS `radial-gradient` 实现
+
+**7. Three Forces Cards（三力卡片）**
+- 用途：三个并列概念
+- 结构：3 列卡片，card-fill（灰底）/ card-ink（黑底）/ card-accent（accent 底）
+- Tailwind：`grid grid-cols-3 gap-4`
+
+**8. Matrix + Hero Stat（矩阵 + 核心数据）**
+- 用途：多维数据 + 一个核心指标
+- 结构：左侧 12 列网格卡片矩阵，右侧巨型 KPI
+- Tailwind：`grid grid-cols-12 gap-3`
+
+**9. Four Cards（四卡片）**
+- 用途：四个并列要素
+- 结构：2×2 网格卡片
+- Tailwind：`grid grid-cols-2 gap-4`
+
+**10. Image Hero（图片主视觉）**
+- 用途：单张大图 + 文字叠加
+- 结构：图片铺满上半部，下方标题 + KPI
+- Tailwind：图片 `w-full h-[50vh] object-cover`，文字区 `p-8`
+
+---
+
+### 卡片填充类型（互斥，不混用）
+
+| 类型 | Tailwind | 角色 |
+|------|----------|------|
+| Ink 黑底 | `bg-[#0A0A0A] text-[#FAFAF8]` | 反转/宣言 |
+| Accent 强调色 | `bg-[#002FA7] text-white` | 唯一焦点 |
+| Grey 灰底 | `bg-[#F0F0EE]` | 默认中性 |
+| Outlined 描边 | `border border-[#D4D4D2]` | 锚点/分割 |
+
+---
+
+### 装饰元素
+
+- **1px 发丝线**：`border-t border-[#D4D4D2]` 或 `border-b border-[#D4D4D2]`
+- **点阵**：CSS `radial-gradient(circle, currentColor 1.4px, transparent 1.6px)` + `bg-[length:14px_14px] opacity-50`
+- **直角小方块**：8×8 或 12×12 的纯色方块替代圆点
+
+---
+
+### 图片规则
+
+- 图片容器保持直角，不加圆角、阴影、边框
+- 默认 `object-cover object-top`，只裁底部
+- 信息图/截图用 `object-contain`
+- 优先比例：21:9（横幅）、16:10（标准）、1:1（方形）
+- 同组图片必须统一高度
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止混搭多套强调色（一份 deck 只用一个 accent）
+- 禁止自定义 hex 值（只用 4 套预设主题）
+- 禁止使用渐变（所有色块必须纯色）
+- 禁止给 accent 色块加阴影/圆角/透明度
+- 禁止正文标题居中（标题默认左对齐）
+- 禁止给图片加圆角或阴影
+- 禁止在大标题上使用 font-bold 或 font-black（字重越大越轻：Hero 用 200，正文用 300-400）

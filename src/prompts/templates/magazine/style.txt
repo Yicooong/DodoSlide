@@ -1,0 +1,159 @@
+## 杂志风 × 电子墨水 (Magazine × E-Ink)
+
+灵感来自 Monocle、Apricot、A Book Apart 等独立出版物的设计语言。衬线主导，暖色调，克制而有仪式感。
+
+---
+
+### 配色方案
+
+默认主题「墨水经典」，整体只用一套，不混搭：
+
+| 角色 | 色值 | Tailwind |
+|------|------|----------|
+| 墨色（主文字） | `#0A0A0B` | `text-[#0A0A0B]` |
+| 纸色（主背景） | `#F1EFEA` | `bg-[#F1EFEA]` |
+| 纸色浅（卡片/区块底） | `#E8E5DE` | `bg-[#E8E5DE]` |
+| 墨色浅（深色区块底） | `#18181A` | `bg-[#18181A]` |
+
+备选主题（整套替换，不混搭）：
+- 靛蓝瓷：ink `#0A1F3D` / paper `#F1F3F5` — 科技/研究/数据
+- 森林墨：ink `#1A2E1F` / paper `#F5F1E8` — 自然/文化/非虚构
+- 牛皮纸：ink `#2A1E13` / paper `#EEDFC7` — 怀旧/人文/阅读
+- 沙丘：ink `#1F1A14` / paper `#F0E6D2` — 艺术/设计/时尚
+
+---
+
+### 排版系统
+
+**核心规则：衬线负责视觉冲击，无衬线负责信息密度，等宽负责装饰节奏。**
+
+| 角色 | 字体 | Tailwind 写法 | 用途 |
+|------|------|---------------|------|
+| Hero 标题 | serif, 900, ~10vw | `font-serif text-[10vw] font-black` | 封面/章节幕封主标题 |
+| 章节标题 | serif, 700, ~6.2vw | `font-serif text-[6.2vw] font-bold` | 正文页主标题 |
+| 副标题 | serif, 500, ~3.1vw | `font-serif text-[3.1vw] font-medium` | 标题下方引语 |
+| 中标题 | serif, 600, ~2.3vw | `font-serif text-[2.3vw] font-semibold` | 子区块标题 |
+| 引导段 | serif, 400, ~1.9vw | `font-serif text-[1.9vw] font-normal leading-relaxed` | 标题下方的引导文字 |
+| 正文 | sans, 400, ~1.22vw | `font-sans text-[1.22vw] leading-relaxed` | 大段描述文字 |
+| 大数字 | serif, 800, ~10vw | `font-serif text-[10vw] font-extrabold` | 数据大字报的核心数字 |
+| Kicker | mono, 400, 12px, uppercase | `font-mono text-xs tracking-[0.18em] uppercase` | 标题上方的小引导句 |
+| 元数据 | mono, 400, ~0.88vw, uppercase | `font-mono text-[0.88vw] tracking-[0.16em] uppercase` | chrome/foot 页眉页脚 |
+
+**中文标题字号降级**（中文方块字视觉面积比英文大）：
+- 1 行 ≤ 8 字：可用全尺寸
+- 2 行每行 ≤ 8 字：降 1-2 档
+- 3 行或更长：优先改写标题
+
+---
+
+### 布局模式
+
+10 种核心布局，根据内容语义选择：
+
+**1. Hero Cover（开场封面）**
+- 用途：演示文稿第一页
+- 结构：深色背景 + kicker + 超大标题 + 引导段 + 元数据行
+- Tailwind：`bg-[#0A0A0B] text-[#F1EFEA] flex flex-col items-center justify-center text-center`
+
+**2. Act Divider（章节幕封）**
+- 用途：章节之间的过渡页
+- 结构：kicker + 大标题 + 一行引语，极简留白
+- Tailwind：交替使用深色/浅色背景
+
+**3. Big Numbers Grid（数据大字报）**
+- 用途：展示关键数据指标
+- 结构：kicker + 标题 + 3×2 或 2×2 网格的数据卡片
+- 每张卡片：mono 小标签 → 巨型数字 → 描述文字
+- Tailwind：`grid grid-cols-3 gap-6` 或 `grid grid-cols-2 gap-6`
+
+**4. Quote + Image（左文右图）**
+- 用途：观点 + 配图
+- 结构：7:5 分栏，左列标题+正文+引用框，右列图片
+- Tailwind：`grid grid-cols-12` + `col-span-7` + `col-span-5`
+
+**5. Image Grid（图片网格）**
+- 用途：多图对比展示
+- 结构：3×2 或 2×3 网格，每张图固定高度
+- Tailwind：`grid grid-cols-3 gap-4`，图片用 `object-cover object-top`
+- 禁止：不用 aspect-ratio，用固定 height
+
+**6. Pipeline（流水线）**
+- 用途：步骤/流程展示
+- 结构：编号 → 标题 → 描述，横向排列
+- Tailwind：`flex items-center gap-4`，步骤间用箭头图标连接
+
+**7. Hero Question（悬念收束）**
+- 用途：章节结束时的思考问题
+- 结构：深色背景 + 超大字号问题 + 一行点破
+- Tailwind：与 Hero Cover 类似但更极简
+
+**8. Big Quote（大引用）**
+- 用途：金句展示
+- 结构：serif 大字号引用 + 出处 + 英文原文（低透明度）
+- Tailwind：`font-serif text-[5.8vw] font-bold leading-tight`
+
+**9. Before/After（并列对比）**
+- 用途：优化前后、旧模式 vs 新模式
+- 结构：1:1 分栏，左列半透明（旧），右列满亮度（新）
+- Tailwind：`grid grid-cols-2 divide-x`，左列加 `opacity-50`
+
+**10. Lead Image + Side Text（图文混排）**
+- 用途：信息量较大的正文页
+- 结构：8:4 分栏，左列大段文字+引用，右列辅助图
+- Tailwind：`grid grid-cols-12` + `col-span-8` + `col-span-4`
+
+---
+
+### 组件模式
+
+**Stat 数据卡片**
+```
+<div className="flex flex-col gap-1">
+  <span className="font-mono text-xs tracking-widest uppercase text-[#737373]">Label</span>
+  <span className="font-serif text-[10vw] font-extrabold text-[#0A0A0B]">64</span>
+  <span className="font-sans text-sm text-[#737373]">描述文字</span>
+</div>
+```
+
+**Callout 引用框**
+```
+<div className="border-l-4 border-[#0A0A0B] pl-6 py-4">
+  <p className="font-serif text-xl italic leading-relaxed">"引用文字"</p>
+  <span className="font-mono text-xs uppercase tracking-widest text-[#737373] mt-2 block">— 出处</span>
+</div>
+```
+
+**Ghost 装饰背景字**
+- 超大字号（~34vw），极低透明度（opacity-[0.06]），absolute 定位
+- 内容：英文单词或章节序号
+- Tailwind：`absolute font-serif text-[34vw] font-black opacity-[0.06] pointer-events-none`
+
+**Kicker 引导句**
+- 标题上方的小文字，mono 等宽，全大写
+- Tailwind：`font-mono text-xs tracking-[0.18em] uppercase text-[#737373]`
+
+**Chrome 页眉 & Foot 页脚**
+- Chrome：顶部左右两栏，左=栏目标签，右=页码
+- Foot：底部左右两栏，左=项目说明，右=章节标记
+- Tailwind：`flex justify-between items-center font-mono text-[0.88vw] tracking-[0.16em] uppercase`
+
+---
+
+### 图片规则
+
+- 图片容器保持直角，不加圆角、阴影
+- 用固定高度（`h-[26vh]`）或标准比例（`aspect-[16/10]`、`aspect-[4/3]`），不用原图奇葩比例
+- 默认 `object-cover object-top`，只裁底部
+- 信息图/截图用 `object-contain`
+- 同组图片必须统一高度
+
+---
+
+### 禁止项
+
+- 禁止使用 emoji 图标，必须用 lucide-react
+- 禁止混搭多套主题色
+- 禁止自定义 hex 值（只用预设主题）
+- 禁止给图片加圆角或阴影
+- 禁止连续 3 页以上使用相同背景色（深/浅交替）
+- 禁止 chrome 和 kicker 写同一句话（chrome 是栏目标签，kicker 是本页钩子）

@@ -62,7 +62,9 @@ Generate a slide based on the user's request. Return only the code in the exact 
 export const getDefaultSystemPrompt = (canvasRatio: CanvasRatio): string => {
   const config = CANVAS_CONFIGS[canvasRatio] || CANVAS_CONFIGS['16:9'];
   const canvasSpecs = `- The slide should be ${config.width}x${config.height} pixels (${config.ratio} aspect ratio)
-- The outer container must use w-[${config.width}px] h-[${config.height}px]`;
+- The outer container must use w-[${config.width}px] h-[${config.height}px]
+- IMPORTANT: You MUST use the exact canvas size specified above. Do NOT copy sizes from reference examples.
+- Reference examples may use different canvas sizes - always adapt to the specified dimensions.`;
   return DEFAULT_SYSTEM_PROMPT.replace('{{CANVAS_SPECS}}', canvasSpecs);
 };
 
