@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 // 导入图标：X(关闭)、Key(API 密钥)、Settings(设置)、Sparkles(AI)、ChevronDown(下箭头)、ChevronUp(上箭头)
-import { X, Key, Settings, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Key, Settings, Sparkles, ChevronDown, ChevronUp, Monitor, Palette } from 'lucide-react';
 // 导入提供商和连接测试类型
 import type { Provider, ConnectionTestResult } from '../lib/providers/types';
 // 导入默认系统 prompt
@@ -18,22 +18,31 @@ import { OpenAiCompatibleStrategy } from '../lib/providers/openai-strategy';
 import { ProviderList } from './settings/ProviderList';
 // 导入提供商详情编辑器组件
 import { ProviderDetailEditor } from './settings/ProviderDetailEditor';
+// 导入画布配置和主题配置类型
+import type { CanvasConfig } from '../lib/canvas-config';
+import type { ThemeConfig } from '../lib/theme-config';
 
 /** 设置弹窗组件属性接口 */
 interface SettingsModalProps {
-  isOpen: boolean;                     // 是否显示弹窗
-  onClose: () => void;                 // 关闭回调
-  providerManager: UseProviderManagerReturn;  // 提供商管理器
-  promptSettings: {                    // Prompt 设置
+  isOpen: boolean;
+  onClose: () => void;
+  providerManager: UseProviderManagerReturn;
+  promptSettings: {
     customPrompt: string;
     useDefaultPrompt: boolean;
     userInstructions: string;
   };
-  onUpdatePromptSettings: (settings: any) => void;  // 更新 Prompt 设置
+  onUpdatePromptSettings: (settings: any) => void;
+  canvasRatio: string;
+  setCanvasRatio: (ratio: string) => void;
+  canvasConfigs: CanvasConfig[];
+  appTheme: string;
+  setAppTheme: (theme: string) => void;
+  themeConfigs: ThemeConfig[];
 }
 
-/** 设置标签页类型：api(API 配置) 或 prompt(Prompt 配置) */
-type SettingsTab = 'api' | 'prompt';
+/** 设置标签页类型 */
+type SettingsTab = 'general' | 'api' | 'prompt';
 
 /**
  * 设置弹窗组件
@@ -49,9 +58,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   providerManager,
   promptSettings,
   onUpdatePromptSettings,
+  canvasRatio,
+  setCanvasRatio,
+  canvasConfigs,
+  appTheme,
+  setAppTheme,
+  themeConfigs,
 }) => {
-  // 当前激活的标签页
-  const [activeTab, setActiveTab] = useState<SettingsTab>('api');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   // 是否展开默认 Prompt 查看
   const [showPromptEditor, setShowPromptEditor] = useState(false);
 
@@ -120,15 +134,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 背景遮罩：点击关闭弹窗 */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 z-50">
+      {/* 全屏透明事件拦截层：阻止所有鼠标/指针事件穿透到背后元素 */}
+      <div className="absolute inset-0" />
 
-      {/* 弹窗主体 */}
-      <div className="relative rounded-2xl shadow-2xl w-[700px] max-h-[80vh] overflow-hidden" style={{ background: 'var(--bg-modal)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
+      {/* 视觉背景遮罩 */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-none" />
+
+      {/* 弹窗主体容器：pointer-events-none 让事件穿透到拦截层 */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="relative rounded-2xl shadow-2xl w-[700px] max-h-[80vh] overflow-hidden pointer-events-auto" style={{ background: 'var(--bg-modal)', borderColor: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>
         {/* 弹窗头部：标题和关闭按钮 */}
         <div className="flex items-center justify-between px-6 py-4" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-3">
@@ -148,6 +163,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* 标签页切换按钮 */}
         <div className="flex" style={{ borderColor: 'var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+          <button
+            onClick={() => setActiveTab('general')}
+            className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95 whitespace-nowrap"
+            style={{
+              color: activeTab === 'general' ? 'var(--accent)' : 'var(--text-muted)',
+              background: activeTab === 'general' ? 'var(--accent-bg)' : 'transparent',
+              borderBottom: activeTab === 'general' ? '2px solid var(--accent)' : 'none',
+            }}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Settings size={16} />
+              通用
+            </div>
+          </button>
           <button
             onClick={() => setActiveTab('api')}
             className="flex-1 px-6 py-3 text-sm font-medium transition-all active:scale-95 whitespace-nowrap"
@@ -180,6 +209,63 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* 内容区域：根据标签页显示不同内容 */}
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-130px)]">
+          {activeTab === 'general' && (
+            <div className="space-y-6">
+              {/* 画布比例 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Monitor size={16} style={{ color: 'var(--accent)' }} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>画布比例</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {canvasConfigs.map((config) => (
+                    <button
+                      key={config.ratio}
+                      onClick={() => setCanvasRatio(config.ratio)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all active:scale-95"
+                      style={{
+                        background: canvasRatio === config.ratio ? 'var(--accent-bg)' : 'var(--bg-input)',
+                        borderColor: canvasRatio === config.ratio ? 'var(--accent)' : 'var(--border-default)',
+                      }}
+                    >
+                      <span className="text-lg">{config.icon}</span>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{config.label}</div>
+                        <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{config.width}×{config.height}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 主题切换 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Palette size={16} style={{ color: 'var(--accent)' }} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>界面主题</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {themeConfigs.map((theme) => (
+                    <button
+                      key={theme.id}
+                      onClick={() => setAppTheme(theme.id)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all active:scale-95"
+                      style={{
+                        background: appTheme === theme.id ? 'var(--accent-bg)' : 'var(--bg-input)',
+                        borderColor: appTheme === theme.id ? 'var(--accent)' : 'var(--border-default)',
+                      }}
+                    >
+                      <span className="text-lg">{theme.icon}</span>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{theme.label}</div>
+                        <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{theme.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {activeTab === 'api' ? (
             <div>
               {isEditingOrAdding ? (
@@ -297,6 +383,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             完成
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

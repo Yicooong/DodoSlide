@@ -90,9 +90,8 @@ export function Player({ slides, initialIndex, canvasConfig, onExit }: PlayerPro
     };
   }, []);
 
-  // Fullscreen
+  // Fullscreen change listener (handle Escape key exit)
   useEffect(() => {
-    document.documentElement.requestFullscreen?.().catch(() => {});
     const onFsChange = () => {
       if (!document.fullscreenElement) onExit();
     };

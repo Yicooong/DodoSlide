@@ -136,22 +136,6 @@ const App = () => {
   // ========== 事件处理函数 ==========
   
   /**
-   * 处理文件上传
-   * 读取上传的文本文件并更新当前幻灯片代码
-   */
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        if (content) slidesHook.updateCurrentSlideCode(content);
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  /**
    * 导出为 PPTX 文件
    * 支持三种模式：当前幻灯片、指定范围、全部幻灯片
    */
@@ -306,6 +290,12 @@ const App = () => {
           providerManager={aiGen.providerManager}
           promptSettings={aiGen.promptSettings}
           onUpdatePromptSettings={aiGen.updatePromptSettings}
+          canvasRatio={appState.canvasRatio}
+          setCanvasRatio={handleCanvasRatioChange}
+          canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
+          appTheme={appState.appTheme}
+          setAppTheme={handleThemeChange}
+          themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
         />
       </div>
     );
@@ -363,19 +353,15 @@ const App = () => {
                 <AppHeader
                   activeTab={appState.activeTab}
                   setActiveTab={appState.setActiveTab}
-                  canvasRatio={appState.canvasRatio}
-                  setCanvasRatio={handleCanvasRatioChange}
-                  canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
-                  appTheme={appState.appTheme}
-                  setAppTheme={handleThemeChange}
-                  themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
                   isGenerating={aiGen.isGenerating}
                   showSettings={showSettings}
                   setShowSettings={setShowSettings}
-                  onUpload={handleFileUpload}
                   onExport={handleExportClick}
                   onNavigateToAi={() => appState.setViewType('ai-generate')}
-                  onPresent={() => appState.setPresenting(true)}
+                  onPresent={() => {
+                    document.documentElement.requestFullscreen?.().catch(() => {});
+                    appState.setPresenting(true);
+                  }}
                 />
 
                 {/* 工作区容器 */}
@@ -443,6 +429,12 @@ const App = () => {
         providerManager={aiGen.providerManager}
         promptSettings={aiGen.promptSettings}
         onUpdatePromptSettings={aiGen.updatePromptSettings}
+        canvasRatio={appState.canvasRatio}
+        setCanvasRatio={handleCanvasRatioChange}
+        canvasConfigs={Object.values(CANVAS_CONFIGS) as CanvasConfig[]}
+        appTheme={appState.appTheme}
+        setAppTheme={handleThemeChange}
+        themeConfigs={Object.values(THEME_CONFIGS) as ThemeConfig[]}
       />
 
       {/* 导出弹窗 */}

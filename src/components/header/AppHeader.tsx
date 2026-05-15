@@ -4,39 +4,24 @@
  */
 
 import React from 'react';
-// 导入图标：Settings(设置)、Sparkles(AI)、Upload(上传)、Download(下载)、Monitor(显示器)
 import {
   Settings,
   Sparkles,
-  Upload,
   Download,
-  Monitor,
   Play,
 } from 'lucide-react';
-// 导入 cn 工具函数：合并 Tailwind 类名
 import { cn } from '../../lib/utils';
-// 导入画布配置类型
-import { CanvasConfig } from '../../lib/canvas-config';
-// 导入主题配置类型
-import { ThemeConfig } from '../../lib/theme-config';
 
 /** 应用头部组件属性接口 */
 interface AppHeaderProps {
-  activeTab: 'preview' | 'code';              // 当前激活的标签
-  setActiveTab: (tab: 'preview' | 'code') => void;  // 设置标签回调
-  canvasRatio: string;                        // 当前画布比例
-  setCanvasRatio: (ratio: string) => void;    // 设置画布比例
-  canvasConfigs: CanvasConfig[];              // 画布配置列表
-  appTheme: string;                           // 当前主题
-  setAppTheme: (theme: string) => void;       // 设置主题
-  themeConfigs: ThemeConfig[];                // 主题配置列表
-  isGenerating: boolean;                      // 是否正在生成
-  showSettings: boolean;                      // 是否显示设置
-  setShowSettings: (show: boolean) => void;   // 设置显示状态
-  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;  // 上传文件回调
-  onExport: () => void;                       // 导出回调
-  onNavigateToAi?: () => void;                // 导航到 AI 生成页（可选）
-  onPresent?: () => void;                     // 演示模式回调（可选）
+  activeTab: 'preview' | 'code';
+  setActiveTab: (tab: 'preview' | 'code') => void;
+  isGenerating: boolean;
+  showSettings: boolean;
+  setShowSettings: (show: boolean) => void;
+  onExport: () => void;
+  onNavigateToAi?: () => void;
+  onPresent?: () => void;
 }
 
 /**
@@ -44,26 +29,16 @@ interface AppHeaderProps {
  * 功能：
  * - 显示应用 Logo 和名称
  * - 提供编辑器/预览标签切换
- * - 画布比例选择器
- * - 主题切换器
  * - AI 生成按钮（导航到 AI 生成页）
  * - 设置按钮
- * - 上传 JSX 文件按钮
  * - 导出 PPTX 按钮
  */
 export const AppHeader: React.FC<AppHeaderProps> = ({
   activeTab,
   setActiveTab,
-  canvasRatio,
-  setCanvasRatio,
-  canvasConfigs,
-  appTheme,
-  setAppTheme,
-  themeConfigs,
   isGenerating,
   showSettings,
   setShowSettings,
-  onUpload,
   onExport,
   onNavigateToAi,
   onPresent,
@@ -100,39 +75,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
          </button>
         </nav>
 
-        {/* 画布比例选择器 */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
-          <Monitor size={14} style={{ color: 'var(--text-muted)' }} />
-          <select
-            value={canvasRatio}
-            onChange={(e) => setCanvasRatio(e.target.value)}
-            className="form-select text-xs font-medium bg-transparent outline-none cursor-pointer h-full"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {canvasConfigs.map((config) => (
-              <option key={config.ratio} value={config.ratio}>
-                {config.icon} {config.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 主题切换器：循环显示所有可用主题 */}
-        <div className="flex items-center gap-1 p-1 rounded-lg border h-9" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
-          {themeConfigs.map((theme) => (
-            <button
-              key={theme.id}
-              onClick={() => setAppTheme(theme.id)}
-              title={theme.description}
-              className={cn("p-1.5 rounded-md transition-all h-full flex items-center justify-center active:scale-90", appTheme === theme.id ? "shadow-sm" : "hover:opacity-80")}
-              style={{
-                background: appTheme === theme.id ? 'var(--bg-button)' : 'transparent',
-              }}
-            >
-              <span className="text-sm">{theme.icon}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* 右侧操作按钮区 */}
@@ -162,12 +104,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
              <Settings size={15} />
              设置
           </button>
-          {/* 上传 JSX 文件按钮：隐藏的 file input 触发文件选择 */}
-          <label className="cursor-pointer px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 border active:scale-95 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap" style={{ background: 'var(--bg-button)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}>
-             <Upload size={15} />
-             上传 JSX
-             <input type="file" accept=".jsx,.tsx,.js,.ts" className="hidden" onChange={onUpload} />
-          </label>
           {/* 演示按钮：进入全屏演示模式 */}
           {onPresent && (
             <button

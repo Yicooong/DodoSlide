@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Crosshair, Bold, Italic, AlignLeft, AlignCenter, AlignRight, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Bold, Italic, AlignLeft, AlignCenter, AlignRight, ChevronRight, ChevronLeft } from 'lucide-react';
 
 import { useInspector } from '../inspector/InspectorProvider';
 import type { EditOp } from '../../lib/inspector/apply-edit';
@@ -200,12 +200,6 @@ export function DesignPanel({ collapsed, onToggleCollapse }: DesignPanelProps) {
               元素属性
             </span>
             <div className="flex items-center gap-1.5">
-              {active && (
-                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent)', color: '#fff' }}>
-                  <Crosshair size={10} />
-                  Inspector
-                </span>
-              )}
               <button
                   onClick={onToggleCollapse}
                   className="p-1.5 rounded-lg transition-all flex-shrink-0 active:scale-90"
